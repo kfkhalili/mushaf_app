@@ -4,10 +4,12 @@ const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 
-// Use the dedicated Unicode character for Basmallah
+// --- TEXT CONSTANTS ---
 const String basmallah = '\uFDFD'; // ﷽
 
-// Base font size for calculations (adjust as needed)
-const double baseFontSize = 21.0;
-// Base screen width used for scaling calculations (e.g., iPhone 12 Pro Max width)
+// --- FONT CONSTANTS ---
+const String surahNameFontFamily = 'SurahNames'; // <-- Add font family name
+
+// --- RESPONSIVE SIZING ---
+const double baseFontSize = 20.5;
 const double referenceScreenWidth = 428.0;

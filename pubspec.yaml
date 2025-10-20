@@ -67,8 +67,8 @@ flutter:
     - assets/db/quran-metadata-juz.sqlite
     - assets/db/quran-metadata-hizb.sqlite
 
-    # This path assumes "p1.ttf" is INSIDE the "QPC V2 Font.ttf" folder
     - "assets/fonts/QPC V2 Font.ttf/"
+    - assets/fonts/surah-name-v4.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -77,9 +77,14 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
+    # Fallback font
     - family: QPCV2
       fonts:
         - asset: fonts/QPCV2.ttf
+    # Surah Name font
+    - family: SurahNames # <-- Declare the new font family
+      fonts:
+        - asset: assets/fonts/surah-name-v4.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

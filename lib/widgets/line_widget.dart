@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
-import '../constants.dart'; // Import constants
+import '../constants.dart';
 
 class LineWidget extends StatelessWidget {
   final LineInfo line;
@@ -15,55 +15,60 @@ class LineWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String textToShow = '';
-    TextStyle? textStyle;
-    String? fontFamily = 'QPCV2'; // Default fallback font
+    TextStyle? specificTextStyle; // Renamed for clarity
+    String? fontFamily = 'QPCV2';
     TextAlign lineAlignment = line.isCentered
         ? TextAlign.center
         : TextAlign.justify;
 
-    // --- Responsive Font Size Calculation ---
-    // Get screen width from MediaQuery
     final double screenWidth = MediaQuery.of(context).size.width;
-    // Calculate scaling factor based on reference width from constants.dart
     final double scaleFactor = screenWidth / referenceScreenWidth;
-    // Calculate dynamic font size using baseFontSize from constants.dart
-    // Clamp the size between a reasonable min and max.
-    double dynamicFontSize = (baseFontSize * scaleFactor).clamp(
+    // This is the BASE dynamic size, used if not overridden below
+    double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
       16.0,
       30.0,
-    ); // e.g., Min 16, Max 30
-    // You might want to scale line height too, or keep it fixed
+    );
     double dynamicLineHeight = 1.8;
 
     switch (line.lineType) {
       case 'surah_name':
         {
-          textToShow = line.surahName ?? 'Surah';
-          // Scale the Surah name font size too, maybe make it slightly larger proportionally
-          textStyle = TextStyle(
-            fontWeight: FontWeight.bold,
-            // Scale up the base size slightly for headers, then apply screen scaling and clamp
-            fontSize: (baseFontSize * 1.2 * scaleFactor).clamp(20.0, 34.0),
+          final String surahNumPadded = line.surahNumber.toString().padLeft(
+            3,
+            '0',
+          );
+          // Use your corrected order
+          textToShow = 'surah$surahNumPadded surah-icon';
+          fontFamily = surahNameFontFamily;
+          // Calculate the specific, larger size for Surah names
+          final double surahNameFontSize = (defaultDynamicFontSize * 1.5).clamp(
+            22.0,
+            40.0,
+          ); // Increased max clamp
+          // Store it in specificTextStyle
+          specificTextStyle = TextStyle(
+            fontSize: surahNameFontSize, // Use the calculated larger size
           );
           lineAlignment = TextAlign.center;
           break;
         }
       case 'basmallah':
         {
-          textToShow = basmallah; // Use constant from constants.dart
-          // Scale Basmallah size, maybe slightly smaller than base ayah size
-          dynamicFontSize = (baseFontSize * 0.95 * scaleFactor).clamp(
-            15.0,
-            28.0,
-          );
+          textToShow = basmallah;
+          // Calculate specific size for Basmallah
+          final double basmallahFontSize = (defaultDynamicFontSize * 0.95)
+              .clamp(15.0, 28.0);
+          specificTextStyle = TextStyle(
+            fontSize: basmallahFontSize,
+          ); // Store it
           lineAlignment = TextAlign.center;
           break;
         }
       case 'ayah':
         {
           textToShow = line.words.map((w) => w.text).join(' ');
-          fontFamily = pageFontFamily; // Use the dynamically loaded page font
-          // dynamicFontSize remains as calculated above
+          fontFamily = pageFontFamily;
+          // No specificTextStyle needed, will use defaultDynamicFontSize
           break;
         }
       default:
@@ -73,24 +78,25 @@ class LineWidget extends StatelessWidget {
         }
     }
 
-    // Apply the calculated dynamic font size and line height
+    // --- Corrected Style Application ---
+    // If a specificTextStyle was created (Surah Name, Basmallah), use it.
+    // Otherwise, create a default TextStyle using the base dynamic size.
+    final TextStyle finalTextStyle =
+        specificTextStyle?.copyWith(
+          fontFamily: fontFamily, // Apply correct font family
+          height: dynamicLineHeight,
+        ) ??
+        TextStyle(
+          fontFamily: fontFamily,
+          fontSize: defaultDynamicFontSize, // Use the default calculated size
+          height: dynamicLineHeight,
+        );
+
     return Text(
       textToShow,
       textDirection: TextDirection.rtl,
       textAlign: lineAlignment,
-      style:
-          textStyle?.copyWith(
-            fontFamily: fontFamily,
-            fontSize: dynamicFontSize, // Use calculated size
-            height: dynamicLineHeight,
-          ) ??
-          TextStyle(
-            fontFamily: fontFamily,
-            fontSize: dynamicFontSize, // Use calculated size
-            height: dynamicLineHeight,
-          ),
-      // Set textScaler to 1.0 because we are manually calculating the font size.
-      // Using MediaQuery's textScaler might interfere.
+      style: finalTextStyle, // Apply the correctly determined style
       textScaler: const TextScaler.linear(1.0),
     );
   }
