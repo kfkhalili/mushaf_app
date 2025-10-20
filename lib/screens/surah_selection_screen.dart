@@ -25,19 +25,21 @@ class SurahSelectionScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: 50,
-                  color: Colors.teal.shade800,
+                  color: Colors.black87,
                 ),
               ),
             ),
             // Surah List
             Expanded(
               child: surahsAsync.when(
-                data: (surahs) => ListView.builder(
+                data: (surahs) => ListView.separated(
                   itemCount: surahs.length,
                   itemBuilder: (context, index) {
                     final surah = surahs[index];
                     return SurahListItem(surah: surah);
                   },
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1, indent: 24, endIndent: 24),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) =>
@@ -62,23 +64,27 @@ class SurahListItem extends StatelessWidget {
     final surahNameGlyph = 'surah$surahNumPadded surah-icon';
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      // WHY: Increased vertical padding to accommodate larger fonts.
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       // Right side: Number and details
-      leading: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Text(
             convertToEasternArabicNumerals(surah.surahNumber.toString()),
-            style: TextStyle(
-              fontSize: 20,
+            style: const TextStyle(
+              // WHY: Increased font size for better readability.
+              fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.teal.shade700,
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             surah.revelationPlace == 'makkah' ? 'مكية' : 'مدنية',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            // WHY: Increased font size for better readability.
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),
@@ -87,7 +93,8 @@ class SurahListItem extends StatelessWidget {
         surahNameGlyph,
         style: const TextStyle(
           fontFamily: surahNameFontFamily,
-          fontSize: 26,
+          // WHY: Increased font size for better readability and visual balance.
+          fontSize: 32,
           color: Colors.black87,
         ),
       ),
