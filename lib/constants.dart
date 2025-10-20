@@ -43,7 +43,7 @@ const double defaultLineHeight = 1.8;
 // Padding Values
 const double pageHorizontalPadding = 16.0;
 const double pageBottomPadding = 45.0; // Space for page number footer
-const double headerHorizontalPadding = 16.0;
+const double headerHorizontalPadding = 20.0;
 const double headerJuzHizbSpacing = 12.0;
 const double footerBottomPadding = 16.0;
 const double footerRightPadding = 16.0; // Standard right padding

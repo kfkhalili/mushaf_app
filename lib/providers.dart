@@ -11,6 +11,12 @@ final databaseServiceProvider = Provider<DatabaseService>((ref) {
   return DatabaseService();
 });
 
+/// Fetches the list of all surahs for the selection screen.
+final surahListProvider = FutureProvider<List<SurahInfo>>((ref) {
+  final dbService = ref.watch(databaseServiceProvider);
+  return dbService.getAllSurahs();
+});
+
 final pageDataProvider = FutureProvider.family<PageData, int>((
   ref,
   pageNumber,
@@ -34,6 +40,6 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
     pageSurahName: pageHeaderInfo['surahName'] as String? ?? '',
     pageSurahNumber: pageHeaderInfo['surahNumber'] as int? ?? 0,
     juzNumber: pageHeaderInfo['juz'] as int? ?? 0,
-    hizbNumber: pageHeaderInfo['hizb'] as int? ?? 0, // <-- RE-ADD THIS
+    hizbNumber: pageHeaderInfo['hizb'] as int? ?? 0,
   );
 });

@@ -1,5 +1,22 @@
 import 'package:flutter/foundation.dart';
 
+// --- New Model for Surah List ---
+@immutable
+class SurahInfo {
+  final int surahNumber;
+  final String nameArabic;
+  final String revelationPlace;
+  final int startingPage;
+
+  const SurahInfo({
+    required this.surahNumber,
+    required this.nameArabic,
+    required this.revelationPlace,
+    required this.startingPage,
+  });
+}
+
+// --- Existing Models ---
 @immutable
 class Word {
   final String text;

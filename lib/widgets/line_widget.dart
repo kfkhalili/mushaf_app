@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
-import '../constants.dart'; // Import constants
+import '../constants.dart';
 
 class LineWidget extends StatelessWidget {
   final LineInfo line;
@@ -23,14 +23,8 @@ class LineWidget extends StatelessWidget {
     );
     const double currentLineHeight = defaultLineHeight;
 
-    // Default Alignment and Font
-    TextAlign lineAlignment = line.isCentered
-        ? TextAlign.center
-        : TextAlign.justify;
-    String? fontFamily = fallbackFontFamily; // Use constant
-
-    // Widget to be returned
-    Widget lineWidget; // Renamed for clarity
+    // --- Widget to be returned ---
+    Widget lineContent;
 
     switch (line.lineType) {
       case 'surah_name':
@@ -53,8 +47,7 @@ class LineWidget extends StatelessWidget {
                 maxSurahHeaderFontSize,
               );
 
-          // Assign the Stack to lineWidget directly
-          lineWidget = Stack(
+          lineContent = Stack(
             alignment: Alignment.center,
             children: [
               Text(
@@ -79,29 +72,24 @@ class LineWidget extends StatelessWidget {
               ),
             ],
           );
-          // REMOVED early return statement here
           break; // Break the switch case
         } // End case 'surah_name'
 
       case 'basmallah':
         {
-          const String textToShow = basmallah; // Use constant
+          const String textToShow = basmallah;
           final double basmallahFontSize =
               (defaultDynamicFontSize * basmallahScaleFactor).clamp(
                 minBasmallahFontSize,
                 maxBasmallahFontSize,
               );
-          lineAlignment = TextAlign.center;
-          // fontFamily remains fallbackFontFamily
 
-          // Assign the Text widget for Basmallah
-          lineWidget = Text(
+          lineContent = Text(
             textToShow,
-            textDirection: TextDirection.rtl,
-            textAlign: lineAlignment,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: basmallahFontSize, // Use specific size
+              fontFamily: fallbackFontFamily,
+              fontSize: basmallahFontSize,
               height: currentLineHeight,
             ),
             textScaler: const TextScaler.linear(1.0),
@@ -110,33 +98,46 @@ class LineWidget extends StatelessWidget {
         }
       case 'ayah':
         {
-          final String textToShow = line.words.map((w) => w.text).join(' ');
-          fontFamily = pageFontFamily; // Use dynamic page font
-          // defaultDynamicFontSize will be used
-
-          // Assign the Text widget for Ayah
-          lineWidget = Text(
-            textToShow,
-            textDirection: TextDirection.rtl,
-            textAlign: lineAlignment,
-            style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: defaultDynamicFontSize, // Use default dynamic size
-              height: currentLineHeight,
-            ),
-            textScaler: const TextScaler.linear(1.0),
-          );
+          // WHY: For non-centered ayah lines, we build a Row to manually
+          // achieve justification. Centered lines still use a single Text widget.
+          if (line.isCentered || line.words.isEmpty) {
+            final String textToShow = line.words.map((w) => w.text).join(' ');
+            lineContent = Text(
+              textToShow,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: pageFontFamily,
+                fontSize: defaultDynamicFontSize,
+                height: currentLineHeight,
+              ),
+              textScaler: const TextScaler.linear(1.0),
+            );
+          } else {
+            // Build a Row for justified lines
+            lineContent = Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              textDirection: TextDirection.rtl,
+              children: line.words.map((word) {
+                return Text(
+                  word.text,
+                  style: TextStyle(
+                    fontFamily: pageFontFamily,
+                    fontSize: defaultDynamicFontSize,
+                    height: currentLineHeight,
+                  ),
+                  textScaler: const TextScaler.linear(1.0),
+                );
+              }).toList(),
+            );
+          }
           break; // Break the switch case
         }
       default:
         {
-          // Assign an empty container or SizedBox for unknown types
-          lineWidget = const SizedBox.shrink();
-          break; // Break the switch case
+          lineContent = const SizedBox.shrink();
+          break;
         }
     }
-
-    // Return the assigned widget AFTER the switch statement
-    return lineWidget;
+    return lineContent;
   }
 }

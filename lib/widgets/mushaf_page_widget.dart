@@ -22,13 +22,12 @@ class MushafPageWidget extends ConsumerWidget {
     const TextStyle surahNameHeaderStyle = TextStyle(
       fontSize: 28,
       color: Colors.black87,
-    ); // Increased size
+    );
 
     const TextStyle footerTextStyle = footerPageNumStyle;
 
     return asyncPageData.when(
       data: (pageData) {
-        // final juz = convertToEasternArabicNumerals(pageData.juzNumber.toString()); // <-- REMOVED UNUSED VARIABLE
         final hizb = convertToEasternArabicNumerals(
           pageData.hizbNumber.toString(),
         );
@@ -48,42 +47,49 @@ class MushafPageWidget extends ConsumerWidget {
             elevation: 0,
             backgroundColor: Colors.transparent,
 
-            // Juz Glyph and Hizb Text on the right (leading in RTL)
+            // Surah Name on the right (leading in RTL)
             leadingWidth: 150,
             leading: Padding(
               padding: const EdgeInsets.only(right: headerHorizontalPadding),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      juzGlyphString,
-                      style: juzHizbStyle.copyWith(
-                        fontFamily: quranCommonFontFamily,
-                      ),
-                    ),
-                    const SizedBox(width: headerJuzHizbSpacing),
-                    // Hizb is plain text
-                    // WHY: Corrected to use the defined 'juzHizbStyle' for consistency.
-                    Text('حزب $hizb', style: juzHizbStyle),
-                  ],
+              child: Center(
+                child: Text(
+                  surahNameGlyphString,
+                  style: surahNameHeaderStyle.copyWith(
+                    fontFamily: surahNameFontFamily,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ),
-            // Surah Name Glyph on the left (actions in RTL)
+            // Juz Glyph and Hizb Text on the left (actions in RTL)
             actions: [
               Padding(
-                padding: const EdgeInsets.only(left: headerHorizontalPadding),
-                child: Center(
-                  child: Text(
-                    surahNameGlyphString,
-                    style: surahNameHeaderStyle.copyWith(
-                      fontFamily: surahNameFontFamily,
-                    ), // Use larger style
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                // WHY: Added 'right' padding to push the content away from the right screen edge.
+                // The 'left' padding remains to keep it from touching the center.
+                padding: const EdgeInsets.only(
+                  left: headerHorizontalPadding,
+                  right: headerHorizontalPadding, // <-- ADDED THIS PADDING
+                ),
+                child: Align(
+                  // Use centerRight to align the content correctly on the right side.
+                  alignment: Alignment.centerRight, // <-- CORRECTED ALIGNMENT
+                  child: Row(
+                    // WHY: This forces the children of the Row to be laid out
+                    // from right to left, placing the Juz glyph first (on the right).
+                    textDirection: TextDirection.rtl,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        juzGlyphString,
+                        style: juzHizbStyle.copyWith(
+                          fontFamily: quranCommonFontFamily,
+                        ),
+                      ),
+                      const SizedBox(width: headerJuzHizbSpacing),
+                      Text('حزب $hizb', style: juzHizbStyle),
+                    ],
                   ),
                 ),
               ),

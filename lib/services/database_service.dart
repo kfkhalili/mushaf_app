@@ -85,6 +85,48 @@ class DatabaseService {
     }
   }
 
+  // --- NEW METHOD ---
+  /// Fetches all surahs with their names, revelation place, and starting page.
+  Future<List<SurahInfo>> getAllSurahs() async {
+    await init();
+    if (_metadataDb == null || _layoutDb == null) {
+      throw Exception(
+        "Required databases for getAllSurahs are not initialized.",
+      );
+    }
+
+    // 1. Get all Surah metadata
+    final List<Map<String, dynamic>> chapters = await _metadataDb!.query(
+      'chapters',
+      orderBy: 'id ASC',
+    );
+
+    // 2. Get the starting page for each Surah
+    final List<Map<String, dynamic>>
+    surahStartPages = await _layoutDb!.rawQuery(
+      'SELECT surah_number, MIN(page_number) as start_page FROM pages WHERE surah_number > 0 GROUP BY surah_number',
+    );
+
+    // 3. Create a quick lookup map for page numbers
+    final Map<int, int> pageMap = {
+      for (var row in surahStartPages)
+        _parseInt(row['surah_number']): _parseInt(row['start_page']),
+    };
+    // Manually set page 1 for Surah Al-Fatiha
+    pageMap[1] = 1;
+
+    // 4. Combine the data into a list of SurahInfo objects
+    return chapters.map((chapter) {
+      final int surahNum = _parseInt(chapter['id']);
+      return SurahInfo(
+        surahNumber: surahNum,
+        nameArabic: chapter['name_arabic'] as String,
+        revelationPlace: chapter['revelation_place'] as String,
+        startingPage: pageMap[surahNum] ?? 0,
+      );
+    }).toList();
+  }
+
   Future<String> getSurahName(int surahId) async {
     await init();
     if (_metadataDb == null) throw Exception("Metadata DB not initialized.");
@@ -114,9 +156,8 @@ class DatabaseService {
 
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null) {
+    if (_layoutDb == null || _scriptDb == null)
       throw Exception("Required DBs not initialized.");
-    }
 
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
       'pages',
@@ -232,30 +273,24 @@ class DatabaseService {
       final pageAyah = firstAyah['ayah']!;
 
       final juzNumber = _findJuz(pageSurah, pageAyah);
-      final hizbNumber = _findHizb(pageSurah, pageAyah); // <-- RE-ADD THIS
+      final hizbNumber = _findHizb(pageSurah, pageAyah);
       final surahName = (pageSurah > 0) ? await getSurahName(pageSurah) : "";
 
       return {
         'juz': juzNumber,
-        'hizb': hizbNumber, // <-- RE-ADD THIS
+        'hizb': hizbNumber,
         'surahName': surahName,
         'surahNumber': pageSurah,
       };
     } catch (e) {
-      return {
-        'juz': 0,
-        'hizb': 0,
-        'surahName': '',
-        'surahNumber': 0,
-      }; // <-- RE-ADD THIS
+      return {'juz': 0, 'hizb': 0, 'surahName': '', 'surahNumber': 0};
     }
   }
 
   Future<PageLayout> getPageLayout(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null) {
+    if (_layoutDb == null || _scriptDb == null)
       throw Exception("Required DBs not initialized.");
-    }
 
     final List<Map<String, dynamic>> linesData = await _layoutDb!.query(
       'pages',
