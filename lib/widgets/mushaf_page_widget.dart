@@ -80,7 +80,7 @@ class MushafPageWidget extends ConsumerWidget {
                     right: pageHorizontalPadding,
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: pageData.layout.lines
                         .map(
