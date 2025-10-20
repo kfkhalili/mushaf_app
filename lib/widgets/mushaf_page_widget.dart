@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../utils/helpers.dart';
 import 'line_widget.dart';
-import '../constants.dart'; // Import constants
+import '../constants.dart';
 
 class MushafPageWidget extends ConsumerWidget {
   final int pageNumber;
@@ -13,18 +13,31 @@ class MushafPageWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
-    // Use constants for styles
-    const TextStyle headerStyle = headerFooterBaseStyle;
-    const TextStyle footerStyle = footerPageNumStyle;
+
+    // Create two separate styles for individual control
+    const TextStyle juzHizbStyle = TextStyle(
+      fontSize: 24,
+      color: Colors.black87,
+    );
+    const TextStyle surahNameHeaderStyle = TextStyle(
+      fontSize: 28,
+      color: Colors.black87,
+    ); // Increased size
+
+    const TextStyle footerTextStyle = footerPageNumStyle;
 
     return asyncPageData.when(
       data: (pageData) {
-        final juz = convertToEasternArabicNumerals(
-          pageData.juzNumber.toString(),
-        );
+        // final juz = convertToEasternArabicNumerals(pageData.juzNumber.toString()); // <-- REMOVED UNUSED VARIABLE
         final hizb = convertToEasternArabicNumerals(
           pageData.hizbNumber.toString(),
         );
+        final String juzGlyphString =
+            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+        final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
+            ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
+            : '';
+
         final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
         return Scaffold(
@@ -35,32 +48,40 @@ class MushafPageWidget extends ConsumerWidget {
             elevation: 0,
             backgroundColor: Colors.transparent,
 
+            // Juz Glyph and Hizb Text on the right (leading in RTL)
             leadingWidth: 150,
             leading: Padding(
-              // Use constant for padding
               padding: const EdgeInsets.only(right: headerHorizontalPadding),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('جزء $juz', style: headerStyle), // Use style constant
-                    // Use constant for spacing
+                    Text(
+                      juzGlyphString,
+                      style: juzHizbStyle.copyWith(
+                        fontFamily: quranCommonFontFamily,
+                      ),
+                    ),
                     const SizedBox(width: headerJuzHizbSpacing),
-                    Text('حزب $hizb', style: headerStyle), // Use style constant
+                    // Hizb is plain text
+                    // WHY: Corrected to use the defined 'juzHizbStyle' for consistency.
+                    Text('حزب $hizb', style: juzHizbStyle),
                   ],
                 ),
               ),
             ),
+            // Surah Name Glyph on the left (actions in RTL)
             actions: [
               Padding(
-                // Use constant for padding
                 padding: const EdgeInsets.only(left: headerHorizontalPadding),
                 child: Center(
                   child: Text(
-                    pageData.pageSurahName,
-                    // Use style constant and override fontWeight
-                    style: headerStyle.copyWith(fontWeight: FontWeight.bold),
+                    surahNameGlyphString,
+                    style: surahNameHeaderStyle.copyWith(
+                      fontFamily: surahNameFontFamily,
+                    ), // Use larger style
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -73,7 +94,6 @@ class MushafPageWidget extends ConsumerWidget {
             children: [
               SafeArea(
                 child: Padding(
-                  // Use constants for padding
                   padding: const EdgeInsets.only(
                     bottom: pageBottomPadding,
                     left: pageHorizontalPadding,
@@ -84,32 +104,24 @@ class MushafPageWidget extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: pageData.layout.lines
                         .map(
-                          (line) => Flexible(
-                            child: LineWidget(
-                              line: line,
-                              pageFontFamily: pageData.pageFontFamily,
-                            ),
+                          (line) => LineWidget(
+                            line: line,
+                            pageFontFamily: pageData.pageFontFamily,
                           ),
                         )
                         .toList(),
                   ),
                 ),
               ),
-
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  // Use constants for padding
                   padding: const EdgeInsets.only(
                     bottom: footerBottomPadding,
                     right: footerRightPadding,
-                    left:
-                        footerLeftPadding, // Adjusts visual right padding in RTL
+                    left: footerLeftPadding,
                   ),
-                  child: Text(
-                    pageNum,
-                    style: footerStyle,
-                  ), // Use style constant
+                  child: Text(pageNum, style: footerTextStyle),
                 ),
               ),
             ],
@@ -121,9 +133,7 @@ class MushafPageWidget extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(
-              pageHorizontalPadding,
-            ), // Use constant
+            padding: const EdgeInsets.all(pageHorizontalPadding),
             child: Text(
               'Failed to load page $pageNumber.\n\nError: $err',
               textAlign: TextAlign.center,

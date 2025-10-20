@@ -16,7 +16,7 @@ const String quranCommonFontFamily = 'QuranCommon';
 const String fallbackFontFamily = 'QPCV2'; // Name for the default font
 
 // --- RESPONSIVE SIZING ---
-const double baseFontSize = 21.0;
+const double baseFontSize = 20.0;
 const double referenceScreenWidth = 428.0;
 
 // --- STYLING CONSTANTS ---

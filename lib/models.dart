@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart'; // For list equality
+import 'package:flutter/foundation.dart';
 
-@immutable // Make models immutable for better state management
+@immutable
 class Word {
   final String text;
   const Word({required this.text});
@@ -40,7 +40,7 @@ class LineInfo {
           isCentered == other.isCentered &&
           surahNumber == other.surahNumber &&
           surahName == other.surahName &&
-          listEquals(words, other.words); // Use listEquals for lists
+          listEquals(words, other.words);
 
   @override
   int get hashCode => Object.hash(
@@ -50,7 +50,7 @@ class LineInfo {
     surahNumber,
     surahName,
     Object.hashAll(words),
-  ); // Use Object.hashAll
+  );
 }
 
 @immutable
@@ -75,6 +75,7 @@ class PageData {
   final PageLayout layout;
   final String pageFontFamily;
   final String pageSurahName;
+  final int pageSurahNumber;
   final int juzNumber;
   final int hizbNumber;
 
@@ -82,6 +83,7 @@ class PageData {
     required this.layout,
     required this.pageFontFamily,
     required this.pageSurahName,
+    required this.pageSurahNumber,
     required this.juzNumber,
     required this.hizbNumber,
   });
@@ -93,10 +95,17 @@ class PageData {
           layout == other.layout &&
           pageFontFamily == other.pageFontFamily &&
           pageSurahName == other.pageSurahName &&
+          pageSurahNumber == other.pageSurahNumber &&
           juzNumber == other.juzNumber &&
           hizbNumber == other.hizbNumber;
 
   @override
-  int get hashCode =>
-      Object.hash(layout, pageFontFamily, pageSurahName, juzNumber, hizbNumber);
+  int get hashCode => Object.hash(
+    layout,
+    pageFontFamily,
+    pageSurahName,
+    pageSurahNumber,
+    juzNumber,
+    hizbNumber,
+  );
 }
