@@ -14,18 +14,6 @@ class MushafPageWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
 
-    // Create two separate styles for individual control
-    const TextStyle juzHizbStyle = TextStyle(
-      fontSize: 24,
-      color: Colors.black87,
-    );
-    const TextStyle surahNameHeaderStyle = TextStyle(
-      fontSize: 28,
-      color: Colors.black87,
-    );
-
-    const TextStyle footerTextStyle = footerPageNumStyle;
-
     return asyncPageData.when(
       data: (pageData) {
         final hizb = convertToEasternArabicNumerals(
@@ -36,8 +24,16 @@ class MushafPageWidget extends ConsumerWidget {
         final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
             ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
             : '';
-
         final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
+
+        const TextStyle headerStyle = TextStyle(
+          fontSize: 24,
+          color: Colors.black87,
+        );
+        const TextStyle surahNameStyle = TextStyle(
+          fontSize: 28,
+          color: Colors.black87,
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -46,15 +42,13 @@ class MushafPageWidget extends ConsumerWidget {
             centerTitle: false,
             elevation: 0,
             backgroundColor: Colors.transparent,
-
-            // Surah Name on the right (leading in RTL)
             leadingWidth: 150,
             leading: Padding(
               padding: const EdgeInsets.only(right: headerHorizontalPadding),
               child: Center(
                 child: Text(
                   surahNameGlyphString,
-                  style: surahNameHeaderStyle.copyWith(
+                  style: surahNameStyle.copyWith(
                     fontFamily: surahNameFontFamily,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -62,33 +56,26 @@ class MushafPageWidget extends ConsumerWidget {
                 ),
               ),
             ),
-            // Juz Glyph and Hizb Text on the left (actions in RTL)
             actions: [
               Padding(
-                // WHY: Added 'right' padding to push the content away from the right screen edge.
-                // The 'left' padding remains to keep it from touching the center.
-                padding: const EdgeInsets.only(
-                  left: headerHorizontalPadding,
-                  right: headerHorizontalPadding, // <-- ADDED THIS PADDING
+                padding: const EdgeInsets.symmetric(
+                  horizontal: headerHorizontalPadding,
                 ),
                 child: Align(
-                  // Use centerRight to align the content correctly on the right side.
-                  alignment: Alignment.centerRight, // <-- CORRECTED ALIGNMENT
+                  alignment: Alignment.centerLeft,
                   child: Row(
-                    // WHY: This forces the children of the Row to be laid out
-                    // from right to left, placing the Juz glyph first (on the right).
                     textDirection: TextDirection.rtl,
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         juzGlyphString,
-                        style: juzHizbStyle.copyWith(
+                        style: headerStyle.copyWith(
                           fontFamily: quranCommonFontFamily,
                         ),
                       ),
                       const SizedBox(width: headerJuzHizbSpacing),
-                      Text('حزب $hizb', style: juzHizbStyle),
+                      Text('حزب $hizb', style: headerStyle),
                     ],
                   ),
                 ),
@@ -98,25 +85,24 @@ class MushafPageWidget extends ConsumerWidget {
           body: Stack(
             fit: StackFit.expand,
             children: [
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: pageBottomPadding,
-                    left: pageHorizontalPadding,
-                    right: pageHorizontalPadding,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: pageData.layout.lines
-                        .map(
-                          (line) => LineWidget(
-                            line: line,
-                            pageFontFamily: pageData.pageFontFamily,
-                          ),
-                        )
-                        .toList(),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 0,
+                  bottom: pageBottomPadding,
+                  left: pageHorizontalPadding,
+                  right: pageHorizontalPadding,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: pageData.layout.lines
+                      .map(
+                        (line) => LineWidget(
+                          line: line,
+                          pageFontFamily: pageData.pageFontFamily,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               Align(
@@ -127,7 +113,7 @@ class MushafPageWidget extends ConsumerWidget {
                     right: footerRightPadding,
                     left: footerLeftPadding,
                   ),
-                  child: Text(pageNum, style: footerTextStyle),
+                  child: Text(pageNum, style: footerPageNumStyle),
                 ),
               ),
             ],

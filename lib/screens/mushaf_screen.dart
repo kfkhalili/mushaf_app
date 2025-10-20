@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/mushaf_page_widget.dart';
+import '../widgets/mushaf_overlay_widget.dart';
 
 class MushafScreen extends StatefulWidget {
-  // Add initialPage parameter
   final int initialPage;
 
   const MushafScreen({super.key, this.initialPage = 1});
@@ -13,11 +13,17 @@ class MushafScreen extends StatefulWidget {
 
 class _MushafScreenState extends State<MushafScreen> {
   late final PageController _pageController;
+  bool _isOverlayVisible = false; // State is now managed here
+
+  void _toggleOverlay() {
+    setState(() {
+      _isOverlayVisible = !_isOverlayVisible;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    // Use the passed initialPage (subtract 1 for 0-based index)
     _pageController = PageController(initialPage: widget.initialPage - 1);
   }
 
@@ -29,16 +35,32 @@ class _MushafScreenState extends State<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView.builder(
-      controller: _pageController,
-      itemCount: 604,
-      // WHY: This reverses the page order and swipe direction.
-      // Now, a right-swipe will advance to the next page (e.g., from page 2 to 3),
-      // which is the natural behavior for reading a Mushaf.
-      reverse: true,
-      itemBuilder: (context, index) {
-        return MushafPageWidget(pageNumber: index + 1);
-      },
+    // The GestureDetector wraps the whole Stack
+    return GestureDetector(
+      onTap: _toggleOverlay,
+      child: Stack(
+        children: [
+          // --- Layer 1: The Page Viewer ---
+          PageView.builder(
+            controller: _pageController,
+            itemCount: 604,
+            reverse: true,
+            itemBuilder: (context, index) {
+              // The page widget is now simple and stateless
+              return MushafPageWidget(pageNumber: index + 1);
+            },
+          ),
+          // --- Layer 2: The Overlay ---
+          MushafOverlayWidget(
+            isVisible: _isOverlayVisible,
+            onBackButtonPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }
