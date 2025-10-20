@@ -64,6 +64,8 @@ flutter:
     - assets/db/uthmani-15-lines.db
     - assets/db/qpc-v2.db
     - assets/db/quran-metadata-surah-name.sqlite
+    - assets/db/quran-metadata-juz.sqlite
+    - assets/db/quran-metadata-hizb.sqlite
 
     # This path assumes "p1.ttf" is INSIDE the "QPC V2 Font.ttf" folder
     - "assets/fonts/QPC V2 Font.ttf/"
