@@ -69,6 +69,7 @@ flutter:
 
     - "assets/fonts/QPC V2 Font.ttf/"
     - assets/fonts/surah-name-v4.ttf
+    - assets/fonts/quran-common.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -82,9 +83,13 @@ flutter:
       fonts:
         - asset: fonts/QPCV2.ttf
     # Surah Name font
-    - family: SurahNames # <-- Declare the new font family
+    - family: SurahNames
       fonts:
         - asset: assets/fonts/surah-name-v4.ttf
+    # Surah Header/Common font
+    - family: QuranCommon
+      fonts:
+        - asset: assets/fonts/quran-common.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

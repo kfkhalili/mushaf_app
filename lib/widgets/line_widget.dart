@@ -14,21 +14,27 @@ class LineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String textToShow = '';
-    TextStyle? specificTextStyle; // Renamed for clarity
-    String? fontFamily = 'QPCV2';
-    TextAlign lineAlignment = line.isCentered
-        ? TextAlign.center
-        : TextAlign.justify;
-
+    // --- Responsive Font Size Calculation ---
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scaleFactor = screenWidth / referenceScreenWidth;
-    // This is the BASE dynamic size, used if not overridden below
     double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
       16.0,
       30.0,
     );
     double dynamicLineHeight = 1.8;
+
+    // Default Alignment and Font
+    TextAlign lineAlignment = line.isCentered
+        ? TextAlign.center
+        : TextAlign.justify;
+    String? fontFamily = 'QPCV2'; // Fallback font
+
+    // Specific styling for certain line types
+    TextStyle? specificTextStyle;
+    String textToShow = '';
+
+    // Widget to be returned - Default is a simple Text widget
+    Widget lineContent;
 
     switch (line.lineType) {
       case 'surah_name':
@@ -37,38 +43,66 @@ class LineWidget extends StatelessWidget {
             3,
             '0',
           );
-          // Use your corrected order
-          textToShow = 'surah$surahNumPadded surah-icon';
-          fontFamily = surahNameFontFamily;
-          // Calculate the specific, larger size for Surah names
+          final String surahNameText = 'surah$surahNumPadded surah-icon';
+          const String headerText = 'header';
+
           final double surahNameFontSize = (defaultDynamicFontSize * 1.5).clamp(
             22.0,
             40.0,
-          ); // Increased max clamp
-          // Store it in specificTextStyle
-          specificTextStyle = TextStyle(
-            fontSize: surahNameFontSize, // Use the calculated larger size
           );
-          lineAlignment = TextAlign.center;
-          break;
-        }
+          // Slightly larger font size for the header frame to ensure it encompasses the name
+          final double headerFontSize = (surahNameFontSize * 1.5).clamp(
+            24.0,
+            44.0,
+          );
+
+          // Build the Stack for Surah Name and Header
+          lineContent = Stack(
+            alignment: Alignment.center, // Center both Text widgets
+            children: [
+              // 1. Surah Name Text (Bottom Layer)
+              Text(
+                surahNameText,
+                style: TextStyle(
+                  fontFamily: surahNameFontFamily, // Specific font for name
+                  fontSize: surahNameFontSize,
+                  height: dynamicLineHeight,
+                ),
+                textScaler: const TextScaler.linear(1.0),
+                textAlign: TextAlign.center,
+              ),
+              // 2. Header Frame Text (Top Layer)
+              Text(
+                headerText,
+                style: TextStyle(
+                  fontFamily: quranCommonFontFamily, // Specific font for header
+                  fontSize: headerFontSize, // Slightly larger size
+                  height: dynamicLineHeight,
+                ),
+                textScaler: const TextScaler.linear(1.0),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          );
+          // Return the Stack directly for surah_name type
+          return lineContent; // Exit build method here for Stack
+        } // End case 'surah_name'
+
       case 'basmallah':
         {
           textToShow = basmallah;
-          // Calculate specific size for Basmallah
           final double basmallahFontSize = (defaultDynamicFontSize * 0.95)
               .clamp(15.0, 28.0);
-          specificTextStyle = TextStyle(
-            fontSize: basmallahFontSize,
-          ); // Store it
+          specificTextStyle = TextStyle(fontSize: basmallahFontSize);
           lineAlignment = TextAlign.center;
+          // fontFamily remains 'QPCV2' (default)
           break;
         }
       case 'ayah':
         {
           textToShow = line.words.map((w) => w.text).join(' ');
-          fontFamily = pageFontFamily;
-          // No specificTextStyle needed, will use defaultDynamicFontSize
+          fontFamily = pageFontFamily; // Use the dynamically loaded page font
+          // No specificTextStyle, use defaultDynamicFontSize
           break;
         }
       default:
@@ -78,26 +112,27 @@ class LineWidget extends StatelessWidget {
         }
     }
 
-    // --- Corrected Style Application ---
-    // If a specificTextStyle was created (Surah Name, Basmallah), use it.
-    // Otherwise, create a default TextStyle using the base dynamic size.
+    // --- Build standard Text widget for non-surah_name lines ---
     final TextStyle finalTextStyle =
         specificTextStyle?.copyWith(
-          fontFamily: fontFamily, // Apply correct font family
+          fontFamily: fontFamily,
           height: dynamicLineHeight,
         ) ??
         TextStyle(
           fontFamily: fontFamily,
-          fontSize: defaultDynamicFontSize, // Use the default calculated size
+          fontSize: defaultDynamicFontSize,
           height: dynamicLineHeight,
         );
 
-    return Text(
+    lineContent = Text(
       textToShow,
       textDirection: TextDirection.rtl,
       textAlign: lineAlignment,
-      style: finalTextStyle, // Apply the correctly determined style
+      style: finalTextStyle,
       textScaler: const TextScaler.linear(1.0),
     );
+
+    // Return the standard Text widget
+    return lineContent;
   }
 }

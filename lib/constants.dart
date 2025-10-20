@@ -8,7 +8,8 @@ const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 const String basmallah = '\uFDFD'; // ﷽
 
 // --- FONT CONSTANTS ---
-const String surahNameFontFamily = 'SurahNames'; // <-- Add font family name
+const String surahNameFontFamily = 'SurahNames';
+const String quranCommonFontFamily = 'QuranCommon';
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.5;
