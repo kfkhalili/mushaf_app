@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
-import '../constants.dart';
+import '../constants.dart'; // Import constants
 
 class LineWidget extends StatelessWidget {
   final LineInfo line;
@@ -18,23 +18,19 @@ class LineWidget extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scaleFactor = screenWidth / referenceScreenWidth;
     double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
-      16.0,
-      30.0,
+      minAyahFontSize,
+      maxAyahFontSize,
     );
-    double dynamicLineHeight = 1.8;
+    const double currentLineHeight = defaultLineHeight;
 
     // Default Alignment and Font
     TextAlign lineAlignment = line.isCentered
         ? TextAlign.center
         : TextAlign.justify;
-    String? fontFamily = 'QPCV2'; // Fallback font
+    String? fontFamily = fallbackFontFamily; // Use constant
 
-    // Specific styling for certain line types
-    TextStyle? specificTextStyle;
-    String textToShow = '';
-
-    // Widget to be returned - Default is a simple Text widget
-    Widget lineContent;
+    // Widget to be returned
+    Widget lineWidget; // Renamed for clarity
 
     switch (line.lineType) {
       case 'surah_name':
@@ -46,93 +42,101 @@ class LineWidget extends StatelessWidget {
           final String surahNameText = 'surah$surahNumPadded surah-icon';
           const String headerText = 'header';
 
-          final double surahNameFontSize = (defaultDynamicFontSize * 1.5).clamp(
-            22.0,
-            40.0,
-          );
-          // Slightly larger font size for the header frame to ensure it encompasses the name
-          final double headerFontSize = (surahNameFontSize * 1.5).clamp(
-            24.0,
-            44.0,
-          );
+          final double surahNameFontSize =
+              (defaultDynamicFontSize * surahNameScaleFactor).clamp(
+                minSurahNameFontSize,
+                maxSurahNameFontSize,
+              );
+          final double headerFontSize =
+              (surahNameFontSize * surahHeaderScaleFactorRelativeToName).clamp(
+                minSurahHeaderFontSize,
+                maxSurahHeaderFontSize,
+              );
 
-          // Build the Stack for Surah Name and Header
-          lineContent = Stack(
-            alignment: Alignment.center, // Center both Text widgets
+          // Assign the Stack to lineWidget directly
+          lineWidget = Stack(
+            alignment: Alignment.center,
             children: [
-              // 1. Surah Name Text (Bottom Layer)
               Text(
                 surahNameText,
                 style: TextStyle(
-                  fontFamily: surahNameFontFamily, // Specific font for name
+                  fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: dynamicLineHeight,
+                  height: currentLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
               ),
-              // 2. Header Frame Text (Top Layer)
               Text(
                 headerText,
                 style: TextStyle(
-                  fontFamily: quranCommonFontFamily, // Specific font for header
-                  fontSize: headerFontSize, // Slightly larger size
-                  height: dynamicLineHeight,
+                  fontFamily: quranCommonFontFamily,
+                  fontSize: headerFontSize,
+                  height: currentLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
               ),
             ],
           );
-          // Return the Stack directly for surah_name type
-          return lineContent; // Exit build method here for Stack
+          // REMOVED early return statement here
+          break; // Break the switch case
         } // End case 'surah_name'
 
       case 'basmallah':
         {
-          textToShow = basmallah;
-          final double basmallahFontSize = (defaultDynamicFontSize * 0.95)
-              .clamp(15.0, 28.0);
-          specificTextStyle = TextStyle(fontSize: basmallahFontSize);
+          const String textToShow = basmallah; // Use constant
+          final double basmallahFontSize =
+              (defaultDynamicFontSize * basmallahScaleFactor).clamp(
+                minBasmallahFontSize,
+                maxBasmallahFontSize,
+              );
           lineAlignment = TextAlign.center;
-          // fontFamily remains 'QPCV2' (default)
-          break;
+          // fontFamily remains fallbackFontFamily
+
+          // Assign the Text widget for Basmallah
+          lineWidget = Text(
+            textToShow,
+            textDirection: TextDirection.rtl,
+            textAlign: lineAlignment,
+            style: TextStyle(
+              fontFamily: fontFamily,
+              fontSize: basmallahFontSize, // Use specific size
+              height: currentLineHeight,
+            ),
+            textScaler: const TextScaler.linear(1.0),
+          );
+          break; // Break the switch case
         }
       case 'ayah':
         {
-          textToShow = line.words.map((w) => w.text).join(' ');
-          fontFamily = pageFontFamily; // Use the dynamically loaded page font
-          // No specificTextStyle, use defaultDynamicFontSize
-          break;
+          final String textToShow = line.words.map((w) => w.text).join(' ');
+          fontFamily = pageFontFamily; // Use dynamic page font
+          // defaultDynamicFontSize will be used
+
+          // Assign the Text widget for Ayah
+          lineWidget = Text(
+            textToShow,
+            textDirection: TextDirection.rtl,
+            textAlign: lineAlignment,
+            style: TextStyle(
+              fontFamily: fontFamily,
+              fontSize: defaultDynamicFontSize, // Use default dynamic size
+              height: currentLineHeight,
+            ),
+            textScaler: const TextScaler.linear(1.0),
+          );
+          break; // Break the switch case
         }
       default:
         {
-          textToShow = '';
-          break;
+          // Assign an empty container or SizedBox for unknown types
+          lineWidget = const SizedBox.shrink();
+          break; // Break the switch case
         }
     }
 
-    // --- Build standard Text widget for non-surah_name lines ---
-    final TextStyle finalTextStyle =
-        specificTextStyle?.copyWith(
-          fontFamily: fontFamily,
-          height: dynamicLineHeight,
-        ) ??
-        TextStyle(
-          fontFamily: fontFamily,
-          fontSize: defaultDynamicFontSize,
-          height: dynamicLineHeight,
-        );
-
-    lineContent = Text(
-      textToShow,
-      textDirection: TextDirection.rtl,
-      textAlign: lineAlignment,
-      style: finalTextStyle,
-      textScaler: const TextScaler.linear(1.0),
-    );
-
-    // Return the standard Text widget
-    return lineContent;
+    // Return the assigned widget AFTER the switch statement
+    return lineWidget;
   }
 }

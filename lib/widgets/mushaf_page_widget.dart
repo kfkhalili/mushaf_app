@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../utils/helpers.dart';
 import 'line_widget.dart';
+import '../constants.dart'; // Import constants
 
 class MushafPageWidget extends ConsumerWidget {
   final int pageNumber;
@@ -12,8 +13,9 @@ class MushafPageWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
-    const headerTextStyle = TextStyle(fontSize: 14, color: Colors.black87);
-    const footerTextStyle = TextStyle(fontSize: 16, color: Colors.black87);
+    // Use constants for styles
+    const TextStyle headerStyle = headerFooterBaseStyle;
+    const TextStyle footerStyle = footerPageNumStyle;
 
     return asyncPageData.when(
       data: (pageData) {
@@ -27,65 +29,62 @@ class MushafPageWidget extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            automaticallyImplyLeading: false, // Remove back button if present
+            automaticallyImplyLeading: false,
             title: null,
             centerTitle: false,
             elevation: 0,
             backgroundColor: Colors.transparent,
 
-            // Juz and Hizb on the right (leading in RTL)
             leadingWidth: 150,
             leading: Padding(
-              padding: const EdgeInsets.only(right: 16.0),
+              // Use constant for padding
+              padding: const EdgeInsets.only(right: headerHorizontalPadding),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('جزء $juz', style: headerTextStyle),
-                    const SizedBox(width: 12),
-                    Text('حزب $hizb', style: headerTextStyle),
+                    Text('جزء $juz', style: headerStyle), // Use style constant
+                    // Use constant for spacing
+                    const SizedBox(width: headerJuzHizbSpacing),
+                    Text('حزب $hizb', style: headerStyle), // Use style constant
                   ],
                 ),
               ),
             ),
-            // Surah Name on the left (actions in RTL)
             actions: [
               Padding(
-                padding: const EdgeInsets.only(left: 16.0),
+                // Use constant for padding
+                padding: const EdgeInsets.only(left: headerHorizontalPadding),
                 child: Center(
                   child: Text(
                     pageData.pageSurahName,
-                    style: headerTextStyle.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    // Use style constant and override fontWeight
+                    style: headerStyle.copyWith(fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
-                    maxLines: 1, // Prevent wrapping
+                    maxLines: 1,
                   ),
                 ),
               ),
             ],
           ),
           body: Stack(
-            fit: StackFit.expand, // Make stack fill the body
+            fit: StackFit.expand,
             children: [
-              // Use SafeArea to avoid status bar/notches
               SafeArea(
                 child: Padding(
-                  // Consistent padding L/R, increased bottom for footer
+                  // Use constants for padding
                   padding: const EdgeInsets.only(
-                    bottom: 50.0,
-                    left: 20.0,
-                    right: 20.0,
+                    bottom: pageBottomPadding,
+                    left: pageHorizontalPadding,
+                    right: pageHorizontalPadding,
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment
-                        .spaceBetween, // Distribute space evenly
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: pageData.layout.lines
                         .map(
                           (line) => Flexible(
-                            // Allow lines to take space but not overflow
                             child: LineWidget(
                               line: line,
                               pageFontFamily: pageData.pageFontFamily,
@@ -97,23 +96,34 @@ class MushafPageWidget extends ConsumerWidget {
                 ),
               ),
 
-              // Page number positioned at bottom-right
-              Positioned(
-                bottom: 16.0,
-                right: 24.0, // Increased padding from edge
-                child: Text(pageNum, style: footerTextStyle),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  // Use constants for padding
+                  padding: const EdgeInsets.only(
+                    bottom: footerBottomPadding,
+                    right: footerRightPadding,
+                    left:
+                        footerLeftPadding, // Adjusts visual right padding in RTL
+                  ),
+                  child: Text(
+                    pageNum,
+                    style: footerStyle,
+                  ), // Use style constant
+                ),
               ),
             ],
           ),
         );
       },
-      // Keep Loading and Error states simple
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(
+              pageHorizontalPadding,
+            ), // Use constant
             child: Text(
               'Failed to load page $pageNumber.\n\nError: $err',
               textAlign: TextAlign.center,
