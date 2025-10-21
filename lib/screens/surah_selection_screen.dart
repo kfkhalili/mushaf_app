@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
 import '../constants.dart';
 import 'mushaf_screen.dart';
@@ -13,12 +13,12 @@ class SurahSelectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final surahsAsync = ref.watch(surahListProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // Header with Quran glyph
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Text(
@@ -26,11 +26,10 @@ class SurahSelectionScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: 50,
-                  color: Colors.black87,
+                  color: theme.colorScheme.primary, // Theme-aware color
                 ),
               ),
             ),
-            // Surah List
             Expanded(
               child: surahsAsync.when(
                 data: (surahs) => ListView.separated(
@@ -59,13 +58,10 @@ class SurahListItem extends StatelessWidget {
 
   const SurahListItem({super.key, required this.surah});
 
-  // WHY: This new async method handles both saving the page and navigating.
-  // This ensures the "last_page" is updated immediately upon user selection.
   Future<void> _navigateToSurah(BuildContext context, int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
 
-    // Check if the widget is still in the tree before navigating.
     if (!context.mounted) return;
 
     Navigator.push(
@@ -78,6 +74,7 @@ class SurahListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final surahNumPadded = surah.surahNumber.toString().padLeft(3, '0');
     final surahNameGlyph = 'surah$surahNumPadded surah-icon';
 
@@ -90,7 +87,11 @@ class SurahListItem extends StatelessWidget {
         children: [
           Text(
             convertToEasternArabicNumerals(surah.surahNumber.toString()),
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary, // Theme-aware color
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -101,14 +102,13 @@ class SurahListItem extends StatelessWidget {
       ),
       trailing: Text(
         surahNameGlyph,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: surahNameFontFamily,
           fontSize: 32,
-          color: Colors.black87,
+          color: theme.textTheme.bodyLarge?.color, // Theme-aware color
         ),
       ),
       onTap: () {
-        // Call the new navigation method.
         _navigateToSurah(context, surah.startingPage);
       },
     );

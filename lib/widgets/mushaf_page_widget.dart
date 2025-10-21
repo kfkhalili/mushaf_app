@@ -14,6 +14,13 @@ class MushafPageWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
 
+    // WHY: Use theme-aware colors instead of hardcoded Colors.black87
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color;
+    final juzHizbStyle = TextStyle(fontSize: 24, color: textColor);
+    final surahNameHeaderStyle = TextStyle(fontSize: 28, color: textColor);
+    final footerTextStyle = TextStyle(fontSize: 16, color: textColor);
+
     return asyncPageData.when(
       data: (pageData) {
         final hizb = convertToEasternArabicNumerals(
@@ -24,16 +31,8 @@ class MushafPageWidget extends ConsumerWidget {
         final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
             ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
             : '';
-        final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
-        const TextStyle headerStyle = TextStyle(
-          fontSize: 24,
-          color: Colors.black87,
-        );
-        const TextStyle surahNameStyle = TextStyle(
-          fontSize: 28,
-          color: Colors.black87,
-        );
+        final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
         return Scaffold(
           appBar: AppBar(
@@ -48,7 +47,7 @@ class MushafPageWidget extends ConsumerWidget {
               child: Center(
                 child: Text(
                   surahNameGlyphString,
-                  style: surahNameStyle.copyWith(
+                  style: surahNameHeaderStyle.copyWith(
                     fontFamily: surahNameFontFamily,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -70,12 +69,12 @@ class MushafPageWidget extends ConsumerWidget {
                     children: [
                       Text(
                         juzGlyphString,
-                        style: headerStyle.copyWith(
+                        style: juzHizbStyle.copyWith(
                           fontFamily: quranCommonFontFamily,
                         ),
                       ),
                       const SizedBox(width: headerJuzHizbSpacing),
-                      Text('حزب $hizb', style: headerStyle),
+                      Text('حزب $hizb', style: juzHizbStyle),
                     ],
                   ),
                 ),
@@ -113,7 +112,7 @@ class MushafPageWidget extends ConsumerWidget {
                     right: footerRightPadding,
                     left: footerLeftPadding,
                   ),
-                  child: Text(pageNum, style: footerPageNumStyle),
+                  child: Text(pageNum, style: footerTextStyle),
                 ),
               ),
             ],
@@ -129,7 +128,7 @@ class MushafPageWidget extends ConsumerWidget {
             child: Text(
               'Failed to load page $pageNumber.\n\nError: $err',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
         ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart'; // Import theme provider
 
-class MushafOverlayWidget extends StatelessWidget {
+// WHY: Convert to a ConsumerWidget to access the theme provider.
+class MushafOverlayWidget extends ConsumerWidget {
   final bool isVisible;
   final VoidCallback onBackButtonPressed;
 
@@ -11,20 +14,20 @@ class MushafOverlayWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Get the current theme to display a checkmark on the selected option.
+    final AppThemeMode currentTheme = ref.watch(themeProvider);
+
     return AnimatedOpacity(
       opacity: isVisible ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 200),
       child: IgnorePointer(
         ignoring: !isVisible,
-        // WHY: By wrapping the Container in an Align widget, we constrain it
-        // to the top of the screen and allow it to shrink to the height of its contents.
         child: Align(
           alignment: Alignment.topCenter,
           child: Container(
             color: const Color(0xFF212121), // A dark grey
             child: SafeArea(
-              // Only apply vertical padding to avoid the notch, but let content go edge-to-edge.
               top: true,
               bottom: false,
               child: Padding(
@@ -35,7 +38,7 @@ class MushafOverlayWidget extends StatelessWidget {
                     // Right side: Back Arrow
                     IconButton(
                       icon: const Icon(
-                        Icons.arrow_back_ios,
+                        Icons.arrow_forward_ios,
                         color: Colors.white,
                         size: 28,
                       ),
@@ -55,15 +58,41 @@ class MushafOverlayWidget extends StatelessWidget {
                             /* Placeholder */
                           },
                         ),
-                        IconButton(
+                        // WHY: Replace the placeholder icon with a PopupMenuButton.
+                        PopupMenuButton<AppThemeMode>(
                           icon: const Icon(
                             Icons.more_vert,
                             color: Colors.white,
                             size: 28,
                           ),
-                          onPressed: () {
-                            /* Placeholder */
+                          onSelected: (AppThemeMode mode) {
+                            // WHY: Call the notifier's method to update the theme.
+                            ref.read(themeProvider.notifier).setTheme(mode);
                           },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<AppThemeMode>>[
+                                CheckedPopupMenuItem<AppThemeMode>(
+                                  value: AppThemeMode.light,
+                                  checked: currentTheme == AppThemeMode.light,
+                                  child: const Text('Light'),
+                                ),
+                                CheckedPopupMenuItem<AppThemeMode>(
+                                  value: AppThemeMode.dark,
+                                  checked: currentTheme == AppThemeMode.dark,
+                                  child: const Text('Dark'),
+                                ),
+                                CheckedPopupMenuItem<AppThemeMode>(
+                                  value: AppThemeMode.sepia,
+                                  checked: currentTheme == AppThemeMode.sepia,
+                                  child: const Text('Sepia'),
+                                ),
+                                const PopupMenuDivider(),
+                                CheckedPopupMenuItem<AppThemeMode>(
+                                  value: AppThemeMode.system,
+                                  checked: currentTheme == AppThemeMode.system,
+                                  child: const Text('Auto (System)'),
+                                ),
+                              ],
                         ),
                       ],
                     ),
