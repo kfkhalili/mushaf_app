@@ -85,6 +85,10 @@ class LineWidget extends StatelessWidget {
     // we just use the base multiplier, not a scaled one.
     final double dynamicLineHeight = baseLineHeight;
 
+    // WHY: We define a tighter line height for non-ayah lines
+    // like surah names and basmallah to reduce extra vertical space.
+    const double tightLineHeight = 1.5;
+
     // --- Dynamic Padding Calculation ---
     // WHY: This calculates the available width for the line, factoring in
     // the page's own horizontal padding.
@@ -129,7 +133,7 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: dynamicLineHeight,
+                  height: tightLineHeight, // WHY: Use tight line height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -139,7 +143,7 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: headerFontSize,
-                  height: dynamicLineHeight,
+                  height: tightLineHeight, // WHY: Use tight line height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -166,7 +170,7 @@ class LineWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: fontFamily,
               fontSize: basmallahFontSize,
-              height: dynamicLineHeight,
+              height: tightLineHeight, // WHY: Use tight line height
             ),
             textScaler: const TextScaler.linear(1.0),
           );
@@ -208,7 +212,7 @@ class LineWidget extends StatelessWidget {
                   key: ValueKey("${word.text}-$isVisible-$isHint"),
                   style: _getWordStyle(
                     fontSize: defaultDynamicFontSize,
-                    lineHeight: dynamicLineHeight,
+                    lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
                     baseColor: baseTextColor,
                     // WHY: The hint is visible, just styled differently.
                     isVisible: isVisible || isHint,
@@ -250,7 +254,7 @@ class LineWidget extends StatelessWidget {
                 text: "${word.text} ", // Add space
                 style: _getWordStyle(
                   fontSize: defaultDynamicFontSize,
-                  lineHeight: dynamicLineHeight,
+                  lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
                   baseColor: baseTextColor,
                   isVisible: isVisible || isHint,
                   isHint: isHint,
