@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-// --- New Model for Surah List ---
+// --- NEW MODEL for Surah List ---
 @immutable
 class SurahInfo {
   final int surahNumber;
@@ -14,6 +14,32 @@ class SurahInfo {
     required this.revelationPlace,
     required this.startingPage,
   });
+}
+
+// --- NEW MODEL for Memorization Mode ---
+@immutable
+class Ayah {
+  final int surahNumber;
+  final int ayahNumber;
+  final List<Word> words;
+
+  const Ayah({
+    required this.surahNumber,
+    required this.ayahNumber,
+    required this.words,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Ayah &&
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber &&
+          listEquals(words, other.words);
+
+  @override
+  int get hashCode =>
+      Object.hash(surahNumber, ayahNumber, Object.hashAll(words));
 }
 
 // --- Existing Models ---
@@ -94,7 +120,7 @@ class PageData {
   final String pageSurahName;
   final int pageSurahNumber;
   final int juzNumber;
-  final int hizbNumber;
+  // hizbNumber removed
 
   const PageData({
     required this.layout,
@@ -102,7 +128,6 @@ class PageData {
     required this.pageSurahName,
     required this.pageSurahNumber,
     required this.juzNumber,
-    required this.hizbNumber,
   });
 
   @override
@@ -113,8 +138,7 @@ class PageData {
           pageFontFamily == other.pageFontFamily &&
           pageSurahName == other.pageSurahName &&
           pageSurahNumber == other.pageSurahNumber &&
-          juzNumber == other.juzNumber &&
-          hizbNumber == other.hizbNumber;
+          juzNumber == other.juzNumber;
 
   @override
   int get hashCode => Object.hash(
@@ -123,6 +147,5 @@ class PageData {
     pageSurahName,
     pageSurahNumber,
     juzNumber,
-    hizbNumber,
   );
 }

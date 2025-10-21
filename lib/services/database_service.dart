@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:collection';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -11,10 +12,9 @@ class DatabaseService {
   Database? _scriptDb;
   Database? _metadataDb;
   Database? _juzDb;
-  Database? _hizbDb;
 
   List<Map<String, dynamic>> _juzCache = [];
-  List<Map<String, dynamic>> _hizbCache = [];
+  // Hizb cache removed
 
   bool _isInitialized = false;
 
@@ -31,20 +31,20 @@ class DatabaseService {
       _initDb(documentsDirectory, dbAssetPath, scriptDbFileName),
       _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
       _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
+      _initDb(
+        documentsDirectory,
+        dbAssetPath,
+        hizbDbFileName,
+      ), // Still need to init for now
     ]);
 
     _layoutDb = databases[0];
     _scriptDb = databases[1];
     _metadataDb = databases[2];
     _juzDb = databases[3];
-    _hizbDb = databases[4];
 
     if (_juzCache.isEmpty && _juzDb != null) {
       _juzCache = await _juzDb!.query('juz', orderBy: 'juz_number ASC');
-    }
-    if (_hizbCache.isEmpty && _hizbDb != null) {
-      _hizbCache = await _hizbDb!.query('hizbs', orderBy: 'hizb_number ASC');
     }
 
     _isInitialized = true;
@@ -85,8 +85,62 @@ class DatabaseService {
     }
   }
 
-  // --- NEW METHOD ---
-  /// Fetches all surahs with their names, revelation place, and starting page.
+  /// Fetches all words on a page and groups them by Ayah.
+  Future<List<Ayah>> getAyahsForPage(int pageNumber) async {
+    await init();
+    if (_layoutDb == null || _scriptDb == null) {
+      throw Exception("Required DBs not initialized for getAyahsForPage.");
+    }
+
+    // WHY: Using CAST(... AS INT) ensures that the MIN and MAX functions
+    // work correctly on columns that might store numbers as text. This was the
+    // cause of the "No ayahs on this page" bug.
+    final List<Map<String, dynamic>> pageBounds = await _layoutDb!.rawQuery(
+      'SELECT MIN(CAST(first_word_id AS INT)) as min_id, MAX(CAST(last_word_id AS INT)) as max_id FROM pages WHERE page_number = ? AND line_type = "ayah"',
+      [pageNumber.toString()],
+    );
+
+    if (pageBounds.isEmpty || pageBounds.first['min_id'] == null) {
+      return [];
+    }
+
+    final int firstWordIdOnPage = _parseInt(pageBounds.first['min_id']);
+    final int lastWordIdOnPage = _parseInt(pageBounds.first['max_id']);
+
+    if (firstWordIdOnPage == 0 || lastWordIdOnPage == 0) return [];
+
+    final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
+      'words',
+      where: 'id BETWEEN ? AND ?',
+      whereArgs: [firstWordIdOnPage.toString(), lastWordIdOnPage.toString()],
+      orderBy: 'id ASC',
+    );
+
+    final Map<String, List<Word>> ayahsMap = {};
+
+    for (final wordRow in wordsData) {
+      final String ayahKey = '${wordRow['surah']}:${wordRow['ayah']}';
+      if (!ayahsMap.containsKey(ayahKey)) {
+        ayahsMap[ayahKey] = [];
+      }
+      ayahsMap[ayahKey]!.add(Word(text: wordRow['text'] as String));
+    }
+
+    final List<Ayah> ayahs = [];
+    ayahsMap.forEach((key, words) {
+      final parts = key.split(':');
+      ayahs.add(
+        Ayah(
+          surahNumber: _parseInt(parts[0]),
+          ayahNumber: _parseInt(parts[1]),
+          words: words,
+        ),
+      );
+    });
+
+    return ayahs;
+  }
+
   Future<List<SurahInfo>> getAllSurahs() async {
     await init();
     if (_metadataDb == null || _layoutDb == null) {
@@ -95,27 +149,22 @@ class DatabaseService {
       );
     }
 
-    // 1. Get all Surah metadata
     final List<Map<String, dynamic>> chapters = await _metadataDb!.query(
       'chapters',
       orderBy: 'id ASC',
     );
 
-    // 2. Get the starting page for each Surah
     final List<Map<String, dynamic>>
     surahStartPages = await _layoutDb!.rawQuery(
-      'SELECT surah_number, MIN(page_number) as start_page FROM pages WHERE surah_number > 0 GROUP BY surah_number',
+      'SELECT surah_number, MIN(CAST(page_number AS INT)) as start_page FROM pages WHERE surah_number > 0 GROUP BY surah_number',
     );
 
-    // 3. Create a quick lookup map for page numbers
     final Map<int, int> pageMap = {
       for (var row in surahStartPages)
         _parseInt(row['surah_number']): _parseInt(row['start_page']),
     };
-    // Manually set page 1 for Surah Al-Fatiha
     pageMap[1] = 1;
 
-    // 4. Combine the data into a list of SurahInfo objects
     return chapters.map((chapter) {
       final int surahNum = _parseInt(chapter['id']);
       return SurahInfo(
@@ -129,9 +178,12 @@ class DatabaseService {
 
   Future<String> getSurahName(int surahId) async {
     await init();
-    if (_metadataDb == null) throw Exception("Metadata DB not initialized.");
-    if (surahId <= 0 || surahId > 114) return "";
-
+    if (_metadataDb == null) {
+      throw Exception("Metadata DB not initialized.");
+    }
+    if (surahId <= 0 || surahId > 114) {
+      return "";
+    }
     try {
       final List<Map<String, dynamic>> result = await _metadataDb!.query(
         'chapters',
@@ -143,14 +195,16 @@ class DatabaseService {
       if (result.isNotEmpty && result.first['name_arabic'] != null) {
         return result.first['name_arabic'] as String;
       }
-      return 'Surah $surahId';
+      return 'Surah $surahId'; // Fallback
     } catch (e) {
-      return 'Surah $surahId';
+      return 'Surah $surahId'; // Fallback on error
     }
   }
 
   int _parseInt(dynamic value) {
-    if (value == null) return 0;
+    if (value == null) {
+      return 0;
+    }
     return int.tryParse(value.toString()) ?? 0;
   }
 
@@ -176,7 +230,9 @@ class DatabaseService {
     for (final line in lines) {
       if (line['line_type'] == 'ayah' && line['first_word_id'] != null) {
         final firstWordId = _parseInt(line['first_word_id']);
-        if (firstWordId == 0) continue;
+        if (firstWordId == 0) {
+          continue;
+        }
 
         final List<Map<String, dynamic>> words = await _scriptDb!.query(
           'words',
@@ -216,18 +272,28 @@ class DatabaseService {
     int sLast,
     int aLast,
   ) {
-    if (s < sFirst || s > sLast) return false;
-    if (s == sFirst && a < aFirst) return false;
-    if (s == sLast && a > aLast) return false;
+    if (s < sFirst || s > sLast) {
+      return false;
+    }
+    if (s == sFirst && a < aFirst) {
+      return false;
+    }
+    if (s == sLast && a > aLast) {
+      return false;
+    }
     return true;
   }
 
   int _findJuz(int pageSurah, int pageAyah) {
-    if (_juzCache.isEmpty) return 0;
+    if (_juzCache.isEmpty) {
+      return 0;
+    }
     for (final row in _juzCache) {
       final firstKey = row['first_verse_key'] as String?;
       final lastKey = row['last_verse_key'] as String?;
-      if (firstKey == null || lastKey == null) continue;
+      if (firstKey == null || lastKey == null) {
+        continue;
+      }
 
       try {
         final sFirst = _parseInt(firstKey.split(':').first);
@@ -244,28 +310,6 @@ class DatabaseService {
     return 0;
   }
 
-  int _findHizb(int pageSurah, int pageAyah) {
-    if (_hizbCache.isEmpty) return 0;
-    for (final row in _hizbCache) {
-      final firstKey = row['first_verse_key'] as String?;
-      final lastKey = row['last_verse_key'] as String?;
-      if (firstKey == null || lastKey == null) continue;
-
-      try {
-        final sFirst = _parseInt(firstKey.split(':').first);
-        final aFirst = _parseInt(firstKey.split(':').last);
-        final sLast = _parseInt(lastKey.split(':').first);
-        final aLast = _parseInt(lastKey.split(':').last);
-        if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return _parseInt(row['hizb_number']);
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-    return 0;
-  }
-
   Future<Map<String, dynamic>> getPageHeaderInfo(int pageNumber) async {
     await init();
     try {
@@ -274,17 +318,15 @@ class DatabaseService {
       final pageAyah = firstAyah['ayah']!;
 
       final juzNumber = _findJuz(pageSurah, pageAyah);
-      final hizbNumber = _findHizb(pageSurah, pageAyah);
       final surahName = (pageSurah > 0) ? await getSurahName(pageSurah) : "";
 
       return {
         'juz': juzNumber,
-        'hizb': hizbNumber,
         'surahName': surahName,
         'surahNumber': pageSurah,
       };
     } catch (e) {
-      return {'juz': 0, 'hizb': 0, 'surahName': '', 'surahNumber': 0};
+      return {'juz': 0, 'surahName': '', 'surahNumber': 0};
     }
   }
 

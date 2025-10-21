@@ -5,11 +5,13 @@ import '../providers/theme_provider.dart';
 class MushafOverlayWidget extends ConsumerWidget {
   final bool isVisible;
   final VoidCallback onBackButtonPressed;
+  final VoidCallback onMemorizationModePressed; // New callback
 
   const MushafOverlayWidget({
     super.key,
     required this.isVisible,
     required this.onBackButtonPressed,
+    required this.onMemorizationModePressed, // New callback
   });
 
   @override
@@ -33,11 +35,39 @@ class MushafOverlayWidget extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // WHY: The first child in the Row is on the LEFT. This is the
-                    // correct place for the options and bookmark icons.
+                    // Right side: Back Arrow
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: onBackButtonPressed,
+                    ),
+                    // Left side: Options
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // --- NEW ICON BUTTON ---
+                        IconButton(
+                          icon: const Icon(
+                            Icons
+                                .style, // An icon that suggests different views/modes
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          onPressed: onMemorizationModePressed,
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.bookmark_border,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          onPressed: () {
+                            /* Placeholder */
+                          },
+                        ),
                         PopupMenuButton<AppThemeMode>(
                           icon: const Icon(
                             Icons.more_vert,
@@ -72,27 +102,7 @@ class MushafOverlayWidget extends ConsumerWidget {
                                 ),
                               ],
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.bookmark_border,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          onPressed: () {
-                            /* Placeholder */
-                          },
-                        ),
                       ],
-                    ),
-                    // WHY: The last child in the Row is on the RIGHT. This is the
-                    // correct place for the back arrow.
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      onPressed: onBackButtonPressed,
                     ),
                   ],
                 ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/mushaf_overlay_widget.dart';
 
@@ -15,6 +15,10 @@ class MushafScreen extends StatefulWidget {
 class _MushafScreenState extends State<MushafScreen> {
   late final PageController _pageController;
   bool _isOverlayVisible = false;
+  bool _isMemorizationMode = false;
+
+  // This map stores the reveal progress for each page individually.
+  final Map<int, int> _memorizationProgress = {};
 
   void _toggleOverlay() {
     setState(() {
@@ -22,8 +26,27 @@ class _MushafScreenState extends State<MushafScreen> {
     });
   }
 
-  // WHY: This function saves the current page number to local storage.
-  // It's called whenever the user finishes swiping to a new page.
+  void _toggleMemorizationMode() {
+    setState(() {
+      _isMemorizationMode = !_isMemorizationMode;
+      _isOverlayVisible = false; // Hide overlay on mode switch
+    });
+  }
+
+  // This is the tap handler passed to the memorization view.
+  void _handleMemorizationTap(int pageNumber, int totalAyahsOnPage) {
+    setState(() {
+      int currentIndex = _memorizationProgress[pageNumber] ?? 0;
+      if (currentIndex < totalAyahsOnPage - 1) {
+        // If not fully revealed, reveal next ayah
+        _memorizationProgress[pageNumber] = currentIndex + 1;
+      } else {
+        // If fully revealed, a tap now toggles the overlay. This is the "escape hatch".
+        _toggleOverlay();
+      }
+    });
+  }
+
   Future<void> _saveCurrentPage(int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
@@ -43,34 +66,54 @@ class _MushafScreenState extends State<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _toggleOverlay,
-      child: Stack(
-        children: [
-          PageView.builder(
+    // The GestureDetector now only wraps the PageView. It's only active for reading mode.
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () {
+            // Only toggle the overlay if NOT in memorization mode.
+            // The memorization view will handle its own taps.
+            if (!_isMemorizationMode) {
+              _toggleOverlay();
+            }
+          },
+          child: PageView.builder(
             controller: _pageController,
             itemCount: 604,
             reverse: true,
-            // WHY: This callback fires every time the user settles on a new page.
-            // We use it to save their progress.
             onPageChanged: (index) {
-              // The PageView is 0-indexed, but our pages are 1-indexed.
-              _saveCurrentPage(index + 1);
+              final pageNumber = index + 1;
+              _saveCurrentPage(pageNumber);
+              // Reset memorization progress when swiping to a new page for a fresh start.
+              setState(() {
+                _memorizationProgress[pageNumber] = 0;
+              });
             },
             itemBuilder: (context, index) {
-              return MushafPageWidget(pageNumber: index + 1);
+              final pageNumber = index + 1;
+              return MushafPageWidget(
+                pageNumber: pageNumber,
+                isMemorizationMode: _isMemorizationMode,
+                // Pass the current progress for this page.
+                memorizationAyahIndex: _memorizationProgress[pageNumber] ?? 0,
+                // Pass the tap handler down to the memorization view.
+                onAyahReveal: (totalAyahs) =>
+                    _handleMemorizationTap(pageNumber, totalAyahs),
+              );
             },
           ),
-          MushafOverlayWidget(
-            isVisible: _isOverlayVisible,
-            onBackButtonPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-          ),
-        ],
-      ),
+        ),
+        // The overlay is a sibling in the Stack, ensuring it's always on top.
+        MushafOverlayWidget(
+          isVisible: _isOverlayVisible,
+          onBackButtonPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+          onMemorizationModePressed: _toggleMemorizationMode,
+        ),
+      ],
     );
   }
 }
