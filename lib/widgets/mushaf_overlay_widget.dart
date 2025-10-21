@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/theme_provider.dart'; // Import theme provider
+import '../providers/theme_provider.dart';
 
-// WHY: Convert to a ConsumerWidget to access the theme provider.
 class MushafOverlayWidget extends ConsumerWidget {
   final bool isVisible;
   final VoidCallback onBackButtonPressed;
@@ -15,7 +14,6 @@ class MushafOverlayWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get the current theme to display a checkmark on the selected option.
     final AppThemeMode currentTheme = ref.watch(themeProvider);
 
     return AnimatedOpacity(
@@ -26,7 +24,7 @@ class MushafOverlayWidget extends ConsumerWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: Container(
-            color: const Color(0xFF212121), // A dark grey
+            color: const Color(0xFF212121),
             child: SafeArea(
               top: true,
               bottom: false,
@@ -35,30 +33,11 @@ class MushafOverlayWidget extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Right side: Back Arrow
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      onPressed: onBackButtonPressed,
-                    ),
-                    // Left side: Bookmark and Options
+                    // WHY: The first child in the Row is on the LEFT. This is the
+                    // correct place for the options and bookmark icons.
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.bookmark_border,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          onPressed: () {
-                            /* Placeholder */
-                          },
-                        ),
-                        // WHY: Replace the placeholder icon with a PopupMenuButton.
                         PopupMenuButton<AppThemeMode>(
                           icon: const Icon(
                             Icons.more_vert,
@@ -66,7 +45,6 @@ class MushafOverlayWidget extends ConsumerWidget {
                             size: 28,
                           ),
                           onSelected: (AppThemeMode mode) {
-                            // WHY: Call the notifier's method to update the theme.
                             ref.read(themeProvider.notifier).setTheme(mode);
                           },
                           itemBuilder: (BuildContext context) =>
@@ -94,7 +72,27 @@ class MushafOverlayWidget extends ConsumerWidget {
                                 ),
                               ],
                         ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.bookmark_border,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          onPressed: () {
+                            /* Placeholder */
+                          },
+                        ),
                       ],
+                    ),
+                    // WHY: The last child in the Row is on the RIGHT. This is the
+                    // correct place for the back arrow.
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: onBackButtonPressed,
                     ),
                   ],
                 ),
