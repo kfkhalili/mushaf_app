@@ -1,3 +1,4 @@
+import 'dart:math'; // WHY: Import for min()
 import 'package:flutter/material.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -65,16 +66,37 @@ class LineWidget extends StatelessWidget {
         : TextAlign.justify;
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = screenWidth / referenceScreenWidth;
+    // WHY: Get screen height for proportional scaling.
+    final double screenHeight = MediaQuery.of(context).size.height;
+
+    // WHY: We scale based on the *smallest* dimension to ensure everything
+    // fits proportionally on both width and height (e.g., "contain").
+    final double widthScale = screenWidth / referenceScreenWidth;
+    final double heightScale = screenHeight / referenceScreenHeight;
+    final double scaleFactor = min(widthScale, heightScale);
+
     double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
       minAyahFontSize,
       maxAyahFontSize,
     );
 
-    final double dynamicLineHeight = (baseLineHeight * scaleFactor).clamp(
-      minLineHeight,
-      maxLineHeight,
-    );
+    // WHY: This is the critical fix. The line height is a *multiplier*
+    // of the font size. Since the font size is already scaled,
+    // we just use the base multiplier, not a scaled one.
+    final double dynamicLineHeight = baseLineHeight;
+
+    // --- Dynamic Padding Calculation ---
+    // WHY: This calculates the available width for the line, factoring in
+    // the page's own horizontal padding.
+    final double availableWidth = screenWidth - (2 * pageHorizontalPadding);
+    double dynamicLinePadding = 0.0;
+
+    // WHY: If the available space is wider than our max content width,
+    // we calculate the extra padding needed to center the content.
+    if (availableWidth > maxLineContentWidth) {
+      dynamicLinePadding = (availableWidth - maxLineContentWidth) / 2.0;
+    }
+    // --- End of Calculation ---
 
     Widget lineWidget;
 
@@ -197,10 +219,15 @@ class LineWidget extends StatelessWidget {
               );
             }).toList();
 
-            lineWidget = Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              textDirection: TextDirection.rtl,
-              children: wordWidgets,
+            // WHY: We wrap the Row in our dynamic padding. This constrains
+            // the `spaceBetween` to the `maxLineContentWidth`.
+            lineWidget = Padding(
+              padding: EdgeInsets.symmetric(horizontal: dynamicLinePadding),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                textDirection: TextDirection.rtl,
+                children: wordWidgets,
+              ),
             );
           } else {
             // WHY: Centered lines (e.g., end of surah) must use RichText.
@@ -231,6 +258,8 @@ class LineWidget extends StatelessWidget {
               );
             }).toList();
 
+            // WHY: Centered text doesn't need the padding, as
+            // `textAlign: TextAlign.center` handles it correctly.
             lineWidget = Text.rich(
               TextSpan(children: spans),
               textAlign: TextAlign.center,

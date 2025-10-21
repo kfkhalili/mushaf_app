@@ -1,4 +1,5 @@
 import 'dart:collection'; // WHY: For SplayTreeMap to sort ayahs.
+import 'dart:math'; // WHY: Import for min()
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
@@ -25,9 +26,37 @@ class MushafPageWidget extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
-    final juzHizbStyle = TextStyle(fontSize: 24, color: textColor);
-    final surahNameHeaderStyle = TextStyle(fontSize: 28, color: textColor);
-    final footerTextStyle = TextStyle(fontSize: 16, color: textColor);
+
+    // --- Responsive Scaling ---
+    // WHY: We calculate the same scaleFactor here to make paddings
+    // and header/footer fonts responsive, just like the line widget.
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double widthScale = screenWidth / referenceScreenWidth;
+    final double heightScale = screenHeight / referenceScreenHeight;
+    final double scaleFactor = min(widthScale, heightScale);
+
+    // WHY: Scale header/footer fonts that were previously absolute.
+    final juzHizbStyle = TextStyle(
+      fontSize: 24 * scaleFactor,
+      color: textColor,
+    );
+    final surahNameHeaderStyle = TextStyle(
+      fontSize: 28 * scaleFactor,
+      color: textColor,
+    );
+    final footerTextStyle = TextStyle(
+      fontSize: 16 * scaleFactor,
+      color: textColor,
+    );
+
+    // WHY: Scale padding values that were previously absolute.
+    final double dynamicHeaderPadding = headerHorizontalPadding * scaleFactor;
+    final double dynamicPageBottomPadding = pageBottomPadding * scaleFactor;
+    final double dynamicFooterBottomPadding = footerBottomPadding * scaleFactor;
+    final double dynamicFooterRightPadding = footerRightPadding * scaleFactor;
+    final double dynamicFooterLeftPadding = footerLeftPadding * scaleFactor;
+    // --- End Responsive Scaling ---
 
     return asyncPageData.when(
       data: (pageData) {
@@ -87,9 +116,8 @@ class MushafPageWidget extends ConsumerWidget {
             elevation: 0,
             backgroundColor: Colors.transparent,
             leading: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: headerHorizontalPadding,
-              ),
+              // WHY: Use dynamic padding.
+              padding: EdgeInsets.symmetric(horizontal: dynamicHeaderPadding),
               child: Center(
                 child: Text(
                   juzGlyphString,
@@ -101,9 +129,8 @@ class MushafPageWidget extends ConsumerWidget {
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: headerHorizontalPadding,
-                ),
+                // WHY: Use dynamic padding.
+                padding: EdgeInsets.symmetric(horizontal: dynamicHeaderPadding),
                 child: Center(
                   child: Text(
                     surahNameGlyphString,
@@ -121,9 +148,12 @@ class MushafPageWidget extends ConsumerWidget {
             fit: StackFit.expand,
             children: [
               Padding(
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   top: 0,
-                  bottom: pageBottomPadding,
+                  // WHY: Use dynamic padding.
+                  bottom: dynamicPageBottomPadding,
+                  // WHY: We use the base padding here, as line_widget
+                  // calculates its own internal padding from this.
                   left: pageHorizontalPadding,
                   right: pageHorizontalPadding,
                 ),
@@ -146,10 +176,11 @@ class MushafPageWidget extends ConsumerWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: footerBottomPadding,
-                    right: footerRightPadding,
-                    left: footerLeftPadding,
+                  // WHY: Use dynamic padding.
+                  padding: EdgeInsets.only(
+                    bottom: dynamicFooterBottomPadding,
+                    right: dynamicFooterRightPadding,
+                    left: dynamicFooterLeftPadding,
                   ),
                   child: Text(pageNum, style: footerTextStyle),
                 ),

@@ -18,6 +18,10 @@ const String fallbackFontFamily = 'QPCV2';
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 21.0;
 const double referenceScreenWidth = 428.0;
+// WHY: We add a reference height to calculate a proportional scale factor.
+// This prevents content from overflowing vertically on wide-aspect-ratio screens.
+const double referenceScreenHeight = 926.0;
+const double maxLineContentWidth = 600.0;
 
 // --- STYLING CONSTANTS ---
 
@@ -30,17 +34,18 @@ const double basmallahScaleFactor = 0.95;
 const double minAyahFontSize = 16.0;
 const double maxAyahFontSize = 30.0;
 const double minSurahNameFontSize = 22.0;
-const double maxSurahNameFontSize = 40.0;
+const maxSurahNameFontSize = 40.0;
 const double minSurahHeaderFontSize = 24.0;
-const double maxSurahHeaderFontSize = 44.0;
+const maxSurahHeaderFontSize = 44.0;
 const double minBasmallahFontSize = 15.0;
-const double maxBasmallahFontSize = 28.0;
+const maxBasmallahFontSize = 28.0;
 
 // Line Height
 const double baseLineHeight = 2.4;
-// Line Height Clamping (Min, Max)
-const double minLineHeight = 1.8;
-const double maxLineHeight = 3.5;
+// WHY: Clamping line height is no longer necessary as we are not
+// scaling the multiplier itself, just the font size it's based on.
+// const double minLineHeight = 1.8;
+// const double maxLineHeight = 3.5;
 
 // Padding Values
 const double pageHorizontalPadding = 16.0;
