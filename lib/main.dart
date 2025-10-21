@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/surah_selection_screen.dart'; // Import the new screen
+import 'screens/splash_screen.dart'; // Import the new splash screen
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,8 +27,9 @@ class MushafApp extends StatelessWidget {
       ),
       home: const Directionality(
         textDirection: TextDirection.rtl,
-        // The app now starts at the selection screen
-        child: SurahSelectionScreen(),
+        // WHY: The app now always starts at the SplashScreen, which handles
+        // the logic for deciding where to navigate next.
+        child: SplashScreen(),
       ),
     );
   }

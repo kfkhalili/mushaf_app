@@ -156,8 +156,9 @@ class DatabaseService {
 
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null)
+    if (_layoutDb == null || _scriptDb == null) {
       throw Exception("Required DBs not initialized.");
+    }
 
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
       'pages',
@@ -289,8 +290,9 @@ class DatabaseService {
 
   Future<PageLayout> getPageLayout(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null)
+    if (_layoutDb == null || _scriptDb == null) {
       throw Exception("Required DBs not initialized.");
+    }
 
     final List<Map<String, dynamic>> linesData = await _layoutDb!.query(
       'pages',

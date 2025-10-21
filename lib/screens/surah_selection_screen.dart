@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 import '../providers.dart';
 import '../constants.dart';
 import 'mushaf_screen.dart';
@@ -58,15 +59,30 @@ class SurahListItem extends StatelessWidget {
 
   const SurahListItem({super.key, required this.surah});
 
+  // WHY: This new async method handles both saving the page and navigating.
+  // This ensures the "last_page" is updated immediately upon user selection.
+  Future<void> _navigateToSurah(BuildContext context, int pageNumber) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_page', pageNumber);
+
+    // Check if the widget is still in the tree before navigating.
+    if (!context.mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MushafScreen(initialPage: pageNumber),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final surahNumPadded = surah.surahNumber.toString().padLeft(3, '0');
     final surahNameGlyph = 'surah$surahNumPadded surah-icon';
 
     return ListTile(
-      // WHY: Increased vertical padding to accommodate larger fonts.
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      // Right side: Number and details
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -74,38 +90,26 @@ class SurahListItem extends StatelessWidget {
         children: [
           Text(
             convertToEasternArabicNumerals(surah.surahNumber.toString()),
-            style: const TextStyle(
-              // WHY: Increased font size for better readability.
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 8),
           Text(
             surah.revelationPlace == 'makkah' ? 'مكية' : 'مدنية',
-            // WHY: Increased font size for better readability.
             style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),
-      // Left side: Stylized name
       trailing: Text(
         surahNameGlyph,
         style: const TextStyle(
           fontFamily: surahNameFontFamily,
-          // WHY: Increased font size for better readability and visual balance.
           fontSize: 32,
           color: Colors.black87,
         ),
       ),
       onTap: () {
-        // Navigate to MushafScreen with the correct starting page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MushafScreen(initialPage: surah.startingPage),
-          ),
-        );
+        // Call the new navigation method.
+        _navigateToSurah(context, surah.startingPage);
       },
     );
   }
