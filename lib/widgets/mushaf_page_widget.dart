@@ -23,9 +23,6 @@ class MushafPageWidget extends ConsumerWidget {
 
     return asyncPageData.when(
       data: (pageData) {
-        final hizb = convertToEasternArabicNumerals(
-          pageData.hizbNumber.toString(),
-        );
         final String juzGlyphString =
             'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
         final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
@@ -41,17 +38,16 @@ class MushafPageWidget extends ConsumerWidget {
             centerTitle: false,
             elevation: 0,
             backgroundColor: Colors.transparent,
-            leadingWidth: 150,
             leading: Padding(
-              padding: const EdgeInsets.only(right: headerHorizontalPadding),
+              padding: const EdgeInsets.symmetric(
+                horizontal: headerHorizontalPadding,
+              ),
               child: Center(
                 child: Text(
-                  surahNameGlyphString,
-                  style: surahNameHeaderStyle.copyWith(
-                    fontFamily: surahNameFontFamily,
+                  juzGlyphString,
+                  style: juzHizbStyle.copyWith(
+                    fontFamily: quranCommonFontFamily,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
               ),
             ),
@@ -60,22 +56,14 @@ class MushafPageWidget extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: headerHorizontalPadding,
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    textDirection: TextDirection.rtl,
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        juzGlyphString,
-                        style: juzHizbStyle.copyWith(
-                          fontFamily: quranCommonFontFamily,
-                        ),
-                      ),
-                      const SizedBox(width: headerJuzHizbSpacing),
-                      Text('حزب $hizb', style: juzHizbStyle),
-                    ],
+                child: Center(
+                  child: Text(
+                    surahNameGlyphString,
+                    style: surahNameHeaderStyle.copyWith(
+                      fontFamily: surahNameFontFamily,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ),
