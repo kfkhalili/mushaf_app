@@ -9,21 +9,18 @@ import '../constants.dart';
 class MushafPageWidget extends ConsumerWidget {
   final int pageNumber;
   final bool isMemorizationMode;
-  final Function(int) onAyahReveal;
-  final int memorizationAyahIndex;
+  final Set<int> visibleWordIds;
 
   const MushafPageWidget({
     super.key,
     required this.pageNumber,
     required this.isMemorizationMode,
-    required this.onAyahReveal,
-    required this.memorizationAyahIndex,
+    required this.visibleWordIds,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
-    final asyncPageAyahs = ref.watch(pageAyahsProvider(pageNumber));
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -34,33 +31,28 @@ class MushafPageWidget extends ConsumerWidget {
               pageNumber.toString(),
             );
 
-            // WHY: Using a Column as the root of the body ensures that the
-            // header, content (Expanded), and footer are laid out vertically
-            // in the correct order and DO NOT overlap.
             return Column(
               children: [
                 _buildPermanentHeader(context, pageData),
-                // WHY: Expanded widget takes up all remaining vertical space
-                // between the header and footer for the page content.
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: pageHorizontalPadding,
                     ),
-                    child: isMemorizationMode
-                        ? asyncPageAyahs.when(
-                            data: (ayahs) => _MemorizationView(
-                              pageData: pageData,
-                              ayahsOnPage: ayahs,
-                              currentVisibleAyahIndex: memorizationAyahIndex,
-                              onTap: () => onAyahReveal(ayahs.length),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: pageData.layout.lines
+                          .map(
+                            (line) => LineWidget(
+                              line: line,
+                              pageFontFamily: pageData.pageFontFamily,
+                              isMemorizationMode: isMemorizationMode,
+                              visibleWordIds: visibleWordIds,
                             ),
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            error: (e, s) => Center(child: Text('Error: $e')),
                           )
-                        : _ReadingView(pageData: pageData),
+                          .toList(),
+                    ),
                   ),
                 ),
                 _buildPermanentFooter(context, pageNum),
@@ -104,7 +96,6 @@ class MushafPageWidget extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left Side: Juz Glyph
           SizedBox(
             width: 150,
             child: Text(
@@ -113,7 +104,6 @@ class MushafPageWidget extends ConsumerWidget {
               textAlign: TextAlign.left,
             ),
           ),
-          // Right Side: Surah Name
           SizedBox(
             width: 150,
             child: Text(
@@ -143,98 +133,6 @@ class MushafPageWidget extends ConsumerWidget {
           style: footerPageNumStyle.copyWith(
             color: theme.textTheme.bodyLarge?.color,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// --- Content Widgets ---
-
-class _ReadingView extends StatelessWidget {
-  final PageData pageData;
-  const _ReadingView({required this.pageData});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: pageData.layout.lines
-          .map(
-            (line) =>
-                LineWidget(line: line, pageFontFamily: pageData.pageFontFamily),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _MemorizationView extends StatelessWidget {
-  final PageData pageData;
-  final List<Ayah> ayahsOnPage;
-  final int currentVisibleAyahIndex;
-  final VoidCallback onTap;
-
-  const _MemorizationView({
-    required this.pageData,
-    required this.ayahsOnPage,
-    required this.currentVisibleAyahIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (ayahsOnPage.isEmpty) {
-      return const Center(child: Text("No ayahs on this page."));
-    }
-
-    final List<Word> wordsToDisplay = [];
-    for (
-      int i = 0;
-      i <= currentVisibleAyahIndex && i < ayahsOnPage.length;
-      i++
-    ) {
-      wordsToDisplay.addAll(ayahsOnPage[i].words);
-    }
-    if (currentVisibleAyahIndex < ayahsOnPage.length - 1) {
-      final Ayah nextAyah = ayahsOnPage[currentVisibleAyahIndex + 1];
-      if (nextAyah.words.isNotEmpty) {
-        wordsToDisplay.add(nextAyah.words.first);
-      }
-    }
-
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = screenWidth / referenceScreenWidth;
-    final double dynamicFontSize = (baseFontSize * scaleFactor).clamp(
-      minAyahFontSize,
-      maxAyahFontSize,
-    );
-    final double dynamicLineHeight = (baseLineHeight * scaleFactor).clamp(
-      minLineHeight,
-      maxLineHeight,
-    );
-
-    // This GestureDetector is internal to the memorization view and only handles revealing ayahs.
-    return GestureDetector(
-      onTap: onTap,
-      child: SingleChildScrollView(
-        child: Wrap(
-          textDirection: TextDirection.rtl,
-          runSpacing: 8.0,
-          spacing: 4.0,
-          children: wordsToDisplay.map((word) {
-            return Text(
-              word.text,
-              style: TextStyle(
-                fontFamily: pageData.pageFontFamily,
-                fontSize: dynamicFontSize,
-                height: dynamicLineHeight,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              textScaler: const TextScaler.linear(1.0),
-            );
-          }).toList(),
         ),
       ),
     );

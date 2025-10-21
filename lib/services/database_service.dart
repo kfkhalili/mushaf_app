@@ -12,16 +12,14 @@ class DatabaseService {
   Database? _scriptDb;
   Database? _metadataDb;
   Database? _juzDb;
+  Database? _hizbDb; // Kept for initialization, but not used for display
 
   List<Map<String, dynamic>> _juzCache = [];
-  // Hizb cache removed
 
   bool _isInitialized = false;
 
   Future<void> init() async {
-    if (_isInitialized) {
-      return;
-    }
+    if (_isInitialized) return;
 
     final documentsDirectory = await getApplicationDocumentsDirectory();
     const dbAssetPath = 'assets/db';
@@ -31,17 +29,14 @@ class DatabaseService {
       _initDb(documentsDirectory, dbAssetPath, scriptDbFileName),
       _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
       _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
-      _initDb(
-        documentsDirectory,
-        dbAssetPath,
-        hizbDbFileName,
-      ), // Still need to init for now
+      _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
     ]);
 
     _layoutDb = databases[0];
     _scriptDb = databases[1];
     _metadataDb = databases[2];
     _juzDb = databases[3];
+    _hizbDb = databases[4];
 
     if (_juzCache.isEmpty && _juzDb != null) {
       _juzCache = await _juzDb!.query('juz', orderBy: 'juz_number ASC');
@@ -65,9 +60,7 @@ class DatabaseService {
     required String destinationPath,
   }) async {
     final dbFile = File(destinationPath);
-    if (await dbFile.exists()) {
-      return;
-    }
+    if (await dbFile.exists()) return;
     try {
       final ByteData data = await rootBundle.load(
         p.join('assets/db', assetFileName),
@@ -80,67 +73,54 @@ class DatabaseService {
       await dbFile.writeAsBytes(bytes, flush: true);
     } catch (e) {
       throw Exception(
-        "DatabaseService: Error copying database '$assetFileName' from assets: $e",
+        "DatabaseService: Error copying database '$assetFileName': $e",
       );
     }
   }
 
-  /// Fetches all words on a page and groups them by Ayah.
-  Future<List<Ayah>> getAyahsForPage(int pageNumber) async {
+  /// Fetches a map of "surah:ayah" keys to a list of word IDs for a page.
+  Future<Map<String, List<int>>> getAyahWordMapForPage(int pageNumber) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {
-      throw Exception("Required DBs not initialized for getAyahsForPage.");
+      throw Exception(
+        "Required DBs not initialized for getAyahWordMapForPage.",
+      );
     }
 
-    // WHY: Using CAST(... AS INT) ensures that the MIN and MAX functions
-    // work correctly on columns that might store numbers as text. This was the
-    // cause of the "No ayahs on this page" bug.
     final List<Map<String, dynamic>> pageBounds = await _layoutDb!.rawQuery(
       'SELECT MIN(CAST(first_word_id AS INT)) as min_id, MAX(CAST(last_word_id AS INT)) as max_id FROM pages WHERE page_number = ? AND line_type = "ayah"',
       [pageNumber.toString()],
     );
 
-    if (pageBounds.isEmpty || pageBounds.first['min_id'] == null) {
-      return [];
-    }
+    if (pageBounds.isEmpty || pageBounds.first['min_id'] == null) return {};
 
     final int firstWordIdOnPage = _parseInt(pageBounds.first['min_id']);
     final int lastWordIdOnPage = _parseInt(pageBounds.first['max_id']);
 
-    if (firstWordIdOnPage == 0 || lastWordIdOnPage == 0) return [];
+    if (firstWordIdOnPage == 0 || lastWordIdOnPage == 0) return {};
 
     final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
       'words',
+      columns: ['id', 'surah', 'ayah'],
       where: 'id BETWEEN ? AND ?',
       whereArgs: [firstWordIdOnPage.toString(), lastWordIdOnPage.toString()],
       orderBy: 'id ASC',
     );
 
-    final Map<String, List<Word>> ayahsMap = {};
+    final Map<String, List<int>> ayahsMap = LinkedHashMap();
 
     for (final wordRow in wordsData) {
       final String ayahKey = '${wordRow['surah']}:${wordRow['ayah']}';
       if (!ayahsMap.containsKey(ayahKey)) {
         ayahsMap[ayahKey] = [];
       }
-      ayahsMap[ayahKey]!.add(Word(text: wordRow['text'] as String));
+      ayahsMap[ayahKey]!.add(_parseInt(wordRow['id']));
     }
 
-    final List<Ayah> ayahs = [];
-    ayahsMap.forEach((key, words) {
-      final parts = key.split(':');
-      ayahs.add(
-        Ayah(
-          surahNumber: _parseInt(parts[0]),
-          ayahNumber: _parseInt(parts[1]),
-          words: words,
-        ),
-      );
-    });
-
-    return ayahs;
+    return ayahsMap;
   }
 
+  // ... (getAllSurahs, getSurahName, _parseInt, etc. remain the same)
   Future<List<SurahInfo>> getAllSurahs() async {
     await init();
     if (_metadataDb == null || _layoutDb == null) {
@@ -178,12 +158,9 @@ class DatabaseService {
 
   Future<String> getSurahName(int surahId) async {
     await init();
-    if (_metadataDb == null) {
-      throw Exception("Metadata DB not initialized.");
-    }
-    if (surahId <= 0 || surahId > 114) {
-      return "";
-    }
+    if (_metadataDb == null) throw Exception("Metadata DB not initialized.");
+    if (surahId <= 0 || surahId > 114) return "";
+
     try {
       final List<Map<String, dynamic>> result = await _metadataDb!.query(
         'chapters',
@@ -195,24 +172,21 @@ class DatabaseService {
       if (result.isNotEmpty && result.first['name_arabic'] != null) {
         return result.first['name_arabic'] as String;
       }
-      return 'Surah $surahId'; // Fallback
+      return 'Surah $surahId';
     } catch (e) {
-      return 'Surah $surahId'; // Fallback on error
+      return 'Surah $surahId';
     }
   }
 
   int _parseInt(dynamic value) {
-    if (value == null) {
-      return 0;
-    }
+    if (value == null) return 0;
     return int.tryParse(value.toString()) ?? 0;
   }
 
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null) {
+    if (_layoutDb == null || _scriptDb == null)
       throw Exception("Required DBs not initialized.");
-    }
 
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
       'pages',
@@ -230,9 +204,7 @@ class DatabaseService {
     for (final line in lines) {
       if (line['line_type'] == 'ayah' && line['first_word_id'] != null) {
         final firstWordId = _parseInt(line['first_word_id']);
-        if (firstWordId == 0) {
-          continue;
-        }
+        if (firstWordId == 0) continue;
 
         final List<Map<String, dynamic>> words = await _scriptDb!.query(
           'words',
@@ -272,28 +244,18 @@ class DatabaseService {
     int sLast,
     int aLast,
   ) {
-    if (s < sFirst || s > sLast) {
-      return false;
-    }
-    if (s == sFirst && a < aFirst) {
-      return false;
-    }
-    if (s == sLast && a > aLast) {
-      return false;
-    }
+    if (s < sFirst || s > sLast) return false;
+    if (s == sFirst && a < aFirst) return false;
+    if (s == sLast && a > aLast) return false;
     return true;
   }
 
   int _findJuz(int pageSurah, int pageAyah) {
-    if (_juzCache.isEmpty) {
-      return 0;
-    }
+    if (_juzCache.isEmpty) return 0;
     for (final row in _juzCache) {
       final firstKey = row['first_verse_key'] as String?;
       final lastKey = row['last_verse_key'] as String?;
-      if (firstKey == null || lastKey == null) {
-        continue;
-      }
+      if (firstKey == null || lastKey == null) continue;
 
       try {
         final sFirst = _parseInt(firstKey.split(':').first);
@@ -332,9 +294,8 @@ class DatabaseService {
 
   Future<PageLayout> getPageLayout(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null) {
+    if (_layoutDb == null || _scriptDb == null)
       throw Exception("Required DBs not initialized.");
-    }
 
     final List<Map<String, dynamic>> linesData = await _layoutDb!.query(
       'pages',
@@ -364,25 +325,35 @@ class DatabaseService {
         if (firstWordId > 0 && lastWordId >= firstWordId) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
             'words',
-            columns: ['text'],
+            columns: ['id', 'text'], // Fetch 'id'
             where: 'id BETWEEN ? AND ?',
             whereArgs: [firstWordId.toString(), lastWordId.toString()],
             orderBy: 'id ASC',
           );
           words = wordsData
-              .map((wordMap) => Word(text: wordMap['text'] as String))
+              .map(
+                (wordMap) => Word(
+                  id: _parseInt(wordMap['id']),
+                  text: wordMap['text'] as String,
+                ),
+              )
               .toList();
         } else if (firstWordId > 0 &&
             (lastWordId == 0 || lastWordId < firstWordId)) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
             'words',
-            columns: ['text'],
+            columns: ['id', 'text'], // Fetch 'id'
             where: 'id = ?',
             whereArgs: [firstWordId.toString()],
             limit: 1,
           );
           words = wordsData
-              .map((wordMap) => Word(text: wordMap['text'] as String))
+              .map(
+                (wordMap) => Word(
+                  id: _parseInt(wordMap['id']),
+                  text: wordMap['text'] as String,
+                ),
+              )
               .toList();
         }
       } else if (lineType == 'surah_name') {

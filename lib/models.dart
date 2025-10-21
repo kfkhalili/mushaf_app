@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-// --- NEW MODEL for Surah List ---
+// This is the class that was missing. It's used for the Surah selection list.
 @immutable
 class SurahInfo {
   final int surahNumber;
@@ -16,7 +16,6 @@ class SurahInfo {
   });
 }
 
-// --- NEW MODEL for Memorization Mode ---
 @immutable
 class Ayah {
   final int surahNumber;
@@ -42,18 +41,19 @@ class Ayah {
       Object.hash(surahNumber, ayahNumber, Object.hashAll(words));
 }
 
-// --- Existing Models ---
 @immutable
 class Word {
+  final int id; // Word ID is crucial for tracking visibility
   final String text;
-  const Word({required this.text});
+  const Word({required this.id, required this.text});
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is Word && text == other.text;
+      identical(this, other) ||
+      other is Word && id == other.id && text == other.text;
 
   @override
-  int get hashCode => text.hashCode;
+  int get hashCode => Object.hash(id, text);
 }
 
 @immutable

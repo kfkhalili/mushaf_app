@@ -11,12 +11,13 @@ final databaseServiceProvider = Provider<DatabaseService>((ref) {
   return DatabaseService();
 });
 
-final pageAyahsProvider = FutureProvider.family<List<Ayah>, int>((
+// Provides the data needed for the "transparency-toggle" memorization mode.
+final ayahWordMapProvider = FutureProvider.family<Map<String, List<int>>, int>((
   ref,
   pageNumber,
 ) {
   final dbService = ref.watch(databaseServiceProvider);
-  return dbService.getAyahsForPage(pageNumber);
+  return dbService.getAyahWordMapForPage(pageNumber);
 });
 
 final surahListProvider = FutureProvider<List<SurahInfo>>((ref) {
@@ -47,6 +48,6 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
     pageSurahName: pageHeaderInfo['surahName'] as String? ?? '',
     pageSurahNumber: pageHeaderInfo['surahNumber'] as int? ?? 0,
     juzNumber: pageHeaderInfo['juz'] as int? ?? 0,
-    // hizbNumber removed
+    // hizbNumber is correctly removed
   );
 });

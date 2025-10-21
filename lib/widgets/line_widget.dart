@@ -5,36 +5,35 @@ import '../constants.dart';
 class LineWidget extends StatelessWidget {
   final LineInfo line;
   final String pageFontFamily;
+  final bool isMemorizationMode;
+  final Set<int> visibleWordIds;
 
   const LineWidget({
     super.key,
     required this.line,
     required this.pageFontFamily,
+    this.isMemorizationMode = false, // Default to false
+    this.visibleWordIds = const {}, // Default to empty set
   });
 
   @override
   Widget build(BuildContext context) {
-    String? fontFamily = fallbackFontFamily;
-    TextAlign lineAlignment = line.isCentered
-        ? TextAlign.center
-        : TextAlign.justify;
+    final theme = Theme.of(context);
+    final defaultTextColor = theme.textTheme.bodyLarge?.color;
 
+    // --- Responsive Font Size Calculation ---
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scaleFactor = screenWidth / referenceScreenWidth;
     double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
       minAyahFontSize,
       maxAyahFontSize,
     );
-
-    // WHY: We calculate a dynamic line height based on the screen width,
-    // just like the font size. This ensures that the vertical spacing
-    // scales proportionally across different devices.
     final double dynamicLineHeight = (baseLineHeight * scaleFactor).clamp(
       minLineHeight,
       maxLineHeight,
     );
 
-    Widget lineWidget;
+    Widget lineContent;
 
     switch (line.lineType) {
       case 'surah_name':
@@ -57,7 +56,7 @@ class LineWidget extends StatelessWidget {
                 maxSurahHeaderFontSize,
               );
 
-          lineWidget = Stack(
+          lineContent = Stack(
             alignment: Alignment.center,
             children: [
               Text(
@@ -65,7 +64,8 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: dynamicLineHeight, // Apply dynamic height
+                  height: dynamicLineHeight,
+                  color: defaultTextColor, // Use theme color
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -75,7 +75,8 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: headerFontSize,
-                  height: dynamicLineHeight, // Apply dynamic height
+                  height: dynamicLineHeight,
+                  color: defaultTextColor, // Use theme color
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -93,16 +94,15 @@ class LineWidget extends StatelessWidget {
                 minBasmallahFontSize,
                 maxBasmallahFontSize,
               );
-          lineAlignment = TextAlign.center;
 
-          lineWidget = Text(
+          lineContent = Text(
             textToShow,
-            textDirection: TextDirection.rtl,
-            textAlign: lineAlignment,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: fontFamily,
+              fontFamily: fallbackFontFamily,
               fontSize: basmallahFontSize,
-              height: dynamicLineHeight, // Apply dynamic height
+              height: dynamicLineHeight,
+              color: defaultTextColor, // Use theme color
             ),
             textScaler: const TextScaler.linear(1.0),
           );
@@ -110,29 +110,50 @@ class LineWidget extends StatelessWidget {
         }
       case 'ayah':
         {
+          final lineAlignment = line.isCentered
+              ? TextAlign.center
+              : TextAlign.justify;
+
           if (line.isCentered || line.words.isEmpty) {
             final String textToShow = line.words.map((w) => w.text).join(' ');
-            lineWidget = Text(
+            lineContent = Text(
               textToShow,
-              textAlign: TextAlign.center,
+              textAlign: lineAlignment,
               style: TextStyle(
                 fontFamily: pageFontFamily,
                 fontSize: defaultDynamicFontSize,
-                height: dynamicLineHeight, // Apply dynamic height
+                height: dynamicLineHeight,
+                // WHY: In memorization mode, centered lines are fully visible or fully transparent.
+                // We check the visibility of the first word to decide.
+                color:
+                    (isMemorizationMode &&
+                        line.words.isNotEmpty &&
+                        !visibleWordIds.contains(line.words.first.id))
+                    ? Colors.transparent
+                    : defaultTextColor,
               ),
               textScaler: const TextScaler.linear(1.0),
             );
           } else {
-            lineWidget = Row(
+            // Build a Row and apply visibility to each word.
+            lineContent = Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               textDirection: TextDirection.rtl,
               children: line.words.map((word) {
+                // WHY: This is the core logic. If in memorization mode, check if the word's
+                // ID is in the visible set. If not, make it transparent.
+                final color =
+                    (isMemorizationMode && !visibleWordIds.contains(word.id))
+                    ? Colors.transparent
+                    : defaultTextColor;
+
                 return Text(
                   word.text,
                   style: TextStyle(
                     fontFamily: pageFontFamily,
                     fontSize: defaultDynamicFontSize,
-                    height: dynamicLineHeight, // Apply dynamic height
+                    height: dynamicLineHeight,
+                    color: color, // Apply the determined color
                   ),
                   textScaler: const TextScaler.linear(1.0),
                 );
@@ -143,11 +164,10 @@ class LineWidget extends StatelessWidget {
         }
       default:
         {
-          lineWidget = const SizedBox.shrink();
+          lineContent = const SizedBox.shrink();
           break;
         }
     }
-
-    return lineWidget;
+    return lineContent;
   }
 }
