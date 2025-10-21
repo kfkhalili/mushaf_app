@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
+import '../screens/mushaf_screen.dart'; // WHY: Import to get memorizationProvider
 
 class MushafOverlayWidget extends ConsumerWidget {
   final bool isVisible;
   final VoidCallback onBackButtonPressed;
+  final VoidCallback onToggleMemorization; // WHY: Callback from parent
 
   const MushafOverlayWidget({
     super.key,
     required this.isVisible,
     required this.onBackButtonPressed,
+    required this.onToggleMemorization,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppThemeMode currentTheme = ref.watch(themeProvider);
+    // WHY: Watch the memorization state to update the button icon.
+    final bool isMemorizing = ref
+        .watch(memorizationProvider)
+        .isMemorizationMode;
 
     return AnimatedOpacity(
       opacity: isVisible ? 1.0 : 0.0,
@@ -33,8 +40,6 @@ class MushafOverlayWidget extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // WHY: The first child in the Row is on the LEFT. This is the
-                    // correct place for the options and bookmark icons.
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -82,10 +87,17 @@ class MushafOverlayWidget extends ConsumerWidget {
                             /* Placeholder */
                           },
                         ),
+                        // WHY: This is the new button for memorization mode.
+                        IconButton(
+                          icon: Icon(
+                            isMemorizing ? Icons.school : Icons.school_outlined,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          onPressed: onToggleMemorization,
+                        ),
                       ],
                     ),
-                    // WHY: The last child in the Row is on the RIGHT. This is the
-                    // correct place for the back arrow.
                     IconButton(
                       icon: const Icon(
                         Icons.arrow_forward_ios,

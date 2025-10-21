@@ -322,26 +322,38 @@ class DatabaseService {
         if (firstWordId > 0 && lastWordId >= firstWordId) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
             'words',
-            columns: ['text'],
+            // WHY: Select surah and ayah columns to identify words.
+            columns: ['text', 'surah', 'ayah'],
             where: 'id BETWEEN ? AND ?',
             whereArgs: [firstWordId.toString(), lastWordId.toString()],
             orderBy: 'id ASC',
           );
-          words = wordsData
-              .map((wordMap) => Word(text: wordMap['text'] as String))
-              .toList();
+          words = wordsData.map((wordMap) {
+            return Word(
+              text: wordMap['text'] as String,
+              // WHY: Populate the new model fields.
+              surahNumber: _parseInt(wordMap['surah']),
+              ayahNumber: _parseInt(wordMap['ayah']),
+            );
+          }).toList();
         } else if (firstWordId > 0 &&
             (lastWordId == 0 || lastWordId < firstWordId)) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
             'words',
-            columns: ['text'],
+            // WHY: Select surah and ayah columns to identify words.
+            columns: ['text', 'surah', 'ayah'],
             where: 'id = ?',
             whereArgs: [firstWordId.toString()],
             limit: 1,
           );
-          words = wordsData
-              .map((wordMap) => Word(text: wordMap['text'] as String))
-              .toList();
+          words = wordsData.map((wordMap) {
+            return Word(
+              text: wordMap['text'] as String,
+              // WHY: Populate the new model fields.
+              surahNumber: _parseInt(wordMap['surah']),
+              ayahNumber: _parseInt(wordMap['ayah']),
+            );
+          }).toList();
         }
       } else if (lineType == 'surah_name') {
         if (surahNum > 0) {
