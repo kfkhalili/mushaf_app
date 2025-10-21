@@ -20,14 +20,26 @@ class SurahInfo {
 @immutable
 class Word {
   final String text;
-  const Word({required this.text});
+  // WHY: We must know the surah/ayah for each word to control visibility.
+  final int surahNumber;
+  final int ayahNumber;
+
+  const Word({
+    required this.text,
+    required this.surahNumber,
+    required this.ayahNumber,
+  });
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is Word && text == other.text;
+      identical(this, other) ||
+      other is Word &&
+          text == other.text &&
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber;
 
   @override
-  int get hashCode => text.hashCode;
+  int get hashCode => Object.hash(text, surahNumber, ayahNumber);
 }
 
 @immutable

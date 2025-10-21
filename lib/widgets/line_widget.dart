@@ -5,15 +5,60 @@ import '../constants.dart';
 class LineWidget extends StatelessWidget {
   final LineInfo line;
   final String pageFontFamily;
+  final bool isMemorizationMode;
+  // WHY: We now pass visibility rules based on ayah keys.
+  final Set<String> visibleAyahKeys;
+  final String? hintAyahKey;
+  final String? hintText;
 
   const LineWidget({
     super.key,
     required this.line,
     required this.pageFontFamily,
+    this.isMemorizationMode = false,
+    this.visibleAyahKeys = const {},
+    this.hintAyahKey,
+    this.hintText,
   });
+
+  // WHY: Helper to build the text style for a word.
+  TextStyle _getWordStyle({
+    required double fontSize,
+    required double lineHeight,
+    required Color baseColor,
+    required bool isVisible,
+    required bool isHint, // This parameter is no longer used for color
+  }) {
+    Color wordColor = baseColor;
+    if (isMemorizationMode) {
+      // WHY: If the word is not visible (which includes hints, as they
+      // are passed with isVisible: true), make it transparent.
+      // Otherwise, it gets the default base color.
+      if (!isVisible) {
+        wordColor = Colors.transparent;
+      }
+    }
+
+    return TextStyle(
+      fontFamily: pageFontFamily,
+      fontSize: fontSize,
+      height: lineHeight,
+      color: wordColor,
+    );
+  }
+
+  // WHY: Helper to create the key for a word.
+  String _getWordKey(Word word) {
+    return "${word.surahNumber.toString().padLeft(3, '0')}:${word.ayahNumber.toString().padLeft(3, '0')}";
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // WHY: Default text color from the theme.
+    final Color baseTextColor =
+        theme.textTheme.bodyLarge?.color ?? Colors.black;
+
     String? fontFamily = fallbackFontFamily;
     TextAlign lineAlignment = line.isCentered
         ? TextAlign.center
@@ -26,9 +71,6 @@ class LineWidget extends StatelessWidget {
       maxAyahFontSize,
     );
 
-    // WHY: We calculate a dynamic line height based on the screen width,
-    // just like the font size. This ensures that the vertical spacing
-    // scales proportionally across different devices.
     final double dynamicLineHeight = (baseLineHeight * scaleFactor).clamp(
       minLineHeight,
       maxLineHeight,
@@ -65,7 +107,7 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: dynamicLineHeight, // Apply dynamic height
+                  height: dynamicLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -75,7 +117,7 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: headerFontSize,
-                  height: dynamicLineHeight, // Apply dynamic height
+                  height: dynamicLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -102,7 +144,7 @@ class LineWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: fontFamily,
               fontSize: basmallahFontSize,
-              height: dynamicLineHeight, // Apply dynamic height
+              height: dynamicLineHeight,
             ),
             textScaler: const TextScaler.linear(1.0),
           );
@@ -110,33 +152,89 @@ class LineWidget extends StatelessWidget {
         }
       case 'ayah':
         {
-          if (line.isCentered || line.words.isEmpty) {
-            final String textToShow = line.words.map((w) => w.text).join(' ');
-            lineWidget = Text(
-              textToShow,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: pageFontFamily,
-                fontSize: defaultDynamicFontSize,
-                height: dynamicLineHeight, // Apply dynamic height
-              ),
-              textScaler: const TextScaler.linear(1.0),
-            );
-          } else {
+          if (line.words.isEmpty) {
+            lineWidget = const SizedBox.shrink();
+            break;
+          }
+
+          // WHY: This is the core logic change.
+          // We must check each word's visibility status.
+
+          if (!line.isCentered) {
+            final List<Widget> wordWidgets = line.words.map((word) {
+              bool isVisible = true;
+              bool isHint = false;
+
+              if (isMemorizationMode && word.ayahNumber > 0) {
+                final String key = _getWordKey(word);
+                isVisible = visibleAyahKeys.contains(key);
+
+                // WHY: Check if this *specific word* is the hint.
+                // We check if it belongs to the hint ayah AND matches the
+                // exact hint text (which we know is the first word).
+                if (key == hintAyahKey && word.text == hintText) {
+                  isHint = true;
+                }
+              }
+
+              // WHY: We use an AnimatedSwitcher to fade the color of each word.
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  word.text,
+                  // WHY: Use a key to make the switcher animate correctly.
+                  key: ValueKey("${word.text}-$isVisible-$isHint"),
+                  style: _getWordStyle(
+                    fontSize: defaultDynamicFontSize,
+                    lineHeight: dynamicLineHeight,
+                    baseColor: baseTextColor,
+                    // WHY: The hint is visible, just styled differently.
+                    isVisible: isVisible || isHint,
+                    isHint: isHint,
+                  ),
+                  textScaler: const TextScaler.linear(1.0),
+                ),
+              );
+            }).toList();
+
             lineWidget = Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               textDirection: TextDirection.rtl,
-              children: line.words.map((word) {
-                return Text(
-                  word.text,
-                  style: TextStyle(
-                    fontFamily: pageFontFamily,
-                    fontSize: defaultDynamicFontSize,
-                    height: dynamicLineHeight, // Apply dynamic height
-                  ),
-                  textScaler: const TextScaler.linear(1.0),
-                );
-              }).toList(),
+              children: wordWidgets,
+            );
+          } else {
+            // WHY: Centered lines (e.g., end of surah) must use RichText.
+            // AnimatedSwitcher doesn't work on TextSpans, so this will
+            // snap instead of fade.
+            final List<TextSpan> spans = line.words.map((word) {
+              bool isVisible = true;
+              bool isHint = false;
+
+              if (isMemorizationMode && word.ayahNumber > 0) {
+                final String key = _getWordKey(word);
+                isVisible = visibleAyahKeys.contains(key);
+
+                if (key == hintAyahKey && word.text == hintText) {
+                  isHint = true;
+                }
+              }
+
+              return TextSpan(
+                text: "${word.text} ", // Add space
+                style: _getWordStyle(
+                  fontSize: defaultDynamicFontSize,
+                  lineHeight: dynamicLineHeight,
+                  baseColor: baseTextColor,
+                  isVisible: isVisible || isHint,
+                  isHint: isHint,
+                ),
+              );
+            }).toList();
+
+            lineWidget = Text.rich(
+              TextSpan(children: spans),
+              textAlign: TextAlign.center,
+              textScaler: const TextScaler.linear(1.0),
             );
           }
           break;
@@ -148,6 +246,13 @@ class LineWidget extends StatelessWidget {
         }
     }
 
+    // WHY: Non-ayah lines and non-memorization mode return the widget directly.
+    if (line.lineType != 'ayah' || !isMemorizationMode) {
+      return lineWidget;
+    }
+
+    // For 'ayah' lines, the animation is handled *inside* the widget
+    // build logic (word by word), so we return it directly.
     return lineWidget;
   }
 }
