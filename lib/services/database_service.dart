@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:collection';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -12,7 +11,6 @@ class DatabaseService {
   Database? _scriptDb;
   Database? _metadataDb;
   Database? _juzDb;
-  Database? _hizbDb; // Kept for initialization, but not used for display
 
   List<Map<String, dynamic>> _juzCache = [];
 
@@ -36,7 +34,6 @@ class DatabaseService {
     _scriptDb = databases[1];
     _metadataDb = databases[2];
     _juzDb = databases[3];
-    _hizbDb = databases[4];
 
     if (_juzCache.isEmpty && _juzDb != null) {
       _juzCache = await _juzDb!.query('juz', orderBy: 'juz_number ASC');
@@ -107,7 +104,7 @@ class DatabaseService {
       orderBy: 'id ASC',
     );
 
-    final Map<String, List<int>> ayahsMap = LinkedHashMap();
+    final Map<String, List<int>> ayahsMap = {};
 
     for (final wordRow in wordsData) {
       final String ayahKey = '${wordRow['surah']}:${wordRow['ayah']}';
@@ -185,8 +182,9 @@ class DatabaseService {
 
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null)
+    if (_layoutDb == null || _scriptDb == null) {
       throw Exception("Required DBs not initialized.");
+    }
 
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
       'pages',
@@ -294,8 +292,9 @@ class DatabaseService {
 
   Future<PageLayout> getPageLayout(int pageNumber) async {
     await init();
-    if (_layoutDb == null || _scriptDb == null)
+    if (_layoutDb == null || _scriptDb == null) {
       throw Exception("Required DBs not initialized.");
+    }
 
     final List<Map<String, dynamic>> linesData = await _layoutDb!.query(
       'pages',
