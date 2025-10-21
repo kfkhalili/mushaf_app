@@ -14,17 +14,27 @@ class LineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Responsive Font Size Calculation ---
+    String? fontFamily = fallbackFontFamily;
+    TextAlign lineAlignment = line.isCentered
+        ? TextAlign.center
+        : TextAlign.justify;
+
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scaleFactor = screenWidth / referenceScreenWidth;
     double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
       minAyahFontSize,
       maxAyahFontSize,
     );
-    const double currentLineHeight = defaultLineHeight;
 
-    // --- Widget to be returned ---
-    Widget lineContent;
+    // WHY: We calculate a dynamic line height based on the screen width,
+    // just like the font size. This ensures that the vertical spacing
+    // scales proportionally across different devices.
+    final double dynamicLineHeight = (baseLineHeight * scaleFactor).clamp(
+      minLineHeight,
+      maxLineHeight,
+    );
+
+    Widget lineWidget;
 
     switch (line.lineType) {
       case 'surah_name':
@@ -47,7 +57,7 @@ class LineWidget extends StatelessWidget {
                 maxSurahHeaderFontSize,
               );
 
-          lineContent = Stack(
+          lineWidget = Stack(
             alignment: Alignment.center,
             children: [
               Text(
@@ -55,7 +65,7 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: currentLineHeight,
+                  height: dynamicLineHeight, // Apply dynamic height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -65,15 +75,15 @@ class LineWidget extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: headerFontSize,
-                  height: currentLineHeight,
+                  height: dynamicLineHeight, // Apply dynamic height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
               ),
             ],
           );
-          break; // Break the switch case
-        } // End case 'surah_name'
+          break;
+        }
 
       case 'basmallah':
         {
@@ -83,38 +93,37 @@ class LineWidget extends StatelessWidget {
                 minBasmallahFontSize,
                 maxBasmallahFontSize,
               );
+          lineAlignment = TextAlign.center;
 
-          lineContent = Text(
+          lineWidget = Text(
             textToShow,
-            textAlign: TextAlign.center,
+            textDirection: TextDirection.rtl,
+            textAlign: lineAlignment,
             style: TextStyle(
-              fontFamily: fallbackFontFamily,
+              fontFamily: fontFamily,
               fontSize: basmallahFontSize,
-              height: currentLineHeight,
+              height: dynamicLineHeight, // Apply dynamic height
             ),
             textScaler: const TextScaler.linear(1.0),
           );
-          break; // Break the switch case
+          break;
         }
       case 'ayah':
         {
-          // WHY: For non-centered ayah lines, we build a Row to manually
-          // achieve justification. Centered lines still use a single Text widget.
           if (line.isCentered || line.words.isEmpty) {
             final String textToShow = line.words.map((w) => w.text).join(' ');
-            lineContent = Text(
+            lineWidget = Text(
               textToShow,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: pageFontFamily,
                 fontSize: defaultDynamicFontSize,
-                height: currentLineHeight,
+                height: dynamicLineHeight, // Apply dynamic height
               ),
               textScaler: const TextScaler.linear(1.0),
             );
           } else {
-            // Build a Row for justified lines
-            lineContent = Row(
+            lineWidget = Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               textDirection: TextDirection.rtl,
               children: line.words.map((word) {
@@ -123,21 +132,22 @@ class LineWidget extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: pageFontFamily,
                     fontSize: defaultDynamicFontSize,
-                    height: currentLineHeight,
+                    height: dynamicLineHeight, // Apply dynamic height
                   ),
                   textScaler: const TextScaler.linear(1.0),
                 );
               }).toList(),
             );
           }
-          break; // Break the switch case
+          break;
         }
       default:
         {
-          lineContent = const SizedBox.shrink();
+          lineWidget = const SizedBox.shrink();
           break;
         }
     }
-    return lineContent;
+
+    return lineWidget;
   }
 }
