@@ -75,7 +75,11 @@ class LineWidget extends StatelessWidget {
     final double heightScale = screenHeight / referenceScreenHeight;
     final double scaleFactor = min(widthScale, heightScale);
 
-    double defaultDynamicFontSize = (baseFontSize * scaleFactor).clamp(
+    // WHY: Calculate the base font size scaled by the form factor.
+    final double unclampedDynamicFontSize = baseFontSize * scaleFactor;
+
+    // WHY: The default (ayah) font size is clamped.
+    double defaultDynamicFontSize = unclampedDynamicFontSize.clamp(
       minAyahFontSize,
       maxAyahFontSize,
     );
@@ -84,6 +88,10 @@ class LineWidget extends StatelessWidget {
     // of the font size. Since the font size is already scaled,
     // we just use the base multiplier, not a scaled one.
     final double dynamicLineHeight = baseLineHeight;
+
+    // WHY: We define a tighter line height for non-ayah lines
+    // like surah names and basmallah to reduce extra vertical space.
+    const double tightLineHeight = 1.5;
 
     // --- Dynamic Padding Calculation ---
     // WHY: This calculates the available width for the line, factoring in
@@ -108,15 +116,21 @@ class LineWidget extends StatelessWidget {
             '0',
           );
           final String surahNameText = 'surah$surahNumPadded surah-icon';
+          // WHY: The quran-common font maps this string to the correct surah name glyph.
           const String headerText = 'header';
 
+          // WHY: Base the surah frame font size on the *unclamped*
+          // dynamic size so it can scale freely, using its specific factor.
           final double surahNameFontSize =
-              (defaultDynamicFontSize * surahNameScaleFactor).clamp(
+              (unclampedDynamicFontSize * surahNameScaleFactor).clamp(
                 minSurahNameFontSize,
                 maxSurahNameFontSize,
               );
+          // WHY: Base the header text font size on the *unclamped*
+          // dynamic size using its own independent factor.
           final double headerFontSize =
-              (surahNameFontSize * surahHeaderScaleFactorRelativeToName).clamp(
+              (unclampedDynamicFontSize * headerScaleFactor).clamp(
+                // Use new factor
                 minSurahHeaderFontSize,
                 maxSurahHeaderFontSize,
               );
@@ -125,21 +139,21 @@ class LineWidget extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Text(
-                surahNameText,
+                surahNameText, // The frame glyph
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: dynamicLineHeight,
+                  height: tightLineHeight, // WHY: Use tight line height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
               ),
               Text(
-                headerText,
+                headerText, // The text inside the frame
                 style: TextStyle(
-                  fontFamily: quranCommonFontFamily,
+                  fontFamily: quranCommonFontFamily, // Use the correct font
                   fontSize: headerFontSize,
-                  height: dynamicLineHeight,
+                  height: tightLineHeight, // WHY: Use tight line height
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -152,8 +166,10 @@ class LineWidget extends StatelessWidget {
       case 'basmallah':
         {
           const String textToShow = basmallah;
+          // WHY: Base the basmallah font size on the *unclamped*
+          // dynamic size so it can scale freely.
           final double basmallahFontSize =
-              (defaultDynamicFontSize * basmallahScaleFactor).clamp(
+              (unclampedDynamicFontSize * basmallahScaleFactor).clamp(
                 minBasmallahFontSize,
                 maxBasmallahFontSize,
               );
@@ -166,7 +182,7 @@ class LineWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: fontFamily,
               fontSize: basmallahFontSize,
-              height: dynamicLineHeight,
+              height: tightLineHeight, // WHY: Use tight line height
             ),
             textScaler: const TextScaler.linear(1.0),
           );
@@ -208,7 +224,7 @@ class LineWidget extends StatelessWidget {
                   key: ValueKey("${word.text}-$isVisible-$isHint"),
                   style: _getWordStyle(
                     fontSize: defaultDynamicFontSize,
-                    lineHeight: dynamicLineHeight,
+                    lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
                     baseColor: baseTextColor,
                     // WHY: The hint is visible, just styled differently.
                     isVisible: isVisible || isHint,
@@ -250,7 +266,7 @@ class LineWidget extends StatelessWidget {
                 text: "${word.text} ", // Add space
                 style: _getWordStyle(
                   fontSize: defaultDynamicFontSize,
-                  lineHeight: dynamicLineHeight,
+                  lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
                   baseColor: baseTextColor,
                   isVisible: isVisible || isHint,
                   isHint: isHint,
