@@ -16,7 +16,7 @@ const String quranCommonFontFamily = 'QuranCommon';
 const String fallbackFontFamily = 'QPCV2';
 
 // --- RESPONSIVE SIZING ---
-const double baseFontSize = 21.0;
+const double baseFontSize = 20.0;
 const double referenceScreenWidth = 428.0;
 const double referenceScreenHeight = 926.0;
 const double maxLineContentWidth = 600.0;
@@ -43,7 +43,7 @@ const double minBasmallahFontSize = 15.0;
 const maxBasmallahFontSize = 28.0;
 
 // Line Height
-const double baseLineHeight = 2.4;
+const double baseLineHeight = 2.2;
 
 // Padding Values
 const double pageHorizontalPadding = 16.0;

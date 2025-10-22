@@ -138,3 +138,12 @@ class PageData {
     hizbNumber,
   );
 }
+
+@immutable
+class JuzInfo {
+  final int juzNumber;
+  final int startingPage;
+  // We don't need the name explicitly, as we'll use the font glyphs.
+
+  const JuzInfo({required this.juzNumber, required this.startingPage});
+}

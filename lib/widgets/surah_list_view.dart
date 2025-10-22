@@ -3,56 +3,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
 import '../constants.dart';
-import 'mushaf_screen.dart';
+import '../screens/mushaf_screen.dart'; // Needed for navigation
 import '../utils/helpers.dart';
 import '../models.dart';
 
-class SurahSelectionScreen extends ConsumerWidget {
-  const SurahSelectionScreen({super.key});
+// WHY: Extracted Surah list display logic into its own widget.
+class SurahListView extends ConsumerWidget {
+  const SurahListView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // WHY: Watch the provider to get Surah data.
     final surahsAsync = ref.watch(surahListProvider);
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Text(
-                'quran',
-                style: TextStyle(
-                  fontFamily: quranCommonFontFamily,
-                  fontSize: 50,
-                  color: theme.colorScheme.primary, // Theme-aware color
-                ),
-              ),
-            ),
-            Expanded(
-              child: surahsAsync.when(
-                data: (surahs) => ListView.separated(
-                  itemCount: surahs.length,
-                  itemBuilder: (context, index) {
-                    final surah = surahs[index];
-                    return SurahListItem(surah: surah);
-                  },
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, indent: 24, endIndent: 24),
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    Center(child: Text('Error loading Surahs: $err')),
-              ),
-            ),
-          ],
-        ),
+    // WHY: Build the UI based on the async state.
+    return surahsAsync.when(
+      data: (surahs) => ListView.separated(
+        itemCount: surahs.length,
+        itemBuilder: (context, index) {
+          final surah = surahs[index];
+          // WHY: Use the dedicated list item widget.
+          return SurahListItem(surah: surah);
+        },
+        separatorBuilder: (context, index) =>
+            const Divider(height: 1, indent: 24, endIndent: 24),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error loading Surahs: $err')),
     );
   }
 }
 
+// WHY: Kept SurahListItem together with the ListView that uses it.
 class SurahListItem extends StatelessWidget {
   final SurahInfo surah;
 
@@ -60,7 +42,7 @@ class SurahListItem extends StatelessWidget {
 
   Future<void> _navigateToSurah(BuildContext context, int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('last_page', pageNumber);
+    await prefs.remove('last_page');
 
     if (!context.mounted) return;
 
@@ -90,7 +72,7 @@ class SurahListItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary, // Theme-aware color
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(width: 8),
@@ -104,8 +86,8 @@ class SurahListItem extends StatelessWidget {
         surahNameGlyph,
         style: TextStyle(
           fontFamily: surahNameFontFamily,
-          fontSize: 32,
-          color: theme.textTheme.bodyLarge?.color, // Theme-aware color
+          fontSize: 36, // Keep consistent size
+          color: theme.textTheme.bodyLarge?.color,
         ),
       ),
       onTap: () {

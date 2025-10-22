@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
-import '../widgets/mushaf_overlay_widget.dart';
-import '../providers.dart'; // We need this for pageDataProvider
-import '../models.dart'; // We need this for PageData
+import '../widgets/mushaf_bottom_menu.dart';
+import '../providers.dart';
+import '../models.dart';
 
 // --- State Management for Memorization Mode ---
-
+// (MemorizationState, MemorizationNotifier, memorizationProvider remain unchanged)
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
-  // WHY: Maps pageNumber to the number of *ayahs* revealed for that page.
-  final Map<int, int> revealedLinesMap;
+  final Map<int, int> revealedLinesMap; // Stores revealed *ayah* count per page
 
   const MemorizationState({
     this.isMemorizationMode = false,
@@ -37,8 +36,6 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     final bool wasMemorizing = state.isMemorizationMode;
     state = state.copyWith(
       isMemorizationMode: !wasMemorizing,
-      // WHY: We reset the reveal counters when toggling mode
-      // to ensure a fresh start next time.
       revealedLinesMap: const {},
     );
   }
@@ -69,17 +66,16 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
-  bool _isOverlayVisible = false;
-
-  void _toggleOverlay() {
-    setState(() {
-      _isOverlayVisible = !_isOverlayVisible;
-    });
-  }
 
   Future<void> _saveCurrentPage(int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
+  }
+
+  // WHY: New function to clear the last page preference.
+  Future<void> _clearLastPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('last_page');
   }
 
   @override
@@ -94,29 +90,22 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.dispose();
   }
 
-  void _handleTap() {
+  void _handleMemorizationTap() {
     final memorizationState = ref.read(memorizationProvider);
-    final int currentPage =
-        _pageController.page?.round() ?? (widget.initialPage - 1);
-    final int pageNumber = currentPage + 1;
-
     if (!memorizationState.isMemorizationMode) {
-      // WHY: Default behavior when not in memorization mode.
-      _toggleOverlay();
       return;
     }
 
-    // WHY: When in memorization mode, taps reveal ayahs.
-    // We must read the page data to know when the page is complete.
+    final int currentPage =
+        _pageController.page?.round() ?? (widget.initialPage - 1);
+    final int pageNumber = currentPage + 1;
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
 
     asyncPageData.whenData((PageData pageData) {
-      // WHY: Find all unique ayahs on this page to get the total count.
       final Set<String> uniqueAyahs = <String>{};
       for (final line in pageData.layout.lines) {
         if (line.lineType == 'ayah') {
           for (final word in line.words) {
-            // We only care about ayahs > 0 (not basmallahs marked as ayah 0)
             if (word.ayahNumber > 0) {
               uniqueAyahs.add("${word.surahNumber}:${word.ayahNumber}");
             }
@@ -124,68 +113,49 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         }
       }
       final int totalAyahsOnPage = uniqueAyahs.length;
-
       final int revealedCount =
           memorizationState.revealedLinesMap[pageNumber] ?? 0;
 
       if (revealedCount < totalAyahsOnPage) {
-        // WHY: If page is not complete, increment the reveal count.
         ref.read(memorizationProvider.notifier).incrementReveal(pageNumber);
-      } else {
-        // WHY: If page is complete, allow the overlay to be toggled.
-        _toggleOverlay();
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // WHY: We watch the provider to rebuild when memorization mode is toggled.
-    final bool isMemorizing = ref
-        .watch(memorizationProvider)
-        .isMemorizationMode;
-
-    return GestureDetector(
-      onTap: _handleTap,
-      child: Stack(
+    return Scaffold(
+      body: Stack(
         children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: 604,
-            reverse: true,
-            onPageChanged: (index) {
-              final int newPageNumber = index + 1;
-              _saveCurrentPage(newPageNumber);
-
-              // WHY: If the user swipes to a new page while memorizing,
-              // we must hide the overlay to force them to reveal the new page.
-              if (isMemorizing && _isOverlayVisible) {
-                setState(() {
-                  _isOverlayVisible = false;
-                });
-              }
-            },
-            itemBuilder: (context, index) {
-              return MushafPageWidget(pageNumber: index + 1);
-            },
-          ),
-          MushafOverlayWidget(
-            isVisible: _isOverlayVisible,
-            onBackButtonPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            // WHY: We pass a callback to let the overlay toggle the
-            // memorization mode and hide itself.
-            onToggleMemorization: () {
-              ref.read(memorizationProvider.notifier).toggleMode();
-              if (_isOverlayVisible) {
-                _toggleOverlay();
-              }
-            },
+          GestureDetector(
+            onTap: _handleMemorizationTap,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: 604,
+              reverse: true,
+              onPageChanged: (index) {
+                _saveCurrentPage(index + 1);
+              },
+              itemBuilder: (context, index) {
+                return MushafPageWidget(pageNumber: index + 1);
+              },
+            ),
           ),
         ],
+      ),
+      bottomNavigationBar: MushafBottomMenu(
+        // WHY: Update the back button logic here.
+        onBackButtonPressed: () async {
+          // Make the callback async
+          if (Navigator.canPop(context)) {
+            // WHY: Clear the saved page *before* popping the screen.
+            await _clearLastPage();
+            if (context.mounted) {
+              // Check if widget is still mounted
+              Navigator.pop(context);
+            }
+          }
+        },
       ),
     );
   }

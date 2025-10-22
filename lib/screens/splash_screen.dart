@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'surah_selection_screen.dart';
+import 'selection_screen.dart';
 import 'mushaf_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // the MushafScreen on top. This creates the correct navigation stack.
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const SurahSelectionScreen()),
+        MaterialPageRoute(builder: (context) => const SelectionScreen()),
       );
       Navigator.push(
         context,
@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // WHY: If no page was saved (first launch), we go to the Surah selection screen.
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const SurahSelectionScreen()),
+        MaterialPageRoute(builder: (context) => const SelectionScreen()),
       );
     }
   }
