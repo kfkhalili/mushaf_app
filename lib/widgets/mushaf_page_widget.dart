@@ -174,7 +174,7 @@ class MushafPageWidget extends ConsumerWidget {
                 ),
               ),
               Align(
-                alignment: Alignment.bottomRight,
+                alignment: Alignment.bottomCenter,
                 child: Padding(
                   // WHY: Use dynamic padding.
                   padding: EdgeInsets.only(
