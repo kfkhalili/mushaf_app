@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
-import '../widgets/mushaf_overlay_widget.dart';
-import '../providers.dart'; // We need this for pageDataProvider
-import '../models.dart'; // We need this for PageData
+// import '../widgets/mushaf_overlay_widget.dart'; // WHY: Removed old overlay import
+import '../widgets/mushaf_bottom_menu.dart'; // WHY: Added new bottom menu import
+import '../providers.dart';
+import '../models.dart';
 
 // --- State Management for Memorization Mode ---
-
+// (MemorizationState, MemorizationNotifier, memorizationProvider remain unchanged)
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
-  // WHY: Maps pageNumber to the number of *ayahs* revealed for that page.
-  final Map<int, int> revealedLinesMap;
+  final Map<int, int> revealedLinesMap; // Stores revealed *ayah* count per page
 
   const MemorizationState({
     this.isMemorizationMode = false,
@@ -37,8 +37,6 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     final bool wasMemorizing = state.isMemorizationMode;
     state = state.copyWith(
       isMemorizationMode: !wasMemorizing,
-      // WHY: We reset the reveal counters when toggling mode
-      // to ensure a fresh start next time.
       revealedLinesMap: const {},
     );
   }
@@ -69,13 +67,9 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
-  bool _isOverlayVisible = false;
+  // bool _isOverlayVisible = false; // WHY: Removed state for overlay visibility
 
-  void _toggleOverlay() {
-    setState(() {
-      _isOverlayVisible = !_isOverlayVisible;
-    });
-  }
+  // void _toggleOverlay() { ... } // WHY: Removed function for toggling overlay
 
   Future<void> _saveCurrentPage(int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,29 +88,27 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.dispose();
   }
 
-  void _handleTap() {
+  // WHY: Renamed and simplified the tap handler for clarity.
+  void _handleMemorizationTap() {
     final memorizationState = ref.read(memorizationProvider);
+
+    // WHY: Only proceed if in memorization mode.
+    if (!memorizationState.isMemorizationMode) {
+      return; // Do nothing if not memorizing
+    }
+
     final int currentPage =
         _pageController.page?.round() ?? (widget.initialPage - 1);
     final int pageNumber = currentPage + 1;
 
-    if (!memorizationState.isMemorizationMode) {
-      // WHY: Default behavior when not in memorization mode.
-      _toggleOverlay();
-      return;
-    }
-
-    // WHY: When in memorization mode, taps reveal ayahs.
-    // We must read the page data to know when the page is complete.
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
 
     asyncPageData.whenData((PageData pageData) {
-      // WHY: Find all unique ayahs on this page to get the total count.
+      // Find all unique ayahs on this page
       final Set<String> uniqueAyahs = <String>{};
       for (final line in pageData.layout.lines) {
         if (line.lineType == 'ayah') {
           for (final word in line.words) {
-            // We only care about ayahs > 0 (not basmallahs marked as ayah 0)
             if (word.ayahNumber > 0) {
               uniqueAyahs.add("${word.surahNumber}:${word.ayahNumber}");
             }
@@ -128,64 +120,47 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       final int revealedCount =
           memorizationState.revealedLinesMap[pageNumber] ?? 0;
 
+      // WHY: Only increment if the page is not yet fully revealed.
       if (revealedCount < totalAyahsOnPage) {
-        // WHY: If page is not complete, increment the reveal count.
         ref.read(memorizationProvider.notifier).incrementReveal(pageNumber);
-      } else {
-        // WHY: If page is complete, allow the overlay to be toggled.
-        _toggleOverlay();
       }
+      // WHY: No longer need to toggle overlay when page is complete.
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // WHY: We watch the provider to rebuild when memorization mode is toggled.
-    final bool isMemorizing = ref
-        .watch(memorizationProvider)
-        .isMemorizationMode;
-
-    return GestureDetector(
-      onTap: _handleTap,
-      child: Stack(
+    // WHY: Wrap the content in a Scaffold to provide structure for the BottomAppBar.
+    return Scaffold(
+      // WHY: Use Scaffold's body for the main content (PageView).
+      body: Stack(
         children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: 604,
-            reverse: true,
-            onPageChanged: (index) {
-              final int newPageNumber = index + 1;
-              _saveCurrentPage(newPageNumber);
-
-              // WHY: If the user swipes to a new page while memorizing,
-              // we must hide the overlay to force them to reveal the new page.
-              if (isMemorizing && _isOverlayVisible) {
-                setState(() {
-                  _isOverlayVisible = false;
-                });
-              }
-            },
-            itemBuilder: (context, index) {
-              return MushafPageWidget(pageNumber: index + 1);
-            },
+          // WHY: Wrap PageView in GestureDetector to capture taps for memorization.
+          GestureDetector(
+            onTap: _handleMemorizationTap,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: 604,
+              reverse: true,
+              onPageChanged: (index) {
+                _saveCurrentPage(index + 1);
+                // WHY: No longer need to hide overlay on page change.
+              },
+              itemBuilder: (context, index) {
+                return MushafPageWidget(pageNumber: index + 1);
+              },
+            ),
           ),
-          MushafOverlayWidget(
-            isVisible: _isOverlayVisible,
-            onBackButtonPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            // WHY: We pass a callback to let the overlay toggle the
-            // memorization mode and hide itself.
-            onToggleMemorization: () {
-              ref.read(memorizationProvider.notifier).toggleMode();
-              if (_isOverlayVisible) {
-                _toggleOverlay();
-              }
-            },
-          ),
+          // MushafOverlayWidget(...) // WHY: Removed the old overlay instance
         ],
+      ),
+      // WHY: Add the new persistent bottom menu.
+      bottomNavigationBar: MushafBottomMenu(
+        onBackButtonPressed: () {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        },
       ),
     );
   }
