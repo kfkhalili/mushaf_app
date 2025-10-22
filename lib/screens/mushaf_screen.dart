@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
-// import '../widgets/mushaf_overlay_widget.dart'; // WHY: Removed old overlay import
-import '../widgets/mushaf_bottom_menu.dart'; // WHY: Added new bottom menu import
+import '../widgets/mushaf_bottom_menu.dart';
 import '../providers.dart';
 import '../models.dart';
 
@@ -67,13 +66,16 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
-  // bool _isOverlayVisible = false; // WHY: Removed state for overlay visibility
-
-  // void _toggleOverlay() { ... } // WHY: Removed function for toggling overlay
 
   Future<void> _saveCurrentPage(int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
+  }
+
+  // WHY: New function to clear the last page preference.
+  Future<void> _clearLastPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('last_page');
   }
 
   @override
@@ -88,23 +90,18 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.dispose();
   }
 
-  // WHY: Renamed and simplified the tap handler for clarity.
   void _handleMemorizationTap() {
     final memorizationState = ref.read(memorizationProvider);
-
-    // WHY: Only proceed if in memorization mode.
     if (!memorizationState.isMemorizationMode) {
-      return; // Do nothing if not memorizing
+      return;
     }
 
     final int currentPage =
         _pageController.page?.round() ?? (widget.initialPage - 1);
     final int pageNumber = currentPage + 1;
-
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
 
     asyncPageData.whenData((PageData pageData) {
-      // Find all unique ayahs on this page
       final Set<String> uniqueAyahs = <String>{};
       for (final line in pageData.layout.lines) {
         if (line.lineType == 'ayah') {
@@ -116,26 +113,20 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         }
       }
       final int totalAyahsOnPage = uniqueAyahs.length;
-
       final int revealedCount =
           memorizationState.revealedLinesMap[pageNumber] ?? 0;
 
-      // WHY: Only increment if the page is not yet fully revealed.
       if (revealedCount < totalAyahsOnPage) {
         ref.read(memorizationProvider.notifier).incrementReveal(pageNumber);
       }
-      // WHY: No longer need to toggle overlay when page is complete.
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // WHY: Wrap the content in a Scaffold to provide structure for the BottomAppBar.
     return Scaffold(
-      // WHY: Use Scaffold's body for the main content (PageView).
       body: Stack(
         children: [
-          // WHY: Wrap PageView in GestureDetector to capture taps for memorization.
           GestureDetector(
             onTap: _handleMemorizationTap,
             child: PageView.builder(
@@ -144,21 +135,25 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
               reverse: true,
               onPageChanged: (index) {
                 _saveCurrentPage(index + 1);
-                // WHY: No longer need to hide overlay on page change.
               },
               itemBuilder: (context, index) {
                 return MushafPageWidget(pageNumber: index + 1);
               },
             ),
           ),
-          // MushafOverlayWidget(...) // WHY: Removed the old overlay instance
         ],
       ),
-      // WHY: Add the new persistent bottom menu.
       bottomNavigationBar: MushafBottomMenu(
-        onBackButtonPressed: () {
+        // WHY: Update the back button logic here.
+        onBackButtonPressed: () async {
+          // Make the callback async
           if (Navigator.canPop(context)) {
-            Navigator.pop(context);
+            // WHY: Clear the saved page *before* popping the screen.
+            await _clearLastPage();
+            if (context.mounted) {
+              // Check if widget is still mounted
+              Navigator.pop(context);
+            }
           }
         },
       ),
