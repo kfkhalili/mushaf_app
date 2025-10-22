@@ -6,6 +6,7 @@ import '../constants.dart';
 import 'mushaf_screen.dart';
 import '../utils/helpers.dart';
 import '../models.dart';
+import '../widgets/juz_list_view.dart';
 
 class SurahSelectionScreen extends ConsumerStatefulWidget {
   const SurahSelectionScreen({super.key});
@@ -16,16 +17,14 @@ class SurahSelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
-  // WHY: Default index is now 2 to select "السور" (Surah) on the right.
   int _currentIndex = 2; // 0: Page, 1: Juz, 2: Surah
 
   Widget _buildCurrentView() {
-    // WHY: Update switch cases to match new index meanings.
     switch (_currentIndex) {
       case 0: // Page
         return const Center(child: Text("Page View (Not Implemented)"));
       case 1: // Juz'
-        return const Center(child: Text("Juz' View (Not Implemented)"));
+        return const JuzListView();
       case 2: // Surah (Default)
       default:
         final surahsAsync = ref.watch(surahListProvider);
@@ -34,6 +33,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
             itemCount: surahs.length,
             itemBuilder: (context, index) {
               final surah = surahs[index];
+              // WHY: Correctly pass the 'surah' named parameter.
               return SurahListItem(surah: surah);
             },
             separatorBuilder: (context, index) =>
@@ -50,7 +50,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const double barHeight = 64.0;
-    const double labelFontSize = 22.0;
+    const double labelFontSize = 26.0;
 
     return Scaffold(
       body: SafeArea(
@@ -87,9 +87,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                // --- Page Button (Now Leftmost - Index 0) ---
                 TextButton(
-                  // WHY: Update index to 0 for Page.
                   onPressed: () => setState(() => _currentIndex = 0),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
@@ -99,7 +97,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
                         : Colors.grey.shade400,
                   ),
                   child: Text(
-                    'الصفحات', // Pages
+                    'الصفحات',
                     style: TextStyle(
                       fontSize: labelFontSize,
                       color: _currentIndex == 0
@@ -108,9 +106,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
                     ),
                   ),
                 ),
-                // --- Juz' Button (Stays in Middle - Index 1) ---
                 TextButton(
-                  // WHY: Update index to 1 for Juz'.
                   onPressed: () => setState(() => _currentIndex = 1),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
@@ -120,7 +116,7 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
                         : Colors.grey.shade400,
                   ),
                   child: Text(
-                    'الأجزاء', // Juz'
+                    'الأجزاء',
                     style: TextStyle(
                       fontSize: labelFontSize,
                       color: _currentIndex == 1
@@ -129,21 +125,17 @@ class _SurahSelectionScreenState extends ConsumerState<SurahSelectionScreen> {
                     ),
                   ),
                 ),
-                // --- Surah Button (Now Rightmost - Index 2 - Default) ---
                 TextButton(
-                  // WHY: Update index to 2 for Surah.
                   onPressed: () => setState(() => _currentIndex = 2),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(50, barHeight),
                     foregroundColor: _currentIndex == 2
-                        ? theme
-                              .colorScheme
-                              .primary // Selected color
-                        : Colors.grey.shade400, // Unselected color
+                        ? theme.colorScheme.primary
+                        : Colors.grey.shade400,
                   ),
                   child: Text(
-                    'السور', // Surahs
+                    'السور',
                     style: TextStyle(
                       fontSize: labelFontSize,
                       color: _currentIndex == 2
@@ -213,7 +205,7 @@ class SurahListItem extends StatelessWidget {
         surahNameGlyph,
         style: TextStyle(
           fontFamily: surahNameFontFamily,
-          fontSize: 32,
+          fontSize: 36,
           color: theme.textTheme.bodyLarge?.color,
         ),
       ),
