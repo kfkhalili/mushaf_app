@@ -8,7 +8,6 @@ import 'line_widget.dart';
 import '../constants.dart';
 import '../models.dart';
 import '../screens/mushaf_screen.dart'; // WHY: Import to get memorizationProvider
-import '../constants.dart';
 
 class MushafPageWidget extends ConsumerWidget {
   final int pageNumber;
