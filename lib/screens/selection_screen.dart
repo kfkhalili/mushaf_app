@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:shared_preferences/shared_preferences.dart'; // No longer needed here
-// import '../providers.dart'; // No longer needed directly here for surahList
 import '../constants.dart';
-// import 'mushaf_screen.dart'; // No longer needed here
-// import '../utils/helpers.dart'; // No longer needed here
-// import '../models.dart'; // No longer needed here
 import '../widgets/juz_list_view.dart';
-import '../widgets/surah_list_view.dart'; // WHY: Import the new SurahListView
+import '../widgets/surah_list_view.dart';
+import '../widgets/page_list_view.dart'; // WHY: Import the new PageListView
 
-// WHY: Renamed class to reflect its general purpose.
 class SelectionScreen extends ConsumerStatefulWidget {
   const SelectionScreen({super.key});
 
@@ -17,19 +12,18 @@ class SelectionScreen extends ConsumerStatefulWidget {
   ConsumerState<SelectionScreen> createState() => _SelectionScreenState();
 }
 
-// WHY: Renamed state class accordingly.
 class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   int _currentIndex = 2; // 0: Page, 1: Juz, 2: Surah
 
   Widget _buildCurrentView() {
     switch (_currentIndex) {
       case 0: // Page
-        return const Center(child: Text("Page View (Not Implemented)"));
+        // WHY: Return the PageListView widget.
+        return const PageListView();
       case 1: // Juz'
         return const JuzListView();
       case 2: // Surah (Default)
       default:
-        // WHY: Simply return an instance of the new SurahListView widget.
         return const SurahListView();
     }
   }
@@ -38,7 +32,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const double barHeight = 64.0;
-    const double labelFontSize = 26.0;
+    const double labelFontSize = 22.0;
 
     return Scaffold(
       body: SafeArea(
@@ -47,7 +41,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Text(
-                'quran', // App title/logo
+                /* ... Title ... */ 'quran',
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: 50,
@@ -55,12 +49,10 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                 ),
               ),
             ),
-            // WHY: The currently selected view (Surah, Juz', Page) is built here.
             Expanded(child: _buildCurrentView()),
           ],
         ),
       ),
-      // WHY: Bottom navigation bar remains the same.
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF212121),
         padding: EdgeInsets.zero,
@@ -71,14 +63,15 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
           child: DefaultTextStyle(
             style: TextStyle(
               fontSize: labelFontSize,
-              color: Colors.grey.shade400, // Unselected color
+              color: Colors.grey.shade400,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 TextButton(
-                  onPressed: () => setState(() => _currentIndex = 0),
+                  /* ... Page Button ... */ onPressed: () =>
+                      setState(() => _currentIndex = 0),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(50, barHeight),
@@ -97,7 +90,8 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => setState(() => _currentIndex = 1),
+                  /* ... Juz' Button ... */ onPressed: () =>
+                      setState(() => _currentIndex = 1),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(50, barHeight),
@@ -116,7 +110,8 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => setState(() => _currentIndex = 2),
+                  /* ... Surah Button ... */ onPressed: () =>
+                      setState(() => _currentIndex = 2),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(50, barHeight),

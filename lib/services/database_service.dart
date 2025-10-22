@@ -556,4 +556,68 @@ class DatabaseService {
     // Return the list of successfully processed Juz' info.
     return juzList;
   }
+
+  /// Retrieves the text of the first 'count' words appearing on a specific page.
+  Future<String> getFirstWordsOfPage(int pageNumber, {int count = 3}) async {
+    await init();
+    if (_layoutDb == null || _scriptDb == null) {
+      throw Exception("Required DBs not initialized for getFirstWordsOfPage.");
+    }
+
+    // 1. Find the first 'ayah' line on the page that has words.
+    final List<Map<String, dynamic>> lines = await _layoutDb!.query(
+      'pages',
+      columns: ['first_word_id', 'last_word_id'],
+      where: 'page_number = ? AND line_type = ? AND first_word_id > 0',
+      whereArgs: [pageNumber.toString(), 'ayah'],
+      orderBy: 'line_number ASC',
+      limit: 5, // Fetch a few lines in case the very first is empty/basmallah
+    );
+
+    int firstWordId = 0;
+    // Find the first line in the results that actually has a word id > 0
+    for (var line in lines) {
+      int currentFirstWordId = _parseInt(line['first_word_id']);
+      if (currentFirstWordId > 0) {
+        // Check if this word is part of Basmallah (often ayah 0)
+        final List<Map<String, dynamic>> checkWord = await _scriptDb!.query(
+          'words',
+          columns: ['ayah'],
+          where: 'id = ?',
+          whereArgs: [currentFirstWordId.toString()],
+          limit: 1,
+        );
+        if (checkWord.isNotEmpty && _parseInt(checkWord.first['ayah']) > 0) {
+          firstWordId = currentFirstWordId;
+          break; // Found the first non-Basmallah word
+        } else if (firstWordId == 0) {
+          // Store the potential Basmallah word ID just in case no other words are found
+          firstWordId = currentFirstWordId;
+        }
+      }
+    }
+
+    // If no valid starting word was found after checking lines
+    if (firstWordId == 0) {
+      if (kDebugMode) {
+        print(
+          "Warning: No valid starting word ID found for preview on page $pageNumber.",
+        );
+      }
+      return "";
+    }
+
+    // 2. Fetch the required number of words starting from that ID.
+    final List<Map<String, dynamic>> words = await _scriptDb!.query(
+      'words',
+      columns: ['text'],
+      where: 'id >= ?',
+      whereArgs: [firstWordId.toString()],
+      orderBy: 'id ASC',
+      limit: count,
+    );
+
+    // 3. Join the text of the words.
+    return words.map((w) => w['text'] as String).join(' ');
+  }
 }
