@@ -14,6 +14,8 @@ class SelectionScreen extends ConsumerStatefulWidget {
 
 class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   int _currentIndex = 2; // 0: Page, 1: Juz, 2: Surah
+  static const double _barHeight = 64.0;
+  static const double _labelFontSize = 22.0;
 
   Widget _buildCurrentView() {
     switch (_currentIndex) {
@@ -28,11 +30,35 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     }
   }
 
+  // WHY: Create a helper method to build the navigation buttons.
+  // This avoids repeating the TextButton logic.
+  Widget _buildNavItem({
+    required int index,
+    required String label,
+    required ThemeData theme,
+  }) {
+    final bool isSelected = _currentIndex == index;
+    final Color? color = isSelected
+        ? theme.colorScheme.primary
+        : Colors.grey.shade400;
+
+    return TextButton(
+      onPressed: () => setState(() => _currentIndex = index),
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size(50, _barHeight),
+        foregroundColor: color,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: _labelFontSize, color: color),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const double barHeight = 64.0;
-    const double labelFontSize = 22.0;
 
     return Scaffold(
       body: SafeArea(
@@ -41,7 +67,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Text(
-                /* ... Title ... */ 'quran',
+                'quran',
                 style: TextStyle(
                   fontFamily: quranCommonFontFamily,
                   fontSize: 50,
@@ -56,79 +82,23 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF212121),
         padding: EdgeInsets.zero,
-        height: barHeight,
+        height: _barHeight,
         clipBehavior: Clip.antiAlias,
         child: SizedBox(
-          height: barHeight,
+          height: _barHeight,
           child: DefaultTextStyle(
             style: TextStyle(
-              fontSize: labelFontSize,
+              fontSize: _labelFontSize,
               color: Colors.grey.shade400,
             ),
+            // WHY: Use the helper method to build the buttons.
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                TextButton(
-                  /* ... Page Button ... */ onPressed: () =>
-                      setState(() => _currentIndex = 0),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(50, barHeight),
-                    foregroundColor: _currentIndex == 0
-                        ? theme.colorScheme.primary
-                        : Colors.grey.shade400,
-                  ),
-                  child: Text(
-                    'الصفحات',
-                    style: TextStyle(
-                      fontSize: labelFontSize,
-                      color: _currentIndex == 0
-                          ? theme.colorScheme.primary
-                          : null,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  /* ... Juz' Button ... */ onPressed: () =>
-                      setState(() => _currentIndex = 1),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(50, barHeight),
-                    foregroundColor: _currentIndex == 1
-                        ? theme.colorScheme.primary
-                        : Colors.grey.shade400,
-                  ),
-                  child: Text(
-                    'الأجزاء',
-                    style: TextStyle(
-                      fontSize: labelFontSize,
-                      color: _currentIndex == 1
-                          ? theme.colorScheme.primary
-                          : null,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  /* ... Surah Button ... */ onPressed: () =>
-                      setState(() => _currentIndex = 2),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(50, barHeight),
-                    foregroundColor: _currentIndex == 2
-                        ? theme.colorScheme.primary
-                        : Colors.grey.shade400,
-                  ),
-                  child: Text(
-                    'السور',
-                    style: TextStyle(
-                      fontSize: labelFontSize,
-                      color: _currentIndex == 2
-                          ? theme.colorScheme.primary
-                          : null,
-                    ),
-                  ),
-                ),
+                _buildNavItem(index: 0, label: 'الصفحات', theme: theme),
+                _buildNavItem(index: 1, label: 'الأجزاء', theme: theme),
+                _buildNavItem(index: 2, label: 'السور', theme: theme),
               ],
             ),
           ),

@@ -4,6 +4,8 @@ import '../providers.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
 import '../models.dart';
+import 'shared/async_list_view.dart'; // WHY: Import the new reusable widget
+import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
 // WHY: Extracted Surah list display logic into its own widget.
 class SurahListView extends ConsumerWidget {
@@ -14,20 +16,14 @@ class SurahListView extends ConsumerWidget {
     // WHY: Watch the provider to get Surah data.
     final surahsAsync = ref.watch(surahListProvider);
 
-    // WHY: Build the UI based on the async state.
-    return surahsAsync.when(
-      data: (surahs) => ListView.separated(
-        itemCount: surahs.length,
-        itemBuilder: (context, index) {
-          final surah = surahs[index];
-          // WHY: Use the dedicated list item widget.
-          return SurahListItem(surah: surah);
-        },
-        separatorBuilder: (context, index) =>
-            const Divider(height: 1, indent: 24, endIndent: 24),
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error loading Surahs: $err')),
+    // WHY: Use the generic AsyncListView to handle loading/error/data states.
+    return AsyncListView<SurahInfo>(
+      asyncValue: surahsAsync,
+      errorText: 'Error loading Surahs',
+      itemBuilder: (context, surah) {
+        // WHY: Use the dedicated list item widget.
+        return SurahListItem(surah: surah);
+      },
     );
   }
 }
@@ -37,9 +33,6 @@ class SurahListItem extends StatelessWidget {
   final SurahInfo surah;
 
   const SurahListItem({super.key, required this.surah});
-
-  // REMOVED: The _navigateToSurah method is no longer needed.
-  // Future<void> _navigateToSurah(BuildContext context, int pageNumber) async { ... }
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +47,8 @@ class SurahListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text(
-            convertToEasternArabicNumerals(surah.surahNumber.toString()),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-          ),
+          // WHY: Use the new reusable LeadingNumberText widget.
+          LeadingNumberText(number: surah.surahNumber),
           const SizedBox(width: 8),
           Text(
             surah.revelationPlace == 'makkah' ? 'مكية' : 'مدنية',
