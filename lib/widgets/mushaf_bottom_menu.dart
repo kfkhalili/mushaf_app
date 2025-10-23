@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../screens/mushaf_screen.dart'; // Import to get memorizationProvider
-import 'countdown_circle.dart'; // Import the circle
+// import 'countdown_circle.dart'; // REMOVED - Circle is no longer displayed here
 
 class MushafBottomMenu extends ConsumerWidget {
   final VoidCallback onBackButtonPressed;
@@ -17,8 +17,9 @@ class MushafBottomMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppThemeMode currentTheme = ref.watch(themeProvider);
-    final memorizationState = ref.watch(memorizationProvider);
-    final bool isMemorizing = memorizationState.isMemorizationMode;
+    final bool isMemorizing = ref.watch(
+      memorizationProvider.select((s) => s.isMemorizationMode),
+    );
 
     final theme = Theme.of(context);
     final Color unselectedIconColor = Colors.grey.shade400;
@@ -31,13 +32,14 @@ class MushafBottomMenu extends ConsumerWidget {
       color: const Color(0xFF212121),
       padding: EdgeInsets.zero,
       height: barHeight,
-      clipBehavior: Clip.none, // Allow potential overflow if needed
+      clipBehavior: Clip.none, // Allow overflow rendering from Stack parent
+      // No shape needed
       child: SizedBox(
         height: barHeight,
         child: IconTheme(
           data: IconThemeData(color: unselectedIconColor, size: iconSize),
           child: Row(
-            // WHY: spaceBetween pushes left/right groups to ends, center widget sits between.
+            // WHY: spaceBetween pushes left and right groups to edges. Center is empty space.
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
@@ -95,7 +97,7 @@ class MushafBottomMenu extends ConsumerWidget {
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
-                  // WHY: Memorization toggle button is back in the left group.
+                  // WHY: Memorization toggle button is always here now.
                   SizedBox(
                     height: barHeight,
                     child: IconButton(
@@ -120,14 +122,8 @@ class MushafBottomMenu extends ConsumerWidget {
                 ],
               ),
 
-              // --- Center Item (Countdown Circle if memorizing) ---
-              // WHY: Only show the circle when memorization is active.
-              if (isMemorizing)
-                const CountdownCircle()
-              else
-                // WHY: Add an empty SizedBox as a placeholder when not memorizing
-                // to help maintain spacing, match circle's approximate width.
-                const SizedBox(width: 56.0),
+              // --- Center Item REMOVED ---
+              // No CountdownCircle or Spacer needed here anymore.
 
               // --- Right Button ---
               SizedBox(

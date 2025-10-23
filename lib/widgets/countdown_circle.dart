@@ -11,10 +11,13 @@ class CountdownCircle extends ConsumerWidget {
       memorizationProvider.select((state) => state.currentRepetitions),
     );
     final theme = Theme.of(context);
+    // WHY: Use the primary color for the background.
+    final Color backgroundColor = theme.colorScheme.primary;
+    // WHY: Use a contrasting color (like white or black based on theme) for text and border.
+    final Color foregroundColor = theme.colorScheme.onPrimary;
 
-    // WHY: Increased size for better visibility and overlap effect.
     const double circleDiameter = 56.0;
-    const double fontSize = 20.0; // Adjusted font size
+    const double fontSize = 20.0;
 
     return GestureDetector(
       onTap: () {
@@ -24,17 +27,17 @@ class CountdownCircle extends ConsumerWidget {
         alignment: Alignment.center,
         children: [
           Container(
-            width: circleDiameter, // Use new size
-            height: circleDiameter, // Use new size
+            width: circleDiameter,
+            height: circleDiameter,
             decoration: BoxDecoration(
-              // WHY: Use a solid color (e.g., matching the bar) for better overlap appearance.
-              color: const Color(0xFF212121),
+              // WHY: Solid primary color background.
+              color: backgroundColor,
               shape: BoxShape.circle,
               border: Border.all(
-                color: theme.colorScheme.primary,
-                width: 2.0, // Slightly thicker border
+                // WHY: Contrasting border color.
+                color: foregroundColor,
+                width: 2.0,
               ),
-              // Optional: Add a subtle shadow for depth
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.3),
@@ -48,9 +51,10 @@ class CountdownCircle extends ConsumerWidget {
           Text(
             currentCount.toString(),
             style: TextStyle(
-              color: theme.colorScheme.primary,
+              // WHY: Contrasting text color.
+              color: foregroundColor,
               fontWeight: FontWeight.bold,
-              fontSize: fontSize, // Use adjusted font size
+              fontSize: fontSize,
             ),
           ),
         ],
