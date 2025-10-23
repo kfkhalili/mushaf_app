@@ -10,7 +10,8 @@ class PageListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      itemCount: 604,
+      // WHY: Use the named constant for total page count.
+      itemCount: totalPages,
       itemBuilder: (context, index) {
         final int pageNumber = index + 1;
         return PageListItem(pageNumber: pageNumber);
@@ -26,8 +27,7 @@ class PageListItem extends ConsumerWidget {
 
   const PageListItem({super.key, required this.pageNumber});
 
-  // REMOVED: The _navigateToPage method is no longer needed.
-  // Future<void> _navigateToPage(BuildContext context, int pageNum) async { ... }
+  // REMOVED: _navigateToPage, now uses helper
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,8 +66,6 @@ class PageListItem extends ConsumerWidget {
           return pageFontFamilyAsync.when(
             data: (fontFamilyName) {
               // WHY: Only display text if BOTH text and font are successfully loaded.
-              // Also check if the loaded font is NOT the fallback, indicating success.
-              // Make sure 'fallbackFontFamily' is accessible, e.g., via constants.dart import.
               if (fontFamilyName != fallbackFontFamily) {
                 return Text(
                   previewText,
@@ -82,8 +80,7 @@ class PageListItem extends ConsumerWidget {
                 );
               } else {
                 // WHY: If the font service returned the fallback, treat it as an error/loading state for the preview.
-                // This handles cases where font_service.dart might return fallback on error.
-                return loadingWidget; // Or errorWidget if preferred when fallback is used.
+                return loadingWidget;
               }
             },
             // WHY: Show loading indicator while the font is loading.

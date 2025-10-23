@@ -1,4 +1,4 @@
-import 'dart:async'; // Import for Completer, though we can simplify
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Import for print
 import 'package:flutter/services.dart';
@@ -20,31 +20,17 @@ class DatabaseService {
 
   bool _isInitialized = false;
 
-  // WHY: This Future is used to ensure that the initialization logic
-  // (_doInit) is only run once, even if 'init()' is called multiple
-  // times concurrently (e.g., by different providers).
+  // WHY: This Future ensures _doInit is only run once.
   Future<void>? _initFuture;
 
   // WHY: This is the new public 'init' method. It acts as a gatekeeper.
   Future<void> init() async {
-    // If already initialized, return immediately.
     if (_isInitialized) return;
-
-    // WHY: The '??=' operator is key.
-    // If _initFuture is null (init hasn't started), it assigns
-    // the result of _doInit() to it and then awaits it.
-    // If _initFuture is *not* null (init is in progress),
-    // it simply awaits the *existing* future.
     _initFuture ??= _doInit();
     await _initFuture;
   }
 
-  // WHY: The original 'init' logic is moved to this private method.
-  // This contains the actual work of opening databases.
   Future<void> _doInit() async {
-    // REMOVED: The '_isInitialized' check is removed from here
-    // as it's now handled by the public 'init()' method.
-
     final documentsDirectory = await getApplicationDocumentsDirectory();
     const dbAssetPath = 'assets/db';
 
@@ -64,10 +50,16 @@ class DatabaseService {
 
     // WHY: Load Juz and Hizb data into cache upon initialization for faster lookups later.
     if (_juzCache.isEmpty && _juzDb != null) {
-      _juzCache = await _juzDb!.query('juz', orderBy: 'juz_number ASC');
+      _juzCache = await _juzDb!.query(
+        DbConstants.juzTable,
+        orderBy: '${DbConstants.juzNumberCol} ASC',
+      );
     }
     if (_hizbCache.isEmpty && _hizbDb != null) {
-      _hizbCache = await _hizbDb!.query('hizbs', orderBy: 'hizb_number ASC');
+      _hizbCache = await _hizbDb!.query(
+        DbConstants.hizbsTable,
+        orderBy: '${DbConstants.hizbNumberCol} ASC',
+      );
     }
 
     _isInitialized = true;
@@ -113,9 +105,6 @@ class DatabaseService {
 
   /// Fetches all surahs with their names, revelation place, and starting page.
   Future<List<SurahInfo>> getAllSurahs() async {
-    // WHY: This 'await init()' is now safe and efficient.
-    // It will either return immediately, await an in-progress
-    // init, or start the init, but the work only happens once.
     await init();
     if (_metadataDb == null || _layoutDb == null) {
       throw Exception(
@@ -125,31 +114,33 @@ class DatabaseService {
 
     // 1. Get all Surah metadata
     final List<Map<String, dynamic>> chapters = await _metadataDb!.query(
-      'chapters',
-      orderBy: 'id ASC',
+      DbConstants.chaptersTable,
+      orderBy: '${DbConstants.idCol} ASC',
     );
 
     // 2. Get the starting page for each Surah (earliest page where surah_number appears).
     final List<Map<String, dynamic>>
     surahStartPages = await _layoutDb!.rawQuery(
-      'SELECT surah_number, MIN(page_number) as start_page FROM pages WHERE surah_number > 0 GROUP BY surah_number',
+      'SELECT ${DbConstants.surahNumberCol}, MIN(${DbConstants.pageNumberCol}) as ${DbConstants.startPageAlias} FROM ${DbConstants.pagesTable} WHERE ${DbConstants.surahNumberCol} > 0 GROUP BY ${DbConstants.surahNumberCol}',
     );
 
     // 3. Create a quick lookup map for page numbers (Surah Number -> Start Page).
     final Map<int, int> pageMap = {
       for (var row in surahStartPages)
-        _parseInt(row['surah_number']): _parseInt(row['start_page']),
+        _parseInt(row[DbConstants.surahNumberCol]): _parseInt(
+          row[DbConstants.startPageAlias],
+        ),
     };
-    // WHY: Surah Al-Fatiha starts on page 1, which might not be picked up by the query if page 1 layout doesn't explicitly list surah_number 1.
+    // WHY: Surah Al-Fatiha starts on page 1, which might not be picked up by the query.
     pageMap[1] = 1;
 
     // 4. Combine the data into a list of SurahInfo objects.
     return chapters.map((chapter) {
-      final int surahNum = _parseInt(chapter['id']);
+      final int surahNum = _parseInt(chapter[DbConstants.idCol]);
       return SurahInfo(
         surahNumber: surahNum,
-        nameArabic: chapter['name_arabic'] as String,
-        revelationPlace: chapter['revelation_place'] as String,
+        nameArabic: chapter[DbConstants.nameArabicCol] as String,
+        revelationPlace: chapter[DbConstants.revelationPlaceCol] as String,
         startingPage: pageMap[surahNum] ?? 0, // Default to 0 if not found
       );
     }).toList();
@@ -163,14 +154,15 @@ class DatabaseService {
 
     try {
       final List<Map<String, dynamic>> result = await _metadataDb!.query(
-        'chapters',
-        columns: ['name_arabic'],
-        where: 'id = ?',
+        DbConstants.chaptersTable,
+        columns: [DbConstants.nameArabicCol],
+        where: '${DbConstants.idCol} = ?',
         whereArgs: [surahId.toString()],
         limit: 1,
       );
-      if (result.isNotEmpty && result.first['name_arabic'] != null) {
-        return result.first['name_arabic'] as String;
+      if (result.isNotEmpty &&
+          result.first[DbConstants.nameArabicCol] != null) {
+        return result.first[DbConstants.nameArabicCol] as String;
       }
       return 'Surah $surahId'; // Fallback name
     } catch (e) {
@@ -193,10 +185,10 @@ class DatabaseService {
 
     // Get all layout lines for the page, ordered.
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
-      'pages',
-      where: 'page_number = ?',
+      DbConstants.pagesTable,
+      where: '${DbConstants.pageNumberCol} = ?',
       whereArgs: [pageNumber.toString()],
-      orderBy: 'line_number ASC',
+      orderBy: '${DbConstants.lineNumberCol} ASC',
     );
 
     if (lines.isEmpty) {
@@ -207,21 +199,22 @@ class DatabaseService {
 
     // WHY: Iterate through lines to find the first 'ayah' line with a valid word ID.
     for (final line in lines) {
-      if (line['line_type'] == 'ayah' && line['first_word_id'] != null) {
-        final firstWordId = _parseInt(line['first_word_id']);
+      if (line[DbConstants.lineTypeCol] == 'ayah' &&
+          line[DbConstants.firstWordIdCol] != null) {
+        final firstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
         if (firstWordId == 0) continue; // Skip if ID is invalid
 
         // Query the script DB to get the Surah/Ayah for this word ID.
         final List<Map<String, dynamic>> words = await _scriptDb!.query(
-          'words',
-          columns: ['surah', 'ayah'],
-          where: 'id = ?',
+          DbConstants.wordsTable,
+          columns: [DbConstants.surahCol, DbConstants.ayahNumberCol],
+          where: '${DbConstants.idCol} = ?',
           whereArgs: [firstWordId.toString()],
           limit: 1,
         );
         if (words.isNotEmpty) {
-          final int surah = _parseInt(words.first['surah']);
-          final int ayah = _parseInt(words.first['ayah']);
+          final int surah = _parseInt(words.first[DbConstants.surahCol]);
+          final int ayah = _parseInt(words.first[DbConstants.ayahNumberCol]);
           if (surah > 0 && ayah > 0) {
             return {'surah': surah, 'ayah': ayah}; // Found it
           }
@@ -230,8 +223,9 @@ class DatabaseService {
     }
     // WHY: Fallback if no 'ayah' line found (e.g., page starts exactly with a Surah name).
     for (final line in lines) {
-      if (line['line_type'] == 'surah_name' && line['surah_number'] != null) {
-        final int surahNum = _parseInt(line['surah_number']);
+      if (line[DbConstants.lineTypeCol] == 'surah_name' &&
+          line[DbConstants.surahNumberCol] != null) {
+        final int surahNum = _parseInt(line[DbConstants.surahNumberCol]);
         if (surahNum > 0) {
           return {'surah': surahNum, 'ayah': 1}; // Assume Ayah 1
         }
@@ -264,8 +258,8 @@ class DatabaseService {
     if (_juzCache.isEmpty) return 0; // Cache not loaded
     // Iterate through cached Juz' ranges.
     for (final row in _juzCache) {
-      final firstKey = row['first_verse_key'] as String?;
-      final lastKey = row['last_verse_key'] as String?;
+      final firstKey = row[DbConstants.firstVerseKeyCol] as String?;
+      final lastKey = row[DbConstants.lastVerseKeyCol] as String?;
       if (firstKey == null || lastKey == null) continue; // Skip invalid data
 
       try {
@@ -276,7 +270,7 @@ class DatabaseService {
         final aLast = _parseInt(lastKey.split(':').last);
         // Check if the target ayah falls within this Juz' range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return _parseInt(row['juz_number']); // Found it
+          return _parseInt(row[DbConstants.juzNumberCol]); // Found it
         }
       } catch (_) {
         continue; // Ignore errors parsing keys
@@ -290,8 +284,8 @@ class DatabaseService {
     if (_hizbCache.isEmpty) return 0; // Cache not loaded
     // Iterate through cached Hizb ranges.
     for (final row in _hizbCache) {
-      final firstKey = row['first_verse_key'] as String?;
-      final lastKey = row['last_verse_key'] as String?;
+      final firstKey = row[DbConstants.firstVerseKeyCol] as String?;
+      final lastKey = row[DbConstants.lastVerseKeyCol] as String?;
       if (firstKey == null || lastKey == null) continue; // Skip invalid data
 
       try {
@@ -302,7 +296,7 @@ class DatabaseService {
         final aLast = _parseInt(lastKey.split(':').last);
         // Check if the target ayah falls within this Hizb range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return _parseInt(row['hizb_number']); // Found it
+          return _parseInt(row[DbConstants.hizbNumberCol]); // Found it
         }
       } catch (_) {
         continue; // Ignore errors parsing keys
@@ -347,10 +341,10 @@ class DatabaseService {
 
     // Get all layout lines for the page.
     final List<Map<String, dynamic>> linesData = await _layoutDb!.query(
-      'pages',
-      where: 'page_number = ?',
+      DbConstants.pagesTable,
+      where: '${DbConstants.pageNumberCol} = ?',
       whereArgs: [pageNumber.toString()],
-      orderBy: 'line_number ASC',
+      orderBy: '${DbConstants.lineNumberCol} ASC',
     );
 
     if (linesData.isEmpty) {
@@ -362,30 +356,34 @@ class DatabaseService {
     List<LineInfo> lines = [];
     // Process each line to fetch words or surah name.
     for (var lineData in linesData) {
-      final lineType = lineData['line_type'] as String;
+      final lineType = lineData[DbConstants.lineTypeCol] as String;
       List<Word> words = [];
       String? surahName;
-      final int surahNum = _parseInt(lineData['surah_number']);
+      final int surahNum = _parseInt(lineData[DbConstants.surahNumberCol]);
 
       if (lineType == 'ayah') {
-        final firstWordId = _parseInt(lineData['first_word_id']);
-        final lastWordId = _parseInt(lineData['last_word_id']);
+        final firstWordId = _parseInt(lineData[DbConstants.firstWordIdCol]);
+        final lastWordId = _parseInt(lineData[DbConstants.lastWordIdCol]);
 
         // Fetch words within the ID range for this line.
         if (firstWordId > 0 && lastWordId >= firstWordId) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
-            'words',
+            DbConstants.wordsTable,
             // WHY: Include surah and ayah for each word, needed for memorization logic.
-            columns: ['text', 'surah', 'ayah'],
-            where: 'id BETWEEN ? AND ?',
+            columns: [
+              DbConstants.textCol,
+              DbConstants.surahCol,
+              DbConstants.ayahNumberCol,
+            ],
+            where: '${DbConstants.idCol} BETWEEN ? AND ?',
             whereArgs: [firstWordId.toString(), lastWordId.toString()],
-            orderBy: 'id ASC',
+            orderBy: '${DbConstants.idCol} ASC',
           );
           words = wordsData.map((wordMap) {
             return Word(
-              text: wordMap['text'] as String,
-              surahNumber: _parseInt(wordMap['surah']),
-              ayahNumber: _parseInt(wordMap['ayah']),
+              text: wordMap[DbConstants.textCol] as String,
+              surahNumber: _parseInt(wordMap[DbConstants.surahCol]),
+              ayahNumber: _parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
           }).toList();
         }
@@ -393,17 +391,21 @@ class DatabaseService {
         else if (firstWordId > 0 &&
             (lastWordId == 0 || lastWordId < firstWordId)) {
           final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
-            'words',
-            columns: ['text', 'surah', 'ayah'],
-            where: 'id = ?',
+            DbConstants.wordsTable,
+            columns: [
+              DbConstants.textCol,
+              DbConstants.surahCol,
+              DbConstants.ayahNumberCol,
+            ],
+            where: '${DbConstants.idCol} = ?',
             whereArgs: [firstWordId.toString()],
             limit: 1,
           );
           words = wordsData.map((wordMap) {
             return Word(
-              text: wordMap['text'] as String,
-              surahNumber: _parseInt(wordMap['surah']),
-              ayahNumber: _parseInt(wordMap['ayah']),
+              text: wordMap[DbConstants.textCol] as String,
+              surahNumber: _parseInt(wordMap[DbConstants.surahCol]),
+              ayahNumber: _parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
           }).toList();
         }
@@ -417,8 +419,8 @@ class DatabaseService {
       // Add the processed line info to the list.
       lines.add(
         LineInfo(
-          lineNumber: _parseInt(lineData['line_number']),
-          isCentered: _parseInt(lineData['is_centered']) == 1,
+          lineNumber: _parseInt(lineData[DbConstants.lineNumberCol]),
+          isCentered: _parseInt(lineData[DbConstants.isCenteredCol]) == 1,
           lineType: lineType,
           surahNumber: surahNum,
           words: words,
@@ -439,11 +441,11 @@ class DatabaseService {
 
     // 1. Find the first word ID for the given surah and ayah.
     final List<Map<String, dynamic>> words = await _scriptDb!.query(
-      'words',
-      columns: ['id'],
-      where: 'surah = ? AND ayah = ?',
+      DbConstants.wordsTable,
+      columns: [DbConstants.idCol],
+      where: '${DbConstants.surahCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
       whereArgs: [surahNumber.toString(), ayahNumber.toString()],
-      orderBy: 'id ASC',
+      orderBy: '${DbConstants.idCol} ASC',
       limit: 1,
     );
 
@@ -456,36 +458,39 @@ class DatabaseService {
         "DatabaseService: Word not found for Surah $surahNumber, Ayah $ayahNumber.",
       );
     }
-    final int firstWordId = _parseInt(words.first['id']);
+    final int firstWordId = _parseInt(words.first[DbConstants.idCol]);
 
     // 2. Find the page layout entry containing this word ID.
     // Check if the word ID falls within the first_word_id and last_word_id range.
     final List<Map<String, dynamic>> pages = await _layoutDb!.query(
-      'pages',
-      columns: ['page_number'],
-      where: 'first_word_id <= ? AND last_word_id >= ? AND line_type = ?',
+      DbConstants.pagesTable,
+      columns: [DbConstants.pageNumberCol],
+      where:
+          '${DbConstants.firstWordIdCol} <= ? AND ${DbConstants.lastWordIdCol} >= ? AND ${DbConstants.lineTypeCol} = ?',
       whereArgs: [firstWordId.toString(), firstWordId.toString(), 'ayah'],
       orderBy:
-          'page_number ASC, line_number ASC', // Ensure the earliest occurrence
+          '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC', // Ensure the earliest occurrence
       limit: 1,
     );
 
     if (pages.isNotEmpty) {
-      return _parseInt(pages.first['page_number']);
+      return _parseInt(pages.first[DbConstants.pageNumberCol]);
     }
 
     // Fallback: Check if it's the very first word on a line (last_word_id might be 0 or equal)
     final List<Map<String, dynamic>> firstWordPages = await _layoutDb!.query(
-      'pages',
-      columns: ['page_number'],
-      where: 'first_word_id = ? AND line_type = ?',
+      DbConstants.pagesTable,
+      columns: [DbConstants.pageNumberCol],
+      where:
+          '${DbConstants.firstWordIdCol} = ? AND ${DbConstants.lineTypeCol} = ?',
       whereArgs: [firstWordId.toString(), 'ayah'],
-      orderBy: 'page_number ASC, line_number ASC',
+      orderBy:
+          '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC',
       limit: 1,
     );
 
     if (firstWordPages.isNotEmpty) {
-      return _parseInt(firstWordPages.first['page_number']);
+      return _parseInt(firstWordPages.first[DbConstants.pageNumberCol]);
     }
 
     // Final fallback specifically for Surah starts (like Surah 1 page 1)
@@ -509,26 +514,32 @@ class DatabaseService {
 
     // Try finding the page where the 'surah_name' line appears first.
     final List<Map<String, dynamic>> result = await _layoutDb!.query(
-      'pages',
-      columns: ['MIN(page_number) as start_page'],
-      where: 'surah_number = ? AND line_type = ?',
+      DbConstants.pagesTable,
+      columns: [
+        'MIN(${DbConstants.pageNumberCol}) as ${DbConstants.startPageAlias}',
+      ],
+      where:
+          '${DbConstants.surahNumberCol} = ? AND ${DbConstants.lineTypeCol} = ?',
       whereArgs: [surahNumber.toString(), 'surah_name'],
       limit: 1,
     );
 
-    if (result.isNotEmpty && result.first['start_page'] != null) {
-      return _parseInt(result.first['start_page']);
+    if (result.isNotEmpty && result.first[DbConstants.startPageAlias] != null) {
+      return _parseInt(result.first[DbConstants.startPageAlias]);
     }
     // Broader fallback if surah_name line isn't found (look for any line with that surah_number).
     final List<Map<String, dynamic>> broaderResult = await _layoutDb!.query(
-      'pages',
-      columns: ['MIN(page_number) as start_page'],
-      where: 'surah_number = ?',
+      DbConstants.pagesTable,
+      columns: [
+        'MIN(${DbConstants.pageNumberCol}) as ${DbConstants.startPageAlias}',
+      ],
+      where: '${DbConstants.surahNumberCol} = ?',
       whereArgs: [surahNumber.toString()],
       limit: 1,
     );
-    if (broaderResult.isNotEmpty && broaderResult.first['start_page'] != null) {
-      return _parseInt(broaderResult.first['start_page']);
+    if (broaderResult.isNotEmpty &&
+        broaderResult.first[DbConstants.startPageAlias] != null) {
+      return _parseInt(broaderResult.first[DbConstants.startPageAlias]);
     }
 
     throw Exception(
@@ -546,8 +557,9 @@ class DatabaseService {
     List<JuzInfo> juzList = [];
     // Process each Juz' entry from the cache.
     for (final juzData in _juzCache) {
-      final int juzNum = _parseInt(juzData['juz_number']);
-      final String? firstVerseKey = juzData['first_verse_key'] as String?;
+      final int juzNum = _parseInt(juzData[DbConstants.juzNumberCol]);
+      final String? firstVerseKey =
+          juzData[DbConstants.firstVerseKeyCol] as String?;
 
       if (firstVerseKey != null && firstVerseKey.isNotEmpty) {
         try {
@@ -590,28 +602,30 @@ class DatabaseService {
 
     // 1. Find the first 'ayah' line on the page that has words.
     final List<Map<String, dynamic>> lines = await _layoutDb!.query(
-      'pages',
-      columns: ['first_word_id', 'last_word_id'],
-      where: 'page_number = ? AND line_type = ? AND first_word_id > 0',
+      DbConstants.pagesTable,
+      columns: [DbConstants.firstWordIdCol, DbConstants.lastWordIdCol],
+      where:
+          '${DbConstants.pageNumberCol} = ? AND ${DbConstants.lineTypeCol} = ? AND ${DbConstants.firstWordIdCol} > 0',
       whereArgs: [pageNumber.toString(), 'ayah'],
-      orderBy: 'line_number ASC',
+      orderBy: '${DbConstants.lineNumberCol} ASC',
       limit: 5, // Fetch a few lines in case the very first is empty/basmallah
     );
 
     int firstWordId = 0;
     // Find the first line in the results that actually has a word id > 0
     for (var line in lines) {
-      int currentFirstWordId = _parseInt(line['first_word_id']);
+      int currentFirstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
       if (currentFirstWordId > 0) {
         // Check if this word is part of Basmallah (often ayah 0)
         final List<Map<String, dynamic>> checkWord = await _scriptDb!.query(
-          'words',
-          columns: ['ayah'],
-          where: 'id = ?',
+          DbConstants.wordsTable,
+          columns: [DbConstants.ayahNumberCol],
+          where: '${DbConstants.idCol} = ?',
           whereArgs: [currentFirstWordId.toString()],
           limit: 1,
         );
-        if (checkWord.isNotEmpty && _parseInt(checkWord.first['ayah']) > 0) {
+        if (checkWord.isNotEmpty &&
+            _parseInt(checkWord.first[DbConstants.ayahNumberCol]) > 0) {
           firstWordId = currentFirstWordId;
           break; // Found the first non-Basmallah word
         } else if (firstWordId == 0) {
@@ -633,15 +647,15 @@ class DatabaseService {
 
     // 2. Fetch the required number of words starting from that ID.
     final List<Map<String, dynamic>> words = await _scriptDb!.query(
-      'words',
-      columns: ['text'],
-      where: 'id >= ?',
+      DbConstants.wordsTable,
+      columns: [DbConstants.textCol],
+      where: '${DbConstants.idCol} >= ?',
       whereArgs: [firstWordId.toString()],
-      orderBy: 'id ASC',
+      orderBy: '${DbConstants.idCol} ASC',
       limit: count,
     );
 
     // 3. Join the text of the words.
-    return words.map((w) => w['text'] as String).join(' ');
+    return words.map((w) => w[DbConstants.textCol] as String).join(' ');
   }
 }

@@ -128,12 +128,9 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
-  // REMOVED: late int _currentPageNumber;
 
-  // WHY: This function is now only responsible for persistence,
-  // not for managing widget state (which is handled by Riverpod).
+  // WHY: This function is only responsible for persistence.
   Future<void> _savePageToPrefs(int pageNumber) async {
-    // REMOVED: setState(() { ... });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
   }
@@ -148,10 +145,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.initState();
     _pageController = PageController(initialPage: widget.initialPage - 1);
 
-    // WHY: We initialize the global page state provider
-    // with the initial page passed to this widget. We use 'ref.read'
-    // in a microtask because initState runs before the first build,
-    // and this ensures the state is set correctly before anyone else reads it.
+    // WHY: Initialize the global page state provider.
     Future.microtask(
       () => ref.read(currentPageProvider.notifier).state = widget.initialPage,
     );
@@ -169,8 +163,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     if (!memorizationState.isMemorizationMode) return;
 
     // WHY: Read the current page number directly from the provider.
-    // We use 'ref.read' because this is inside a function callback
-    // and we just need the *current* value, not to listen for changes.
     final int pageNumber = ref.read(currentPageProvider);
 
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
@@ -205,32 +197,26 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // WHY: Watch the global page state. This widget will rebuild
-    // whenever the currentPageProvider changes, ensuring the
-    // MushafNavigation widget always receives the latest page number.
+    // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
 
     // Read state needed ONLY for the back button logic here
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
-    // Remove positioning variables related to circle
 
     return Scaffold(
-      // WHY: Body is back to just the GestureDetector + PageView. No Stack needed here.
       body: GestureDetector(
         onTap: _handleMemorizationTap,
         child: PageView.builder(
           controller: _pageController,
-          itemCount: 604,
+          // WHY: Use the named constant for total page count.
+          itemCount: totalPages,
           reverse: true,
           onPageChanged: (index) {
             final int newPageNumber = index + 1;
-            // WHY: Update the global state provider. This will trigger
-            // this widget (and thus MushafNavigation) to rebuild.
+            // WHY: Update the global state provider.
             ref.read(currentPageProvider.notifier).state = newPageNumber;
-
-            // WHY: Separately handle persistence.
             _savePageToPrefs(newPageNumber);
           },
           itemBuilder: (context, index) {
@@ -238,18 +224,14 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           },
         ),
       ),
-      // WHY: Use the MushafNavigation widget which handles the Stack internally.
-      // Scaffold handles placing this correctly at the bottom, respecting safe areas for the bar itself.
       bottomNavigationBar: MushafNavigation(
         // WHY: Pass the page number from the watched provider.
         currentPageNumber: currentPageNumber,
         onBackButtonPressed: () async {
           final memorizationNotifier = ref.read(memorizationProvider.notifier);
-          // Use the watched 'isMemorizing' variable directly
           if (Navigator.canPop(context)) {
             await _clearLastPage();
             if (isMemorizing) {
-              // Use watched variable
               memorizationNotifier.disableMode();
             }
             if (context.mounted) {

@@ -52,3 +52,49 @@ const double footerLeftPadding = 24.0;
 // --- MEMORIZATION ---
 // WHY: Number of words to show initially when memorization mode starts.
 const int initialWordCount = 15;
+
+// --- APP CONSTANTS (Newly Added) ---
+
+// WHY: Centralize the total page count for use in PageView builders and ListViews.
+const int totalPages = 604;
+
+/// WHY: Centralizes all database table and column names as constants
+/// to prevent typos and make schema changes easier to manage.
+class DbConstants {
+  // --- Table Names ---
+  static const String pagesTable = 'pages';
+  static const String wordsTable = 'words';
+  static const String chaptersTable = 'chapters';
+  static const String juzTable = 'juz';
+  static const String hizbsTable = 'hizbs';
+
+  // --- Common Columns ---
+  static const String idCol = 'id';
+  static const String surahNumberCol = 'surah_number';
+  static const String ayahNumberCol = 'ayah';
+  static const String surahCol = 'surah';
+  static const String pageNumberCol = 'page_number';
+  static const String lineNumberCol = 'line_number';
+  static const String lineTypeCol = 'line_type';
+
+  // --- Pages Table ---
+  static const String firstWordIdCol = 'first_word_id';
+  static const String lastWordIdCol = 'last_word_id';
+  static const String isCenteredCol = 'is_centered';
+
+  // --- Words Table ---
+  static const String textCol = 'text';
+
+  // --- Chapters Table ---
+  static const String nameArabicCol = 'name_arabic';
+  static const String revelationPlaceCol = 'revelation_place';
+
+  // --- Juz & Hizb Tables ---
+  static const String juzNumberCol = 'juz_number';
+  static const String hizbNumberCol = 'hizb_number';
+  static const String firstVerseKeyCol = 'first_verse_key';
+  static const String lastVerseKeyCol = 'last_verse_key';
+
+  // --- Query Helpers ---
+  static const String startPageAlias = 'start_page';
+}
