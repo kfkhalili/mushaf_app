@@ -1,4 +1,4 @@
-import 'dart:math'; // WHY: Import for min()
+import 'dart:math'; // For min()
 import 'package:flutter/material.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -7,38 +7,28 @@ class LineWidget extends StatelessWidget {
   final LineInfo line;
   final String pageFontFamily;
   final bool isMemorizationMode;
-  // WHY: We now pass visibility rules based on ayah keys.
-  final Set<String> visibleAyahKeys;
-  final String? hintAyahKey;
-  final String? hintText;
+  // WHY: Accept the set of words that should be visible.
+  final Set<Word> wordsToShow;
 
   const LineWidget({
     super.key,
     required this.line,
     required this.pageFontFamily,
-    this.isMemorizationMode = false,
-    this.visibleAyahKeys = const {},
-    this.hintAyahKey,
-    this.hintText,
+    required this.isMemorizationMode,
+    required this.wordsToShow, // Use this set to determine visibility
   });
 
-  // WHY: Helper to build the text style for a word.
+  // WHY: Simplified style helper - only needs visibility flag.
   TextStyle _getWordStyle({
     required double fontSize,
     required double lineHeight,
     required Color baseColor,
     required bool isVisible,
-    required bool isHint, // This parameter is no longer used for color
   }) {
-    Color wordColor = baseColor;
-    if (isMemorizationMode) {
-      // WHY: If the word is not visible (which includes hints, as they
-      // are passed with isVisible: true), make it transparent.
-      // Otherwise, it gets the default base color.
-      if (!isVisible) {
-        wordColor = Colors.transparent;
-      }
-    }
+    // WHY: Use transparent color if not visible in memorization mode.
+    Color wordColor = (isMemorizationMode && !isVisible)
+        ? Colors.transparent
+        : baseColor;
 
     return TextStyle(
       fontFamily: pageFontFamily,
@@ -48,63 +38,39 @@ class LineWidget extends StatelessWidget {
     );
   }
 
-  // WHY: Helper to create the key for a word.
-  String _getWordKey(Word word) {
-    return "${word.surahNumber.toString().padLeft(3, '0')}:${word.ayahNumber.toString().padLeft(3, '0')}";
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // WHY: Default text color from the theme.
     final Color baseTextColor =
         theme.textTheme.bodyLarge?.color ?? Colors.black;
 
-    String? fontFamily = fallbackFontFamily;
+    String? fontFamily = fallbackFontFamily; // For Basmallah
     TextAlign lineAlignment = line.isCentered
         ? TextAlign.center
         : TextAlign.justify;
 
+    // --- Responsive Scaling ---
     final double screenWidth = MediaQuery.of(context).size.width;
-    // WHY: Get screen height for proportional scaling.
     final double screenHeight = MediaQuery.of(context).size.height;
-
-    // WHY: We scale based on the *smallest* dimension to ensure everything
-    // fits proportionally on both width and height (e.g., "contain").
     final double widthScale = screenWidth / referenceScreenWidth;
     final double heightScale = screenHeight / referenceScreenHeight;
     final double scaleFactor = min(widthScale, heightScale);
-
-    // WHY: Calculate the base font size scaled by the form factor.
     final double unclampedDynamicFontSize = baseFontSize * scaleFactor;
-
-    // WHY: The default (ayah) font size is clamped.
     double defaultDynamicFontSize = unclampedDynamicFontSize.clamp(
       minAyahFontSize,
       maxAyahFontSize,
     );
-
-    // WHY: This is the critical fix. The line height is a *multiplier*
-    // of the font size. Since the font size is already scaled,
-    // we just use the base multiplier, not a scaled one.
     final double dynamicLineHeight = baseLineHeight;
-
-    // WHY: We define a tighter line height for non-ayah lines
-    // like surah names and basmallah to reduce extra vertical space.
     const double tightLineHeight = 1.5;
+    // --- End Responsive Scaling ---
 
     // --- Dynamic Padding Calculation ---
-    // WHY: This calculates the available width for the line, factoring in
-    // the page's own horizontal padding.
     final double availableWidth = screenWidth - (2 * pageHorizontalPadding);
     double dynamicLinePadding = 0.0;
-
-    // WHY: If the available space is wider than our max content width,
-    // we calculate the extra padding needed to center the content.
     if (availableWidth > maxLineContentWidth) {
       dynamicLinePadding = (availableWidth - maxLineContentWidth) / 2.0;
     }
-    // --- End of Calculation ---
+    // --- End Dynamic Padding Calculation ---
 
     Widget lineWidget;
 
@@ -116,21 +82,15 @@ class LineWidget extends StatelessWidget {
             '0',
           );
           final String surahNameText = 'surah$surahNumPadded surah-icon';
-          // WHY: The quran-common font maps this string to the correct surah name glyph.
           const String headerText = 'header';
 
-          // WHY: Base the surah frame font size on the *unclamped*
-          // dynamic size so it can scale freely, using its specific factor.
           final double surahNameFontSize =
               (unclampedDynamicFontSize * surahNameScaleFactor).clamp(
                 minSurahNameFontSize,
                 maxSurahNameFontSize,
               );
-          // WHY: Base the header text font size on the *unclamped*
-          // dynamic size using its own independent factor.
           final double headerFontSize =
               (unclampedDynamicFontSize * headerScaleFactor).clamp(
-                // Use new factor
                 minSurahHeaderFontSize,
                 maxSurahHeaderFontSize,
               );
@@ -139,21 +99,21 @@ class LineWidget extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Text(
-                surahNameText, // The frame glyph
+                surahNameText,
                 style: TextStyle(
                   fontFamily: surahNameFontFamily,
                   fontSize: surahNameFontSize,
-                  height: tightLineHeight, // WHY: Use tight line height
+                  height: tightLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
               ),
               Text(
-                headerText, // The text inside the frame
+                headerText,
                 style: TextStyle(
-                  fontFamily: quranCommonFontFamily, // Use the correct font
+                  fontFamily: quranCommonFontFamily,
                   fontSize: headerFontSize,
-                  height: tightLineHeight, // WHY: Use tight line height
+                  height: tightLineHeight,
                 ),
                 textScaler: const TextScaler.linear(1.0),
                 textAlign: TextAlign.center,
@@ -166,8 +126,6 @@ class LineWidget extends StatelessWidget {
       case 'basmallah':
         {
           const String textToShow = basmallah;
-          // WHY: Base the basmallah font size on the *unclamped*
-          // dynamic size so it can scale freely.
           final double basmallahFontSize =
               (unclampedDynamicFontSize * basmallahScaleFactor).clamp(
                 minBasmallahFontSize,
@@ -182,7 +140,7 @@ class LineWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: fontFamily,
               fontSize: basmallahFontSize,
-              height: tightLineHeight, // WHY: Use tight line height
+              height: tightLineHeight,
             ),
             textScaler: const TextScaler.linear(1.0),
           );
@@ -195,48 +153,31 @@ class LineWidget extends StatelessWidget {
             break;
           }
 
-          // WHY: This is the core logic change.
-          // We must check each word's visibility status.
-
+          // WHY: Determine visibility word by word based on wordsToShow set.
           if (!line.isCentered) {
             final List<Widget> wordWidgets = line.words.map((word) {
-              bool isVisible = true;
-              bool isHint = false;
+              // WHY: Visibility is true if the word is in the set passed from parent.
+              final bool isVisible = wordsToShow.contains(word);
 
-              if (isMemorizationMode && word.ayahNumber > 0) {
-                final String key = _getWordKey(word);
-                isVisible = visibleAyahKeys.contains(key);
-
-                // WHY: Check if this *specific word* is the hint.
-                // We check if it belongs to the hint ayah AND matches the
-                // exact hint text (which we know is the first word).
-                if (key == hintAyahKey && word.text == hintText) {
-                  isHint = true;
-                }
-              }
-
-              // WHY: We use an AnimatedSwitcher to fade the color of each word.
+              // WHY: Use AnimatedSwitcher for fade effect.
               return AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
                   word.text,
-                  // WHY: Use a key to make the switcher animate correctly.
-                  key: ValueKey("${word.text}-$isVisible-$isHint"),
+                  key: ValueKey(
+                    "${word.text}-$isVisible",
+                  ), // Key includes visibility
                   style: _getWordStyle(
                     fontSize: defaultDynamicFontSize,
-                    lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
+                    lineHeight: dynamicLineHeight, // Ayah line height
                     baseColor: baseTextColor,
-                    // WHY: The hint is visible, just styled differently.
-                    isVisible: isVisible || isHint,
-                    isHint: isHint,
+                    isVisible: isVisible, // Pass calculated visibility
                   ),
                   textScaler: const TextScaler.linear(1.0),
                 ),
               );
             }).toList();
 
-            // WHY: We wrap the Row in our dynamic padding. This constrains
-            // the `spaceBetween` to the `maxLineContentWidth`.
             lineWidget = Padding(
               padding: EdgeInsets.symmetric(horizontal: dynamicLinePadding),
               child: Row(
@@ -246,36 +187,20 @@ class LineWidget extends StatelessWidget {
               ),
             );
           } else {
-            // WHY: Centered lines (e.g., end of surah) must use RichText.
-            // AnimatedSwitcher doesn't work on TextSpans, so this will
-            // snap instead of fade.
+            // WHY: Centered lines use RichText (no animation per word).
             final List<TextSpan> spans = line.words.map((word) {
-              bool isVisible = true;
-              bool isHint = false;
-
-              if (isMemorizationMode && word.ayahNumber > 0) {
-                final String key = _getWordKey(word);
-                isVisible = visibleAyahKeys.contains(key);
-
-                if (key == hintAyahKey && word.text == hintText) {
-                  isHint = true;
-                }
-              }
-
+              final bool isVisible = wordsToShow.contains(word);
               return TextSpan(
                 text: "${word.text} ", // Add space
                 style: _getWordStyle(
                   fontSize: defaultDynamicFontSize,
-                  lineHeight: dynamicLineHeight, // WHY: Use 2.4 height
+                  lineHeight: dynamicLineHeight, // Ayah line height
                   baseColor: baseTextColor,
-                  isVisible: isVisible || isHint,
-                  isHint: isHint,
+                  isVisible: isVisible,
                 ),
               );
             }).toList();
 
-            // WHY: Centered text doesn't need the padding, as
-            // `textAlign: TextAlign.center` handles it correctly.
             lineWidget = Text.rich(
               TextSpan(children: spans),
               textAlign: TextAlign.center,
@@ -291,13 +216,7 @@ class LineWidget extends StatelessWidget {
         }
     }
 
-    // WHY: Non-ayah lines and non-memorization mode return the widget directly.
-    if (line.lineType != 'ayah' || !isMemorizationMode) {
-      return lineWidget;
-    }
-
-    // For 'ayah' lines, the animation is handled *inside* the widget
-    // build logic (word by word), so we return it directly.
+    // WHY: Non-ayah lines return directly. Ayah lines have visibility handled internally.
     return lineWidget;
   }
 }
