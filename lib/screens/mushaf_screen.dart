@@ -7,7 +7,6 @@ import '../providers.dart';
 import '../models.dart';
 
 // --- State Management for Memorization Mode ---
-// (MemorizationState, MemorizationNotifier, memorizationProvider remain unchanged)
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
@@ -32,16 +31,26 @@ class MemorizationState {
 class MemorizationNotifier extends StateNotifier<MemorizationState> {
   MemorizationNotifier() : super(const MemorizationState());
 
-  void toggleMode() {
-    final bool wasMemorizing = state.isMemorizationMode;
+  // WHY: Accept currentPageNumber to initialize the first reveal.
+  void toggleMode({int? currentPageNumber}) {
+    final bool enabling = !state.isMemorizationMode;
+    Map<int, int> newMap = const {}; // Reset map when toggling off
+
+    // WHY: If enabling memorization mode and a page number is provided,
+    // initialize the reveal count for that page to 1.
+    if (enabling && currentPageNumber != null) {
+      newMap = {currentPageNumber: 1};
+    }
+
     state = state.copyWith(
-      isMemorizationMode: !wasMemorizing,
-      revealedLinesMap: const {},
+      isMemorizationMode: enabling,
+      revealedLinesMap: newMap, // Use the potentially initialized map
     );
   }
 
   void incrementReveal(int pageNumber) {
     final int currentCount = state.revealedLinesMap[pageNumber] ?? 0;
+    // WHY: Ensure map is mutable before updating
     final newMap = Map<int, int>.from(state.revealedLinesMap);
     newMap[pageNumber] = currentCount + 1;
     state = state.copyWith(revealedLinesMap: newMap);
@@ -66,13 +75,18 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
+  // Store current page number locally to pass to toggleMode
+  late int _currentPageNumber;
 
   Future<void> _saveCurrentPage(int pageNumber) async {
+    // Update local state when page changes
+    setState(() {
+      _currentPageNumber = pageNumber;
+    });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
   }
 
-  // WHY: New function to clear the last page preference.
   Future<void> _clearLastPage() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('last_page');
@@ -81,6 +95,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   @override
   void initState() {
     super.initState();
+    _currentPageNumber = widget.initialPage; // Initialize current page
     _pageController = PageController(initialPage: widget.initialPage - 1);
   }
 
@@ -96,9 +111,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       return;
     }
 
-    final int currentPage =
-        _pageController.page?.round() ?? (widget.initialPage - 1);
-    final int pageNumber = currentPage + 1;
+    // Use the local _currentPageNumber state variable
+    final int pageNumber = _currentPageNumber;
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
 
     asyncPageData.whenData((PageData pageData) {
@@ -134,6 +148,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
               itemCount: 604,
               reverse: true,
               onPageChanged: (index) {
+                // Save and update local state
                 _saveCurrentPage(index + 1);
               },
               itemBuilder: (context, index) {
@@ -144,14 +159,12 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         ],
       ),
       bottomNavigationBar: MushafBottomMenu(
-        // WHY: Update the back button logic here.
+        // Pass the current page number to the menu
+        currentPageNumber: _currentPageNumber,
         onBackButtonPressed: () async {
-          // Make the callback async
           if (Navigator.canPop(context)) {
-            // WHY: Clear the saved page *before* popping the screen.
             await _clearLastPage();
             if (context.mounted) {
-              // Check if widget is still mounted
               Navigator.pop(context);
             }
           }

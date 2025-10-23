@@ -5,8 +5,14 @@ import '../screens/mushaf_screen.dart'; // Import to get memorizationProvider
 
 class MushafBottomMenu extends ConsumerWidget {
   final VoidCallback onBackButtonPressed;
+  // WHY: Accept the current page number from the parent screen.
+  final int currentPageNumber;
 
-  const MushafBottomMenu({super.key, required this.onBackButtonPressed});
+  const MushafBottomMenu({
+    super.key,
+    required this.onBackButtonPressed,
+    required this.currentPageNumber, // Add required parameter
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,25 +20,20 @@ class MushafBottomMenu extends ConsumerWidget {
     final bool isMemorizing = ref
         .watch(memorizationProvider)
         .isMemorizationMode;
-    // WHY: Get theme for primary color and default icon color.
     final theme = Theme.of(context);
-    // WHY: Use a grey similar to the unselected color in SelectionScreen.
     final Color unselectedIconColor = Colors.grey.shade400;
-    // WHY: Get the primary color for the selected state.
     final Color selectedIconColor = theme.colorScheme.primary;
 
-    const double barHeight = 64.0; // Keep consistent height
-    const double iconSize = 30.0;
+    const double barHeight = 48.0;
+    const double iconSize = 24.0;
 
     return BottomAppBar(
-      color: const Color(0xFF212121), // Keep the dark background
+      color: const Color(0xFF212121),
       padding: EdgeInsets.zero,
       height: barHeight,
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         height: barHeight,
-        // WHY: Set a default UNSELECTED icon color for the bar.
-        // Icons that need selection state will override this.
         child: IconTheme(
           data: IconThemeData(color: unselectedIconColor, size: iconSize),
           child: Row(
@@ -47,7 +48,7 @@ class MushafBottomMenu extends ConsumerWidget {
                   SizedBox(
                     height: barHeight,
                     child: PopupMenuButton<AppThemeMode>(
-                      // Uses default unselected color from IconTheme
+                      /* ... Popup Menu ... */
                       icon: const Icon(Icons.more_vert),
                       onSelected: (AppThemeMode mode) {
                         ref.read(themeProvider.notifier).setTheme(mode);
@@ -83,10 +84,22 @@ class MushafBottomMenu extends ConsumerWidget {
                   SizedBox(
                     height: barHeight,
                     child: IconButton(
+                      /* ... Bookmark Button ... */
+                      tooltip: 'Bookmark',
+                      icon: const Icon(Icons.bookmark_border),
+                      onPressed: () {
+                        /* Placeholder */
+                      },
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  SizedBox(
+                    height: barHeight,
+                    child: IconButton(
                       tooltip: isMemorizing
                           ? 'Exit Memorization'
                           : 'Memorization Mode',
-                      // WHY: Conditionally set color based on memorization state.
                       color: isMemorizing
                           ? selectedIconColor
                           : unselectedIconColor,
@@ -94,7 +107,10 @@ class MushafBottomMenu extends ConsumerWidget {
                         isMemorizing ? Icons.school : Icons.school_outlined,
                       ),
                       onPressed: () {
-                        ref.read(memorizationProvider.notifier).toggleMode();
+                        // WHY: Pass the current page number when toggling.
+                        ref
+                            .read(memorizationProvider.notifier)
+                            .toggleMode(currentPageNumber: currentPageNumber);
                       },
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
@@ -106,8 +122,8 @@ class MushafBottomMenu extends ConsumerWidget {
               SizedBox(
                 height: barHeight,
                 child: IconButton(
+                  /* ... Back Button ... */
                   tooltip: 'Back',
-                  // Uses default unselected color
                   icon: const Icon(Icons.arrow_forward_ios),
                   onPressed: onBackButtonPressed,
                   padding: EdgeInsets.zero,
