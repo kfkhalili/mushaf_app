@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 // --- DATABASE FILENAMES ---
 const String layoutDbFileName = 'uthmani-15-lines.db';
 const String scriptDbFileName = 'qpc-v2.db';
@@ -13,7 +11,7 @@ const String basmallah = '\uFDFD'; // ﷽
 // --- FONT CONSTANTS ---
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
-const String fallbackFontFamily = 'QPCV2';
+const String fallbackFontFamily = 'QPCV2'; // Used for Quran text fallback
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;
@@ -25,11 +23,7 @@ const double maxLineContentWidth = 600.0;
 
 // Font Size Multipliers
 const double surahNameScaleFactor = 1.4; // For the frame glyph
-// WHY: Introduced a separate factor for the text *inside* the frame
-// to scale it independently from the frame itself.
-const double headerScaleFactor = 2.0;
-// WHY: Removed the relative scaling factor as it's no longer needed.
-// const double surahHeaderScaleFactorRelativeToName = 1.5;
+const double headerScaleFactor = 2.0; // For text inside surah frame
 const double basmallahScaleFactor = 0.95;
 
 // Font Size Clamping (Min, Max)
@@ -43,23 +37,18 @@ const double minBasmallahFontSize = 15.0;
 const maxBasmallahFontSize = 28.0;
 
 // Line Height
-const double baseLineHeight = 2.2;
+const double baseLineHeight = 2.2; // For Ayah text
+// const double tightLineHeight = 1.5; // Used directly in line_widget.dart
 
 // Padding Values
 const double pageHorizontalPadding = 16.0;
 const double pageBottomPadding = 45.0;
 const double headerHorizontalPadding = 20.0;
-const double headerJuzHizbSpacing = 12.0;
+const double headerJuzHizbSpacing = 12.0; // Not currently used but kept
 const double footerBottomPadding = 16.0;
 const double footerRightPadding = 16.0;
 const double footerLeftPadding = 24.0;
 
-// Text Styles
-const TextStyle headerFooterBaseStyle = TextStyle(
-  fontSize: 14,
-  color: Colors.black87,
-);
-const TextStyle footerPageNumStyle = TextStyle(
-  fontSize: 16,
-  color: Colors.black87,
-);
+// --- MEMORIZATION ---
+// WHY: Number of words to show initially when memorization mode starts.
+const int initialWordCount = 15;
