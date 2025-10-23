@@ -3,30 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/mushaf_navigation.dart'; // Import the container widget
-import '../widgets/countdown_circle.dart'; // Import the circle
 import '../providers.dart';
 import '../models.dart';
-import '../constants.dart'; // Import constants for initialWordCount
-import 'dart:collection'; // Needed for SplayTreeMap in _handleMemorizationTap
+import '../constants.dart';
+import 'dart:collection';
 
 // --- State Management for Memorization Mode ---
-// Placed here because the state affects both the MushafPageWidget (visibility)
-// and the MushafBottomMenu/CountdownCircle (display). The screen coordinates this.
+// (MemorizationState and Notifier remain the same)
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
-  // State stores the index of the LAST fully revealed ayah. -1 = initial N words state.
   final Map<int, int> lastRevealedAyahIndexMap;
   final int repetitionGoal;
   final int currentRepetitions;
-
   const MemorizationState({
     this.isMemorizationMode = false,
     this.lastRevealedAyahIndexMap = const {},
-    this.repetitionGoal = 5, // Default goal
-    this.currentRepetitions = 0, // Initial count
+    this.repetitionGoal = 5,
+    this.currentRepetitions = 0,
   });
-
   MemorizationState copyWith({
     bool? isMemorizationMode,
     Map<int, int>? lastRevealedAyahIndexMap,
@@ -45,24 +40,18 @@ class MemorizationState {
 
 class MemorizationNotifier extends StateNotifier<MemorizationState> {
   MemorizationNotifier() : super(const MemorizationState());
-
   void toggleMode({int? currentPageNumber}) {
     final bool enabling = !state.isMemorizationMode;
-    Map<int, int> newMap = const {}; // Reset map when toggling off
-
-    // If enabling, set the index for the current page to -1 (initial state).
+    Map<int, int> newMap = const {};
     if (enabling && currentPageNumber != null) {
       newMap = {currentPageNumber: -1};
-      // Reset counter to goal when enabling
       state = state.copyWith(currentRepetitions: state.repetitionGoal);
     } else {
-      // Reset counter when disabling
       state = state.copyWith(currentRepetitions: 0);
     }
-
     state = state.copyWith(
       isMemorizationMode: enabling,
-      lastRevealedAyahIndexMap: newMap, // Use the potentially initialized map
+      lastRevealedAyahIndexMap: newMap,
     );
   }
 
@@ -70,8 +59,8 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     if (state.isMemorizationMode) {
       state = state.copyWith(
         isMemorizationMode: false,
-        lastRevealedAyahIndexMap: const {}, // Reset map
-        currentRepetitions: 0, // Reset counter
+        lastRevealedAyahIndexMap: const {},
+        currentRepetitions: 0,
       );
     }
   }
@@ -80,8 +69,6 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     if (state.currentRepetitions > 0) {
       state = state.copyWith(currentRepetitions: state.currentRepetitions - 1);
     }
-    // Optional: If count reaches 0, automatically advance? Or just stop?
-    // Current logic just stops at 0.
   }
 
   void setRepetitionGoal(int goal) {
@@ -93,44 +80,31 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     }
   }
 
-  // Updates the index based on the logic described (first tap vs subsequent).
   void revealNextStep(
     int pageNumber,
     List<Word> allWords,
     List<String> orderedKeys,
   ) {
     final int currentIndex = state.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-    int nextIndex = currentIndex; // Default to current
-
+    int nextIndex = currentIndex;
     if (currentIndex == -1) {
-      // First tap after initial reveal
-      // Ensure there are enough words to determine the index
       if (allWords.isNotEmpty && initialWordCount > 0) {
-        // Clamp word index to prevent out of bounds
         int wordIndex = (initialWordCount - 1).clamp(0, allWords.length - 1);
         Word lastWordInitiallyShown = allWords[wordIndex];
         String lastAyahKey =
             "${lastWordInitiallyShown.surahNumber.toString().padLeft(3, '0')}:${lastWordInitiallyShown.ayahNumber.toString().padLeft(3, '0')}";
-        nextIndex = orderedKeys.indexOf(
-          lastAyahKey,
-        ); // Find index of the ayah containing the last initial word
+        nextIndex = orderedKeys.indexOf(lastAyahKey);
       } else {
-        // Edge case: No words or initialWordCount is 0
-        nextIndex = 0; // Move to reveal the first ayah
+        nextIndex = 0;
       }
-      // Ensure index is valid, default to 0 if something went wrong
       if (nextIndex < 0) nextIndex = 0;
     } else if (currentIndex < orderedKeys.length - 1) {
-      // Subsequent taps
       nextIndex = currentIndex + 1;
     } else {
-      // Already fully revealed or beyond, do nothing
       return;
     }
-
     final newMap = Map<int, int>.from(state.lastRevealedAyahIndexMap);
     newMap[pageNumber] = nextIndex;
-    // Reset repetition count whenever the revealed ayah index changes
     state = state.copyWith(
       lastRevealedAyahIndexMap: newMap,
       currentRepetitions: state.repetitionGoal,
@@ -142,8 +116,7 @@ final memorizationProvider =
     StateNotifierProvider<MemorizationNotifier, MemorizationState>(
       (ref) => MemorizationNotifier(),
     );
-
-// --- Mushaf Screen Widget ---
+// --- End State Management ---
 
 class MushafScreen extends ConsumerStatefulWidget {
   final int initialPage;
@@ -182,21 +155,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.dispose();
   }
 
-  // Tap handler calls the revealNextStep logic in the notifier.
   void _handleMemorizationTap() {
     final memorizationNotifier = ref.read(memorizationProvider.notifier);
     final memorizationState = ref.read(memorizationProvider);
-
-    if (!memorizationState.isMemorizationMode) {
-      return;
-    }
-
+    if (!memorizationState.isMemorizationMode) return;
     final int pageNumber = _currentPageNumber;
-    // Use read as we don't need rebuilds here based on pageData
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
-
     asyncPageData.whenData((PageData pageData) {
-      // --- Gather necessary data for revealNextStep ---
       final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
       final List<Word> allQuranWordsOnPage = [];
       for (final line in pageData.layout.lines) {
@@ -212,17 +177,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         }
       }
       final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
-      // --- End data gathering ---
-
-      // Check if page is already fully revealed before calling notifier
       final int currentIndex =
           memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-      // Page is fully revealed if the last revealed index is the index of the last ayah
       if (currentIndex >= orderedAyahKeys.length - 1) {
-        return; // Already showing the last ayah fully
-      }
-
-      // Call the notifier method to update the state
+        return;
+      } // Already fully revealed
       memorizationNotifier.revealNextStep(
         pageNumber,
         allQuranWordsOnPage,
@@ -233,48 +192,30 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch state needed for showing the circle and back button logic
+    // Read state needed ONLY for the back button logic here
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
-    final double bottomPadding = MediaQuery.of(context).padding.bottom;
-    // Ensure these constants match the values used in the respective widgets
-    const double barHeight = 48.0; // From MushafBottomMenu
-    const double circleDiameter = 56.0; // From CountdownCircle
+    // Remove positioning variables related to circle
 
     return Scaffold(
-      // Use a Stack to layer the CountdownCircle over the PageView and BottomAppBar area.
-      body: Stack(
-        children: [
-          // PageView takes up the full space behind the circle
-          GestureDetector(
-            onTap: _handleMemorizationTap,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: 604,
-              reverse: true,
-              onPageChanged: (index) {
-                _saveCurrentPage(index + 1);
-              },
-              itemBuilder: (context, index) {
-                return MushafPageWidget(pageNumber: index + 1);
-              },
-            ),
-          ),
-
-          // Conditionally display the CountdownCircle positioned at the bottom center.
-          if (isMemorizing)
-            Positioned(
-              // Calculate bottom to align circle BOTTOM with the CENTER of the bar.
-              bottom: bottomPadding + (barHeight / 2),
-              // Horizontal centering achieved by setting left/right to 0 and using Center widget
-              left: 0,
-              right: 0,
-              child: const Center(child: CountdownCircle()),
-            ),
-        ],
+      // WHY: Body is back to just the GestureDetector + PageView. No Stack needed here.
+      body: GestureDetector(
+        onTap: _handleMemorizationTap,
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: 604,
+          reverse: true,
+          onPageChanged: (index) {
+            _saveCurrentPage(index + 1);
+          },
+          itemBuilder: (context, index) {
+            return MushafPageWidget(pageNumber: index + 1);
+          },
+        ),
       ),
-      // Use the MushafNavigation widget which handles the BottomAppBar layout
+      // WHY: Use the MushafNavigation widget which handles the Stack internally.
+      // Scaffold handles placing this correctly at the bottom, respecting safe areas for the bar itself.
       bottomNavigationBar: MushafNavigation(
         currentPageNumber: _currentPageNumber,
         onBackButtonPressed: () async {

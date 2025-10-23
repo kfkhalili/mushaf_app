@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../screens/mushaf_screen.dart'; // Import to get memorizationProvider
-// import 'countdown_circle.dart'; // REMOVED - Circle is no longer displayed here
 
 class MushafBottomMenu extends ConsumerWidget {
   final VoidCallback onBackButtonPressed;
@@ -25,7 +24,7 @@ class MushafBottomMenu extends ConsumerWidget {
     final Color unselectedIconColor = Colors.grey.shade400;
     final Color selectedIconColor = theme.colorScheme.primary;
 
-    const double barHeight = 48.0;
+    const double barHeight = 64.0;
     const double iconSize = 24.0;
 
     return BottomAppBar(

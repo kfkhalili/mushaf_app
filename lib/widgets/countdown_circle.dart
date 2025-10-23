@@ -16,7 +16,7 @@ class CountdownCircle extends ConsumerWidget {
     // WHY: Use a contrasting color (like white or black based on theme) for text and border.
     final Color foregroundColor = theme.colorScheme.onPrimary;
 
-    const double circleDiameter = 56.0;
+    const double circleDiameter = 64.0;
     const double fontSize = 20.0;
 
     return GestureDetector(
