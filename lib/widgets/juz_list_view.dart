@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// REMOVED: import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
-import '../screens/mushaf_screen.dart';
 
 class JuzListView extends ConsumerWidget {
   const JuzListView({super.key});
@@ -36,19 +35,8 @@ class JuzListItem extends StatelessWidget {
 
   const JuzListItem({super.key, required this.juzInfo});
 
-  Future<void> _navigateToJuz(BuildContext context, int pageNumber) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_page');
-
-    if (!context.mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MushafScreen(initialPage: pageNumber),
-      ),
-    );
-  }
+  // REMOVED: The _navigateToJuz method is no longer needed.
+  // Future<void> _navigateToJuz(BuildContext context, int pageNumber) async { ... }
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +86,8 @@ class JuzListItem extends StatelessWidget {
       ),
       onTap: () {
         if (juzInfo.startingPage > 0) {
-          _navigateToJuz(context, juzInfo.startingPage);
+          // WHY: Use the centralized navigation helper.
+          navigateToMushafPage(context, juzInfo.startingPage);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

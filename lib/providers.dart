@@ -1,9 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'models.dart';
-import 'constants.dart'; // For fallbackFontFamily
-import 'package:flutter/foundation.dart';
+
+// --- Current Page Provider ---
+// Manages the state of the currently viewed page number.
+final currentPageProvider = StateProvider<int>((ref) {
+  // Default to 1. MushafScreen overrides this on init.
+  return 1;
+});
 
 // --- Database Service Provider ---
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
@@ -25,20 +31,13 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
   final dbService = ref.watch(databaseServiceProvider);
   final fontService = ref.watch(fontServiceProvider);
 
-  String pageFontFamilyName;
-  try {
-    // Attempt to load page-specific font via the service (uses incorrect path in original service)
-    pageFontFamilyName = await fontService.loadFontForPage(pageNumber);
-  } catch (e) {
-    // Explicitly fall back to QPCV2 if the service fails
-    pageFontFamilyName = fallbackFontFamily;
-    // Log this fallback event in debug mode
-    if (kDebugMode) {
-      debugPrint("Using fallback font for page $pageNumber due to error: $e");
-    }
-  }
+  // WHY: The try-catch block was removed. If 'loadFontForPage'
+  // or the database calls fail, the provider will now correctly
+  // enter an error state, which the UI (MushafPageWidget) can handle.
+  String pageFontFamilyName = await fontService.loadFontForPage(pageNumber);
 
-  // Load layout and header info asynchronously
+  // Load layout and header info asynchronously. Errors here will also
+  // cause the provider to enter an error state.
   final layout = await dbService.getPageLayout(pageNumber);
   final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
 
@@ -56,7 +55,7 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
 // Provides the list of SurahInfo for the SelectionScreen.
 final surahListProvider = FutureProvider<List<SurahInfo>>((ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  await dbService.init(); // Ensure DB is initialized before fetching
+  // 'getAllSurahs()' calls 'init()' internally.
   return dbService.getAllSurahs();
 });
 
@@ -64,7 +63,7 @@ final surahListProvider = FutureProvider<List<SurahInfo>>((ref) async {
 // Provides the list of JuzInfo for the SelectionScreen.
 final juzListProvider = FutureProvider<List<JuzInfo>>((ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  // getAllJuzInfo calls init() internally if needed
+  // 'getAllJuzInfo()' calls 'init()' internally.
   return dbService.getAllJuzInfo();
 });
 
@@ -86,18 +85,11 @@ final pageFontFamilyProvider = FutureProvider.family<String, int>((
   pageNumber,
 ) async {
   final fontService = ref.watch(fontServiceProvider);
-  try {
-    // Attempt to load the page-specific font (likely fails with original service path)
-    return await fontService.loadFontForPage(pageNumber);
-  } catch (e) {
-    // Return fallback on error
-    if (kDebugMode) {
-      debugPrint(
-        "pageFontFamilyProvider: Using fallback font for page $pageNumber due to error: $e",
-      );
-    }
-    return fallbackFontFamily; // Use constant from constants.dart
-  }
+
+  // WHY: The try-catch block was removed. If 'loadFontForPage' fails,
+  // this provider will now correctly enter an error state.
+  // The UI (PageListItem) already handles this error state.
+  return fontService.loadFontForPage(pageNumber);
 });
 
 // --- Theme Provider ---

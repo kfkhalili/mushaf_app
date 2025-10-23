@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
-// import '../constants.dart'; // No longer needed directly here
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
-import '../screens/mushaf_screen.dart'; // For navigation
 import '../constants.dart';
 
 class PageListView extends StatelessWidget {
@@ -13,7 +10,8 @@ class PageListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      itemCount: 604,
+      // WHY: Use the named constant for total page count.
+      itemCount: totalPages,
       itemBuilder: (context, index) {
         final int pageNumber = index + 1;
         return PageListItem(pageNumber: pageNumber);
@@ -29,19 +27,7 @@ class PageListItem extends ConsumerWidget {
 
   const PageListItem({super.key, required this.pageNumber});
 
-  Future<void> _navigateToPage(BuildContext context, int pageNum) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_page');
-
-    if (!context.mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MushafScreen(initialPage: pageNum),
-      ),
-    );
-  }
+  // REMOVED: _navigateToPage, now uses helper
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,8 +66,6 @@ class PageListItem extends ConsumerWidget {
           return pageFontFamilyAsync.when(
             data: (fontFamilyName) {
               // WHY: Only display text if BOTH text and font are successfully loaded.
-              // Also check if the loaded font is NOT the fallback, indicating success.
-              // Make sure 'fallbackFontFamily' is accessible, e.g., via constants.dart import.
               if (fontFamilyName != fallbackFontFamily) {
                 return Text(
                   previewText,
@@ -96,8 +80,7 @@ class PageListItem extends ConsumerWidget {
                 );
               } else {
                 // WHY: If the font service returned the fallback, treat it as an error/loading state for the preview.
-                // This handles cases where font_service.dart might return fallback on error.
-                return loadingWidget; // Or errorWidget if preferred when fallback is used.
+                return loadingWidget;
               }
             },
             // WHY: Show loading indicator while the font is loading.
@@ -112,7 +95,8 @@ class PageListItem extends ConsumerWidget {
         error: (err, stack) => errorWidget,
       ),
       onTap: () {
-        _navigateToPage(context, pageNumber);
+        // WHY: Use the centralized navigation helper.
+        navigateToMushafPage(context, pageNumber);
       },
     );
   }

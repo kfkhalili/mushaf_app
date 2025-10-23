@@ -14,7 +14,7 @@ class FontService {
 
     final String pageFontFamily = 'Page$pageNumber';
     final String fontAssetPath =
-        'assets/fonts/QPC V2 Font.ttf/p$pageNumber.ttf';
+        'assets/fonts/qpc-v2-page-by-page-fonts/p$pageNumber.ttf';
 
     try {
       final FontLoader fontLoader = FontLoader(pageFontFamily);
