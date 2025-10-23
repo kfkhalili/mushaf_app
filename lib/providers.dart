@@ -8,12 +8,9 @@ import 'package:flutter/foundation.dart';
 
 // --- Current Page Provider ---
 // Manages the state of the currently viewed page number.
-// WHY: This is created as a simple StateProvider. The MushafScreen
-// is responsible for initializing it with its 'initialPage' argument
-// and for handling persistence to SharedPreferences when this value changes.
+// WHY: This was added in the previous step to centralize page state.
 final currentPageProvider = StateProvider<int>((ref) {
-  // Default to 1. This will be immediately overridden by MushafScreen
-  // in its initState when it's first loaded.
+  // Default to 1. MushafScreen overrides this on init.
   return 1;
 });
 
@@ -51,6 +48,8 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
   }
 
   // Load layout and header info asynchronously
+  // WHY: We no longer need 'await dbService.init()' here,
+  // as getPageLayout() and getPageHeaderInfo() will call it internally and safely.
   final layout = await dbService.getPageLayout(pageNumber);
   final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
 
@@ -68,15 +67,18 @@ final pageDataProvider = FutureProvider.family<PageData, int>((
 // Provides the list of SurahInfo for the SelectionScreen.
 final surahListProvider = FutureProvider<List<SurahInfo>>((ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  await dbService.init(); // Ensure DB is initialized before fetching
+  // WHY: The explicit 'await dbService.init()' is removed.
+  // 'getAllSurahs()' calls 'init()' internally, and our
+  // DatabaseService refactor ensures this is safe and efficient.
   return dbService.getAllSurahs();
 });
 
 // --- Juz List Provider ---
-// Provides the list of JuzInfo for the SelectionScreen.
+// Provides the list of JuzInfo for the SelectionScree.
 final juzListProvider = FutureProvider<List<JuzInfo>>((ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  // getAllJuzInfo calls init() internally if needed
+  // WHY: This provider already (correctly) relied on the
+  // internal 'init()' call in 'getAllJuzInfo()'.
   return dbService.getAllJuzInfo();
 });
 
@@ -87,6 +89,8 @@ final pagePreviewProvider = FutureProvider.family<String, int>((
   pageNumber,
 ) async {
   final dbService = ref.watch(databaseServiceProvider);
+  // WHY: This provider already (correctly) relied on the
+  // internal 'init()' call in 'getFirstWordsOfPage()'.
   return dbService.getFirstWordsOfPage(pageNumber, count: 3);
 });
 

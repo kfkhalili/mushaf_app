@@ -1,3 +1,4 @@
+import 'dart:async'; // Import for Completer, though we can simplify
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Import for print
 import 'package:flutter/services.dart';
@@ -19,10 +20,30 @@ class DatabaseService {
 
   bool _isInitialized = false;
 
+  // WHY: This Future is used to ensure that the initialization logic
+  // (_doInit) is only run once, even if 'init()' is called multiple
+  // times concurrently (e.g., by different providers).
+  Future<void>? _initFuture;
+
+  // WHY: This is the new public 'init' method. It acts as a gatekeeper.
   Future<void> init() async {
-    if (_isInitialized) {
-      return;
-    }
+    // If already initialized, return immediately.
+    if (_isInitialized) return;
+
+    // WHY: The '??=' operator is key.
+    // If _initFuture is null (init hasn't started), it assigns
+    // the result of _doInit() to it and then awaits it.
+    // If _initFuture is *not* null (init is in progress),
+    // it simply awaits the *existing* future.
+    _initFuture ??= _doInit();
+    await _initFuture;
+  }
+
+  // WHY: The original 'init' logic is moved to this private method.
+  // This contains the actual work of opening databases.
+  Future<void> _doInit() async {
+    // REMOVED: The '_isInitialized' check is removed from here
+    // as it's now handled by the public 'init()' method.
 
     final documentsDirectory = await getApplicationDocumentsDirectory();
     const dbAssetPath = 'assets/db';
@@ -92,7 +113,10 @@ class DatabaseService {
 
   /// Fetches all surahs with their names, revelation place, and starting page.
   Future<List<SurahInfo>> getAllSurahs() async {
-    await init(); // Ensure initialization
+    // WHY: This 'await init()' is now safe and efficient.
+    // It will either return immediately, await an in-progress
+    // init, or start the init, but the work only happens once.
+    await init();
     if (_metadataDb == null || _layoutDb == null) {
       throw Exception(
         "Required databases for getAllSurahs are not initialized.",
