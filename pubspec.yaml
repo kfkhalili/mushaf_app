@@ -68,7 +68,7 @@ flutter:
     - assets/db/quran-metadata-juz.sqlite
     - assets/db/quran-metadata-hizb.sqlite
 
-    - "assets/fonts/QPC V2 Font.ttf/"
+    - assets/fonts/qpc-v2-page-by-page-fonts/
     - assets/fonts/surah-name-v4.ttf
     - assets/fonts/quran-common.ttf
 
