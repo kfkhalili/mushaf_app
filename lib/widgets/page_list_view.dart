@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
-// import '../constants.dart'; // No longer needed directly here
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
-import '../screens/mushaf_screen.dart'; // For navigation
 import '../constants.dart';
 
 class PageListView extends StatelessWidget {
@@ -29,19 +26,8 @@ class PageListItem extends ConsumerWidget {
 
   const PageListItem({super.key, required this.pageNumber});
 
-  Future<void> _navigateToPage(BuildContext context, int pageNum) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_page');
-
-    if (!context.mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MushafScreen(initialPage: pageNum),
-      ),
-    );
-  }
+  // REMOVED: The _navigateToPage method is no longer needed.
+  // Future<void> _navigateToPage(BuildContext context, int pageNum) async { ... }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,7 +98,8 @@ class PageListItem extends ConsumerWidget {
         error: (err, stack) => errorWidget,
       ),
       onTap: () {
-        _navigateToPage(context, pageNumber);
+        // WHY: Use the centralized navigation helper.
+        navigateToMushafPage(context, pageNumber);
       },
     );
   }

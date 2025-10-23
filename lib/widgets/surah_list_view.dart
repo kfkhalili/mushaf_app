@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
 import '../constants.dart';
-import '../screens/mushaf_screen.dart'; // Needed for navigation
 import '../utils/helpers.dart';
 import '../models.dart';
 
@@ -40,19 +38,8 @@ class SurahListItem extends StatelessWidget {
 
   const SurahListItem({super.key, required this.surah});
 
-  Future<void> _navigateToSurah(BuildContext context, int pageNumber) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_page');
-
-    if (!context.mounted) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MushafScreen(initialPage: pageNumber),
-      ),
-    );
-  }
+  // REMOVED: The _navigateToSurah method is no longer needed.
+  // Future<void> _navigateToSurah(BuildContext context, int pageNumber) async { ... }
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +78,8 @@ class SurahListItem extends StatelessWidget {
         ),
       ),
       onTap: () {
-        _navigateToSurah(context, surah.startingPage);
+        // WHY: Use the centralized navigation helper.
+        navigateToMushafPage(context, surah.startingPage);
       },
     );
   }
