@@ -1,9 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'models.dart';
 import 'constants.dart'; // For fallbackFontFamily
 import 'package:flutter/foundation.dart';
+
+// --- Current Page Provider ---
+// Manages the state of the currently viewed page number.
+// WHY: This is created as a simple StateProvider. The MushafScreen
+// is responsible for initializing it with its 'initialPage' argument
+// and for handling persistence to SharedPreferences when this value changes.
+final currentPageProvider = StateProvider<int>((ref) {
+  // Default to 1. This will be immediately overridden by MushafScreen
+  // in its initState when it's first loaded.
+  return 1;
+});
 
 // --- Database Service Provider ---
 final databaseServiceProvider = Provider<DatabaseService>((ref) {

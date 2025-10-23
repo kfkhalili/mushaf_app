@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/mushaf_navigation.dart'; // Import the container widget
@@ -127,12 +128,12 @@ class MushafScreen extends ConsumerStatefulWidget {
 
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
-  late int _currentPageNumber;
+  // REMOVED: late int _currentPageNumber;
 
-  Future<void> _saveCurrentPage(int pageNumber) async {
-    setState(() {
-      _currentPageNumber = pageNumber;
-    });
+  // WHY: This function is now only responsible for persistence,
+  // not for managing widget state (which is handled by Riverpod).
+  Future<void> _savePageToPrefs(int pageNumber) async {
+    // REMOVED: setState(() { ... });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_page', pageNumber);
   }
@@ -145,8 +146,15 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   @override
   void initState() {
     super.initState();
-    _currentPageNumber = widget.initialPage;
     _pageController = PageController(initialPage: widget.initialPage - 1);
+
+    // WHY: We initialize the global page state provider
+    // with the initial page passed to this widget. We use 'ref.read'
+    // in a microtask because initState runs before the first build,
+    // and this ensures the state is set correctly before anyone else reads it.
+    Future.microtask(
+      () => ref.read(currentPageProvider.notifier).state = widget.initialPage,
+    );
   }
 
   @override
@@ -159,7 +167,12 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     final memorizationNotifier = ref.read(memorizationProvider.notifier);
     final memorizationState = ref.read(memorizationProvider);
     if (!memorizationState.isMemorizationMode) return;
-    final int pageNumber = _currentPageNumber;
+
+    // WHY: Read the current page number directly from the provider.
+    // We use 'ref.read' because this is inside a function callback
+    // and we just need the *current* value, not to listen for changes.
+    final int pageNumber = ref.read(currentPageProvider);
+
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
     asyncPageData.whenData((PageData pageData) {
       final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
@@ -192,6 +205,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // WHY: Watch the global page state. This widget will rebuild
+    // whenever the currentPageProvider changes, ensuring the
+    // MushafNavigation widget always receives the latest page number.
+    final int currentPageNumber = ref.watch(currentPageProvider);
+
     // Read state needed ONLY for the back button logic here
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
@@ -207,7 +225,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           itemCount: 604,
           reverse: true,
           onPageChanged: (index) {
-            _saveCurrentPage(index + 1);
+            final int newPageNumber = index + 1;
+            // WHY: Update the global state provider. This will trigger
+            // this widget (and thus MushafNavigation) to rebuild.
+            ref.read(currentPageProvider.notifier).state = newPageNumber;
+
+            // WHY: Separately handle persistence.
+            _savePageToPrefs(newPageNumber);
           },
           itemBuilder: (context, index) {
             return MushafPageWidget(pageNumber: index + 1);
@@ -217,7 +241,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       // WHY: Use the MushafNavigation widget which handles the Stack internally.
       // Scaffold handles placing this correctly at the bottom, respecting safe areas for the bar itself.
       bottomNavigationBar: MushafNavigation(
-        currentPageNumber: _currentPageNumber,
+        // WHY: Pass the page number from the watched provider.
+        currentPageNumber: currentPageNumber,
         onBackButtonPressed: () async {
           final memorizationNotifier = ref.read(memorizationProvider.notifier);
           // Use the watched 'isMemorizing' variable directly
