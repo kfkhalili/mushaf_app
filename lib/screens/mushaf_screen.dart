@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
-import '../widgets/mushaf_bottom_menu.dart';
+import '../widgets/mushaf_navigation.dart'; // Import the container widget
+import '../widgets/countdown_circle.dart'; // Import the circle
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart'; // Import constants for initialWordCount
@@ -10,7 +11,7 @@ import 'dart:collection'; // Needed for SplayTreeMap in _handleMemorizationTap
 
 // --- State Management for Memorization Mode ---
 // Placed here because the state affects both the MushafPageWidget (visibility)
-// and the MushafBottomMenu (icon/circle display). The screen coordinates this.
+// and the MushafBottomMenu/CountdownCircle (display). The screen coordinates this.
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
@@ -232,28 +233,49 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch state ONLY needed for the back button logic here
+    // Watch state needed for showing the circle and back button logic
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+    // Ensure these constants match the values used in the respective widgets
+    const double barHeight = 48.0; // From MushafBottomMenu
+    const double circleDiameter = 56.0; // From CountdownCircle
 
     return Scaffold(
-      // Body is simple GestureDetector + PageView
-      body: GestureDetector(
-        onTap: _handleMemorizationTap,
-        child: PageView.builder(
-          controller: _pageController,
-          itemCount: 604,
-          reverse: true,
-          onPageChanged: (index) {
-            _saveCurrentPage(index + 1);
-          },
-          itemBuilder: (context, index) {
-            return MushafPageWidget(pageNumber: index + 1);
-          },
-        ),
+      // Use a Stack to layer the CountdownCircle over the PageView and BottomAppBar area.
+      body: Stack(
+        children: [
+          // PageView takes up the full space behind the circle
+          GestureDetector(
+            onTap: _handleMemorizationTap,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: 604,
+              reverse: true,
+              onPageChanged: (index) {
+                _saveCurrentPage(index + 1);
+              },
+              itemBuilder: (context, index) {
+                return MushafPageWidget(pageNumber: index + 1);
+              },
+            ),
+          ),
+
+          // Conditionally display the CountdownCircle positioned at the bottom center.
+          if (isMemorizing)
+            Positioned(
+              // Calculate bottom to align circle BOTTOM with the CENTER of the bar.
+              bottom: bottomPadding + (barHeight / 2),
+              // Horizontal centering achieved by setting left/right to 0 and using Center widget
+              left: 0,
+              right: 0,
+              child: const Center(child: CountdownCircle()),
+            ),
+        ],
       ),
-      bottomNavigationBar: MushafBottomMenu(
+      // Use the MushafNavigation widget which handles the BottomAppBar layout
+      bottomNavigationBar: MushafNavigation(
         currentPageNumber: _currentPageNumber,
         onBackButtonPressed: () async {
           final memorizationNotifier = ref.read(memorizationProvider.notifier);
