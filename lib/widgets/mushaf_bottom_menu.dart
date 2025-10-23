@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../screens/mushaf_screen.dart'; // Import to get memorizationProvider
+import 'countdown_circle.dart'; // Import the circle
 
 class MushafBottomMenu extends ConsumerWidget {
   final VoidCallback onBackButtonPressed;
-  // WHY: Accept the current page number from the parent screen.
   final int currentPageNumber;
 
   const MushafBottomMenu({
     super.key,
     required this.onBackButtonPressed,
-    required this.currentPageNumber, // Add required parameter
+    required this.currentPageNumber,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppThemeMode currentTheme = ref.watch(themeProvider);
-    final bool isMemorizing = ref
-        .watch(memorizationProvider)
-        .isMemorizationMode;
+    final memorizationState = ref.watch(memorizationProvider);
+    final bool isMemorizing = memorizationState.isMemorizationMode;
+
     final theme = Theme.of(context);
     final Color unselectedIconColor = Colors.grey.shade400;
     final Color selectedIconColor = theme.colorScheme.primary;
@@ -31,19 +31,19 @@ class MushafBottomMenu extends ConsumerWidget {
       color: const Color(0xFF212121),
       padding: EdgeInsets.zero,
       height: barHeight,
-      clipBehavior: Clip.antiAlias,
+      clipBehavior: Clip.none, // Allow potential overflow if needed
       child: SizedBox(
         height: barHeight,
         child: IconTheme(
           data: IconThemeData(color: unselectedIconColor, size: iconSize),
           child: Row(
+            // WHY: spaceBetween pushes left/right groups to ends, center widget sits between.
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              // --- Left-aligned buttons ---
+              // --- Left Buttons ---
               Row(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
                     height: barHeight,
@@ -57,6 +57,7 @@ class MushafBottomMenu extends ConsumerWidget {
                       tooltip: 'More options',
                       itemBuilder: (BuildContext context) =>
                           <PopupMenuEntry<AppThemeMode>>[
+                            /* ... Items ... */
                             CheckedPopupMenuItem<AppThemeMode>(
                               value: AppThemeMode.light,
                               checked: currentTheme == AppThemeMode.light,
@@ -94,6 +95,7 @@ class MushafBottomMenu extends ConsumerWidget {
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
+                  // WHY: Memorization toggle button is back in the left group.
                   SizedBox(
                     height: barHeight,
                     child: IconButton(
@@ -107,7 +109,6 @@ class MushafBottomMenu extends ConsumerWidget {
                         isMemorizing ? Icons.school : Icons.school_outlined,
                       ),
                       onPressed: () {
-                        // WHY: Pass the current page number when toggling.
                         ref
                             .read(memorizationProvider.notifier)
                             .toggleMode(currentPageNumber: currentPageNumber);
@@ -118,7 +119,17 @@ class MushafBottomMenu extends ConsumerWidget {
                   ),
                 ],
               ),
-              // --- Right-aligned button ---
+
+              // --- Center Item (Countdown Circle if memorizing) ---
+              // WHY: Only show the circle when memorization is active.
+              if (isMemorizing)
+                const CountdownCircle()
+              else
+                // WHY: Add an empty SizedBox as a placeholder when not memorizing
+                // to help maintain spacing, match circle's approximate width.
+                const SizedBox(width: 56.0),
+
+              // --- Right Button ---
               SizedBox(
                 height: barHeight,
                 child: IconButton(

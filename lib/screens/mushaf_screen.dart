@@ -6,28 +6,38 @@ import '../widgets/mushaf_bottom_menu.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart'; // Import constants for initialWordCount
-import 'dart:collection'; // Needed for SplayTreeMap
+import 'dart:collection'; // Needed for SplayTreeMap in _handleMemorizationTap
 
 // --- State Management for Memorization Mode ---
+// Placed here because the state affects both the MushafPageWidget (visibility)
+// and the MushafBottomMenu (icon/circle display). The screen coordinates this.
 @immutable
 class MemorizationState {
   final bool isMemorizationMode;
-  // WHY: State now stores the index of the LAST fully revealed ayah. -1 = initial N words state.
+  // State stores the index of the LAST fully revealed ayah. -1 = initial N words state.
   final Map<int, int> lastRevealedAyahIndexMap;
+  final int repetitionGoal;
+  final int currentRepetitions;
 
   const MemorizationState({
     this.isMemorizationMode = false,
     this.lastRevealedAyahIndexMap = const {},
+    this.repetitionGoal = 5, // Default goal
+    this.currentRepetitions = 0, // Initial count
   });
 
   MemorizationState copyWith({
     bool? isMemorizationMode,
     Map<int, int>? lastRevealedAyahIndexMap,
+    int? repetitionGoal,
+    int? currentRepetitions,
   }) {
     return MemorizationState(
       isMemorizationMode: isMemorizationMode ?? this.isMemorizationMode,
       lastRevealedAyahIndexMap:
           lastRevealedAyahIndexMap ?? this.lastRevealedAyahIndexMap,
+      repetitionGoal: repetitionGoal ?? this.repetitionGoal,
+      currentRepetitions: currentRepetitions ?? this.currentRepetitions,
     );
   }
 }
@@ -39,9 +49,14 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     final bool enabling = !state.isMemorizationMode;
     Map<int, int> newMap = const {}; // Reset map when toggling off
 
-    // WHY: If enabling, set the index for the current page to -1 (initial state).
+    // If enabling, set the index for the current page to -1 (initial state).
     if (enabling && currentPageNumber != null) {
       newMap = {currentPageNumber: -1};
+      // Reset counter to goal when enabling
+      state = state.copyWith(currentRepetitions: state.repetitionGoal);
+    } else {
+      // Reset counter when disabling
+      state = state.copyWith(currentRepetitions: 0);
     }
 
     state = state.copyWith(
@@ -55,11 +70,29 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
       state = state.copyWith(
         isMemorizationMode: false,
         lastRevealedAyahIndexMap: const {}, // Reset map
+        currentRepetitions: 0, // Reset counter
       );
     }
   }
 
-  // WHY: Updates the index based on the logic described (first tap vs subsequent).
+  void decrementRepetitions() {
+    if (state.currentRepetitions > 0) {
+      state = state.copyWith(currentRepetitions: state.currentRepetitions - 1);
+    }
+    // Optional: If count reaches 0, automatically advance? Or just stop?
+    // Current logic just stops at 0.
+  }
+
+  void setRepetitionGoal(int goal) {
+    if (goal > 0) {
+      state = state.copyWith(repetitionGoal: goal);
+      if (state.isMemorizationMode) {
+        state = state.copyWith(currentRepetitions: goal);
+      }
+    }
+  }
+
+  // Updates the index based on the logic described (first tap vs subsequent).
   void revealNextStep(
     int pageNumber,
     List<Word> allWords,
@@ -70,16 +103,19 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
 
     if (currentIndex == -1) {
       // First tap after initial reveal
-      if (allWords.length >= initialWordCount) {
-        Word lastWordInitiallyShown = allWords[initialWordCount - 1];
+      // Ensure there are enough words to determine the index
+      if (allWords.isNotEmpty && initialWordCount > 0) {
+        // Clamp word index to prevent out of bounds
+        int wordIndex = (initialWordCount - 1).clamp(0, allWords.length - 1);
+        Word lastWordInitiallyShown = allWords[wordIndex];
         String lastAyahKey =
             "${lastWordInitiallyShown.surahNumber.toString().padLeft(3, '0')}:${lastWordInitiallyShown.ayahNumber.toString().padLeft(3, '0')}";
         nextIndex = orderedKeys.indexOf(
           lastAyahKey,
         ); // Find index of the ayah containing the last initial word
       } else {
-        // Edge case
-        nextIndex = orderedKeys.length - 1;
+        // Edge case: No words or initialWordCount is 0
+        nextIndex = 0; // Move to reveal the first ayah
       }
       // Ensure index is valid, default to 0 if something went wrong
       if (nextIndex < 0) nextIndex = 0;
@@ -91,10 +127,13 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
       return;
     }
 
-    // WHY: Ensure map is mutable before updating
     final newMap = Map<int, int>.from(state.lastRevealedAyahIndexMap);
     newMap[pageNumber] = nextIndex;
-    state = state.copyWith(lastRevealedAyahIndexMap: newMap);
+    // Reset repetition count whenever the revealed ayah index changes
+    state = state.copyWith(
+      lastRevealedAyahIndexMap: newMap,
+      currentRepetitions: state.repetitionGoal,
+    );
   }
 }
 
@@ -117,7 +156,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   late int _currentPageNumber;
 
   Future<void> _saveCurrentPage(int pageNumber) async {
-    /* ... unchanged ... */
     setState(() {
       _currentPageNumber = pageNumber;
     });
@@ -126,14 +164,12 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   }
 
   Future<void> _clearLastPage() async {
-    /* ... unchanged ... */
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('last_page');
   }
 
   @override
   void initState() {
-    /* ... unchanged ... */
     super.initState();
     _currentPageNumber = widget.initialPage;
     _pageController = PageController(initialPage: widget.initialPage - 1);
@@ -141,12 +177,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   void dispose() {
-    /* ... unchanged ... */
     _pageController.dispose();
     super.dispose();
   }
 
-  // WHY: Tap handler now calls the revealNextStep logic in the notifier.
+  // Tap handler calls the revealNextStep logic in the notifier.
   void _handleMemorizationTap() {
     final memorizationNotifier = ref.read(memorizationProvider.notifier);
     final memorizationState = ref.read(memorizationProvider);
@@ -156,6 +191,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     }
 
     final int pageNumber = _currentPageNumber;
+    // Use read as we don't need rebuilds here based on pageData
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
 
     asyncPageData.whenData((PageData pageData) {
@@ -180,9 +216,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       // Check if page is already fully revealed before calling notifier
       final int currentIndex =
           memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
+      // Page is fully revealed if the last revealed index is the index of the last ayah
       if (currentIndex >= orderedAyahKeys.length - 1) {
-        // Already showing the last ayah fully, do nothing more
-        return;
+        return; // Already showing the last ayah fully
       }
 
       // Call the notifier method to update the state
@@ -196,38 +232,36 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   @override
   Widget build(BuildContext context) {
-    /* ... unchanged ... */
-    final isMemorizing = ref.watch(memorizationProvider).isMemorizationMode;
+    // Watch state ONLY needed for the back button logic here
+    final isMemorizing = ref.watch(
+      memorizationProvider.select((s) => s.isMemorizationMode),
+    );
 
     return Scaffold(
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: _handleMemorizationTap,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: 604,
-              reverse: true,
-              onPageChanged: (index) {
-                _saveCurrentPage(index + 1);
-              },
-              itemBuilder: (context, index) {
-                return MushafPageWidget(pageNumber: index + 1);
-              },
-            ),
-          ),
-        ],
+      // Body is simple GestureDetector + PageView
+      body: GestureDetector(
+        onTap: _handleMemorizationTap,
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: 604,
+          reverse: true,
+          onPageChanged: (index) {
+            _saveCurrentPage(index + 1);
+          },
+          itemBuilder: (context, index) {
+            return MushafPageWidget(pageNumber: index + 1);
+          },
+        ),
       ),
       bottomNavigationBar: MushafBottomMenu(
         currentPageNumber: _currentPageNumber,
         onBackButtonPressed: () async {
           final memorizationNotifier = ref.read(memorizationProvider.notifier);
-          final bool wasMemorizing = ref
-              .read(memorizationProvider)
-              .isMemorizationMode; // Read before async gap
+          // Use the watched 'isMemorizing' variable directly
           if (Navigator.canPop(context)) {
             await _clearLastPage();
-            if (wasMemorizing) {
+            if (isMemorizing) {
+              // Use watched variable
               memorizationNotifier.disableMode();
             }
             if (context.mounted) {

@@ -23,7 +23,7 @@ class MushafPageWidget extends ConsumerWidget {
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
     final memorizationState = ref.watch(memorizationProvider);
     final isMemorizing = memorizationState.isMemorizationMode;
-    // WHY: Get the index of the last fully revealed ayah (-1 means initial state).
+    // WHY: Corrected to read from 'lastRevealedAyahIndexMap'. -1 is the initial state.
     final int lastRevealedIndex =
         memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
 
@@ -63,7 +63,6 @@ class MushafPageWidget extends ConsumerWidget {
         final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
             ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
             : '';
-
         final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
         // --- Ayah Visibility Logic (Based on lastRevealedIndex) ---
@@ -126,7 +125,6 @@ class MushafPageWidget extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            /* ... AppBar ... */
             automaticallyImplyLeading: false,
             title: null,
             centerTitle: false,
@@ -160,7 +158,6 @@ class MushafPageWidget extends ConsumerWidget {
             ],
           ),
           body: Stack(
-            /* ... Body Stack ... */
             fit: StackFit.expand,
             children: [
               Padding(
@@ -184,7 +181,6 @@ class MushafPageWidget extends ConsumerWidget {
                 ),
               ),
               Align(
-                /* ... Page Number ... */
                 alignment: (pageNumber % 2 != 0)
                     ? Alignment.bottomRight
                     : Alignment.bottomLeft,
@@ -204,7 +200,6 @@ class MushafPageWidget extends ConsumerWidget {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(
-        /* ... Error Display ... */
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(pageHorizontalPadding),
