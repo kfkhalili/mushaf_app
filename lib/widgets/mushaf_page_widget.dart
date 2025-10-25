@@ -59,43 +59,36 @@ class MushafPageWidget extends ConsumerWidget {
 
     return asyncPageData.when(
       data: (pageData) {
-        final String juzGlyphString =
-            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-        final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
-            ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
-            : '';
-        final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
+        final Set<Word> wordsToShow = {};
 
-        // --- Ayah Visibility Logic (Based on lastRevealedIndex) ---
-        final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
-        final List<Word> allQuranWordsOnPage = [];
-        for (final line in pageData.layout.lines) {
-          if (line.lineType == 'ayah') {
-            for (final word in line.words) {
-              if (word.ayahNumber > 0) {
-                allQuranWordsOnPage.add(word);
-                final String key = _getAyahKey(
-                  word.surahNumber,
-                  word.ayahNumber,
-                );
-                ayahsOnPageMap.putIfAbsent(key, () => []).add(word);
+        // Only prepare words to show if memorizing and text is not hidden
+        if (isMemorizing && !memorizationState.isTextHidden) {
+          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
+          final List<Word> allQuranWordsOnPage = [];
+          for (final line in pageData.layout.lines) {
+            if (line.lineType == 'ayah') {
+              for (final word in line.words) {
+                if (word.ayahNumber > 0) {
+                  allQuranWordsOnPage.add(word);
+                  final String key = _getAyahKey(
+                    word.surahNumber,
+                    word.ayahNumber,
+                  );
+                  ayahsOnPageMap.putIfAbsent(key, () => []).add(word);
+                }
               }
             }
           }
-        }
-        final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
+          final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
-        final Set<Word> wordsToShow = {};
-
-        if (isMemorizing) {
-          // ** Initial State: Show first N words **
-          if (lastRevealedIndex == -1 && allQuranWordsOnPage.isNotEmpty) {
-            wordsToShow.addAll(allQuranWordsOnPage.take(initialWordCount));
-            // No hint
-          }
-          // ** Subsequent States: Show completed Ayahs + Hint **
-          else if (lastRevealedIndex >= 0 && orderedAyahKeys.isNotEmpty) {
-            // Clamp index to valid range
+          if (lastRevealedIndex == -1) {
+            // ** Initial State: Show first N words **
+            if (allQuranWordsOnPage.isNotEmpty) {
+              wordsToShow.addAll(allQuranWordsOnPage.take(initialWordCount));
+              // No hint
+            }
+          } else if (lastRevealedIndex >= 0) {
+            // ** Subsequent States: Show completed Ayahs + Hint **
             int clampedLastRevealedIndex = lastRevealedIndex.clamp(
               -1,
               orderedAyahKeys.length - 1,
@@ -118,11 +111,24 @@ class MushafPageWidget extends ConsumerWidget {
               }
             }
           }
-        } else {
-          // Not memorizing
-          wordsToShow.addAll(allQuranWordsOnPage);
+        } else if (!isMemorizing) {
+          // If not in memorization mode, show all words
+          for (final line in pageData.layout.lines) {
+            if (line.lineType == 'ayah') {
+              for (final word in line.words) {
+                if (word.ayahNumber > 0) {
+                  wordsToShow.add(word);
+                }
+              }
+            }
+          }
         }
-        // --- End Ayah Visibility Logic ---
+        final String juzGlyphString =
+            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+        final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
+            ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
+            : '';
+        final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
         return Scaffold(
           appBar: AppBar(

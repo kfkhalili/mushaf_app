@@ -18,17 +18,22 @@ class MemorizationState {
   final Map<int, int> lastRevealedAyahIndexMap;
   final int repetitionGoal;
   final int currentRepetitions;
+  final bool isTextHidden;
+
   const MemorizationState({
     this.isMemorizationMode = false,
     this.lastRevealedAyahIndexMap = const {},
     this.repetitionGoal = 5,
     this.currentRepetitions = 0,
+    this.isTextHidden = false,
   });
+
   MemorizationState copyWith({
     bool? isMemorizationMode,
     Map<int, int>? lastRevealedAyahIndexMap,
     int? repetitionGoal,
     int? currentRepetitions,
+    bool? isTextHidden,
   }) {
     return MemorizationState(
       isMemorizationMode: isMemorizationMode ?? this.isMemorizationMode,
@@ -36,6 +41,7 @@ class MemorizationState {
           lastRevealedAyahIndexMap ?? this.lastRevealedAyahIndexMap,
       repetitionGoal: repetitionGoal ?? this.repetitionGoal,
       currentRepetitions: currentRepetitions ?? this.currentRepetitions,
+      isTextHidden: isTextHidden ?? this.isTextHidden,
     );
   }
 }
@@ -54,6 +60,7 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     state = state.copyWith(
       isMemorizationMode: enabling,
       lastRevealedAyahIndexMap: newMap,
+      isTextHidden: false,
     );
   }
 
@@ -63,13 +70,27 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
         isMemorizationMode: false,
         lastRevealedAyahIndexMap: const {},
         currentRepetitions: 0,
+        isTextHidden: false,
       );
     }
   }
 
-  void decrementRepetitions() {
-    if (state.currentRepetitions > 0) {
+  void decrementRepetitions(VoidCallback onRevealNext) {
+    if (state.currentRepetitions > 1) {
       state = state.copyWith(currentRepetitions: state.currentRepetitions - 1);
+    } else {
+      if (!state.isTextHidden) {
+        state = state.copyWith(
+          isTextHidden: true,
+          currentRepetitions: state.repetitionGoal,
+        );
+      } else {
+        state = state.copyWith(
+          isTextHidden: false,
+          currentRepetitions: state.repetitionGoal,
+        );
+        onRevealNext();
+      }
     }
   }
 
@@ -255,7 +276,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             bottom: kBottomNavBarHeight - (kCountdownCircleDiameter / 3),
             left: 0,
             right: 0,
-            child: const CountdownCircle(),
+            child: CountdownCircle(
+              onTap: () => ref
+                  .read(memorizationProvider.notifier)
+                  .decrementRepetitions(_handleMemorizationTap),
+            ),
           ),
       ],
     );

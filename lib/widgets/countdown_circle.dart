@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/mushaf_screen.dart'; // For memorizationProvider
 
 class CountdownCircle extends ConsumerWidget {
-  const CountdownCircle({super.key});
+  final VoidCallback? onTap;
+
+  const CountdownCircle({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,9 +22,7 @@ class CountdownCircle extends ConsumerWidget {
     const double fontSize = 20.0;
 
     return GestureDetector(
-      onTap: () {
-        ref.read(memorizationProvider.notifier).decrementRepetitions();
-      },
+      onTap: onTap,
       child: Stack(
         alignment: Alignment.center,
         children: [
