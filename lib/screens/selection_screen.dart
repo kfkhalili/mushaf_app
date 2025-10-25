@@ -38,7 +38,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     required ThemeData theme,
   }) {
     final bool isSelected = _currentIndex == index;
-    final Color? color = isSelected
+    final Color color = isSelected
         ? theme.colorScheme.primary
         : Colors.grey.shade400;
 

@@ -1,97 +1,96 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+// lib/providers.dart
+
+// WHY: These are the only two imports you need for this file.
+// 'riverpod_annotation' provides the @riverpod annotation and the 'Ref' type.
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'models.dart';
 
+// WHY: This directive points to the file that code-gen will create.
+part 'providers.g.dart';
+
 // --- Current Page Provider ---
-// Manages the state of the currently viewed page number.
-final currentPageProvider = StateProvider<int>((ref) {
-  // Default to 1. MushafScreen overrides this on init.
-  return 1;
-});
+// WHY: This syntax for a Notifier class is correct.
+@Riverpod(keepAlive: true)
+class CurrentPage extends _$CurrentPage {
+  @override
+  int build() {
+    return 1;
+  }
+
+  void setPage(int newPage) {
+    state = newPage;
+  }
+}
 
 // --- Database Service Provider ---
-final databaseServiceProvider = Provider<DatabaseService>((ref) {
-  // DatabaseService handles its own internal initialization via init()
+// WHY: All provider functions now use the unified 'Ref' type.
+@Riverpod(keepAlive: true)
+DatabaseService databaseService(Ref ref) {
   return DatabaseService();
-});
+}
 
 // --- Font Loader Service Provider ---
-final fontServiceProvider = Provider<FontService>((ref) {
+// WHY: All provider functions now use the unified 'Ref' type.
+@Riverpod(keepAlive: true)
+FontService fontService(Ref ref) {
   return FontService();
-});
+}
 
 // --- Page Data Provider ---
-// Provides PageData including the correct font family for a given page number.
-final pageDataProvider = FutureProvider.family<PageData, int>((
-  ref,
-  pageNumber,
-) async {
+// WHY: This is an auto-disposing provider (no keepAlive),
+// but it *still* uses the unified 'Ref' type.
+@riverpod
+Future<PageData> pageData(Ref ref, int pageNumber) async {
   final dbService = ref.watch(databaseServiceProvider);
   final fontService = ref.watch(fontServiceProvider);
 
-  // WHY: The try-catch block was removed. If 'loadFontForPage'
-  // or the database calls fail, the provider will now correctly
-  // enter an error state, which the UI (MushafPageWidget) can handle.
   String pageFontFamilyName = await fontService.loadFontForPage(pageNumber);
 
-  // Load layout and header info asynchronously. Errors here will also
-  // cause the provider to enter an error state.
   final layout = await dbService.getPageLayout(pageNumber);
   final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
 
   return PageData(
     layout: layout,
-    pageFontFamily: pageFontFamilyName, // Use name from FontService or fallback
+    pageFontFamily: pageFontFamilyName,
     pageSurahName: headerInfo['surahName'] as String? ?? '',
     pageSurahNumber: headerInfo['surahNumber'] as int? ?? 0,
     juzNumber: headerInfo['juz'] as int? ?? 0,
     hizbNumber: headerInfo['hizb'] as int? ?? 0,
   );
-});
+}
 
 // --- Surah List Provider ---
-// Provides the list of SurahInfo for the SelectionScreen.
-final surahListProvider = FutureProvider<List<SurahInfo>>((ref) async {
+// WHY: All provider functions now use the unified 'Ref' type.
+@Riverpod(keepAlive: true)
+Future<List<SurahInfo>> surahList(Ref ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  // 'getAllSurahs()' calls 'init()' internally.
   return dbService.getAllSurahs();
-});
+}
 
 // --- Juz List Provider ---
-// Provides the list of JuzInfo for the SelectionScreen.
-final juzListProvider = FutureProvider<List<JuzInfo>>((ref) async {
+// WHY: All provider functions now use the unified 'Ref' type.
+@Riverpod(keepAlive: true)
+Future<List<JuzInfo>> juzList(Ref ref) async {
   final dbService = ref.watch(databaseServiceProvider);
-  // 'getAllJuzInfo()' calls 'init()' internally.
   return dbService.getAllJuzInfo();
-});
+}
 
 // --- Page Preview Provider ---
-// Provides the first few words of a page for the SelectionScreen page list.
-final pagePreviewProvider = FutureProvider.family<String, int>((
-  ref,
-  pageNumber,
-) async {
+// WHY: This is an auto-disposing provider, but it
+// *still* uses the unified 'Ref' type.
+@riverpod
+Future<String> pagePreview(Ref ref, int pageNumber) async {
   final dbService = ref.watch(databaseServiceProvider);
   return dbService.getFirstWordsOfPage(pageNumber, count: 3);
-});
+}
 
 // --- Page Font Family Provider ---
-// Provides the correct font family name (dynamically loaded or fallback) for a page,
-// specifically used by the PageListView in SelectionScreen for preview text.
-final pageFontFamilyProvider = FutureProvider.family<String, int>((
-  ref,
-  pageNumber,
-) async {
+// WHY: This is an auto-disposing provider, but it
+// *still* uses the unified 'Ref' type.
+@riverpod
+Future<String> pageFontFamily(Ref ref, int pageNumber) async {
   final fontService = ref.watch(fontServiceProvider);
-
-  // WHY: The try-catch block was removed. If 'loadFontForPage' fails,
-  // this provider will now correctly enter an error state.
-  // The UI (PageListItem) already handles this error state.
   return fontService.loadFontForPage(pageNumber);
-});
-
-// --- Theme Provider ---
-// (Assuming this is defined elsewhere, e.g., theme_provider.dart)
-// final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemeMode>(...);
+}

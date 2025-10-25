@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers.dart';
+import '../providers.dart'; // WHY: Add this import to find your new providers
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
 import '../constants.dart';
 import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
@@ -32,6 +32,7 @@ class PageListItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     // Watch provider for preview text.
+    // WHY: These lines will now work because of the added import.
     final pagePreviewAsync = ref.watch(pagePreviewProvider(pageNumber));
     // Watch provider for the correct font family name.
     final pageFontFamilyAsync = ref.watch(pageFontFamilyProvider(pageNumber));
