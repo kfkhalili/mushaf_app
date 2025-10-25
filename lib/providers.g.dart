@@ -429,3 +429,56 @@ final class PageFontFamilyFamily extends $Family
   @override
   String toString() => r'pageFontFamilyProvider';
 }
+
+@ProviderFor(SelectionTabIndex)
+const selectionTabIndexProvider = SelectionTabIndexProvider._();
+
+final class SelectionTabIndexProvider
+    extends $NotifierProvider<SelectionTabIndex, int> {
+  const SelectionTabIndexProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'selectionTabIndexProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$selectionTabIndexHash();
+
+  @$internal
+  @override
+  SelectionTabIndex create() => SelectionTabIndex();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$selectionTabIndexHash() => r'1c04c273ee33cbe2d5543511691a69512c93d9f1';
+
+abstract class _$SelectionTabIndex extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

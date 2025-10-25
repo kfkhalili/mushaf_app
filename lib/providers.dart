@@ -94,3 +94,17 @@ Future<String> pageFontFamily(Ref ref, int pageNumber) async {
   final fontService = ref.watch(fontServiceProvider);
   return fontService.loadFontForPage(pageNumber);
 }
+
+// --- Navigation Provider ---
+// WHY: This is a keepAlive provider for managing selection screen tab state.
+@Riverpod(keepAlive: true)
+class SelectionTabIndex extends _$SelectionTabIndex {
+  @override
+  int build() {
+    return 2; // Default to Surah tab
+  }
+
+  void setTabIndex(int index) {
+    state = index;
+  }
+}

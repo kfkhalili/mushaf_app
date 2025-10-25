@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
-import '../widgets/mushaf_navigation.dart'; // Import the container widget
+import '../widgets/shared/app_bottom_navigation.dart';
+import '../widgets/countdown_circle.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -224,8 +225,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           },
         ),
       ),
-      bottomNavigationBar: MushafNavigation(
-        // WHY: Pass the page number from the watched provider.
+      bottomNavigationBar: AppBottomNavigation(
+        type: AppBottomNavigationType.mushaf,
         currentPageNumber: currentPageNumber,
         onBackButtonPressed: () async {
           final memorizationNotifier = ref.read(memorizationProvider.notifier);

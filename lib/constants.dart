@@ -48,6 +48,12 @@ const double footerBottomPadding = 16.0;
 const double footerRightPadding = 16.0;
 const double footerLeftPadding = 24.0;
 
+// --- NAVIGATION ---
+const double kBottomNavBarHeight = 64.0;
+const double kBottomNavLabelFontSize = 22.0;
+const double kBottomNavIconSize = 24.0;
+const double kCountdownCircleDiameter = 56.0;
+
 // --- MEMORIZATION ---
 // WHY: Number of words to show initially when memorization mode starts.
 const int initialWordCount = 15;
