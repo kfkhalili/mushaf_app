@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# Mushaf App Project Architecture
+
+This is a Flutter Quran (Mushaf) reader application with multi-platform support.
+
+## Project Structure
+
+- **Entry Point**: [main.dart](mdc:lib/main.dart) - App initialization with portrait-only orientation
+- **Models**: [models.dart](mdc:lib/models.dart) - Immutable data models (Word, LineInfo, PageLayout, PageData, etc.)
+- **Constants**: [constants.dart](mdc:lib/constants.dart) - Centralized configuration including DbConstants class
+- **State Management**: [providers.dart](mdc:lib/providers.dart) - Riverpod providers with code generation
+- **Themes**: [themes.dart](mdc:lib/themes.dart) - Light, dark, and sepia theme definitions
+
+## Directory Organization
+
+### `/lib/screens/`
+
+Screen-level widgets representing complete pages:
+
+- `splash_screen.dart` - Initial loading screen
+- `mushaf_screen.dart` - Main Quran reading interface with PageView
+- `selection_screen.dart` - Navigation by Surah/Juz/Page
+
+### `/lib/widgets/`
+
+Reusable UI components:
+
+- `mushaf_page_widget.dart` - Individual Quran page renderer
+- `line_widget.dart` - Single line of Quranic text
+- `mushaf_navigation.dart` - Bottom navigation bar
+- `mushaf_bottom_menu.dart` - Action menu
+- List views for Surah, Juz, and Page selection
+
+### `/lib/services/`
+
+Business logic and data access:
+
+- `database_service.dart` - SQLite database operations
+- `font_service.dart` - Dynamic font loading for each page
+
+### `/lib/providers/`
+
+Additional state management:
+
+- `theme_provider.dart` - Theme mode persistence and switching
+
+### `/lib/utils/`
+
+Helper functions and utilities
+
+## Key Architecture Patterns
+
+1. **Immutable Models**: All data models use `@immutable` and implement equality operators
+2. **Service Layer**: Database and font operations isolated in service classes
+3. **State Management**: Riverpod with code generation (`providers.g.dart`)
+4. **Asset Management**: Multiple SQLite databases and 604 page-specific fonts
+5. **Orientation Lock**: App locked to portrait mode in [main.dart](mdc:lib/main.dart)
+6. **RTL Support**: Default text direction is RTL (Right-to-Left) for Arabic

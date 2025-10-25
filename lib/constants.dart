@@ -11,7 +11,6 @@ const String basmallah = '\uFDFD'; // ﷽
 // --- FONT CONSTANTS ---
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
-const String fallbackFontFamily = 'QPCV2'; // Used for Quran text fallback
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;
@@ -48,6 +47,12 @@ const double headerJuzHizbSpacing = 12.0; // Not currently used but kept
 const double footerBottomPadding = 16.0;
 const double footerRightPadding = 16.0;
 const double footerLeftPadding = 24.0;
+
+// --- NAVIGATION ---
+const double kBottomNavBarHeight = 64.0;
+const double kBottomNavLabelFontSize = 22.0;
+const double kBottomNavIconSize = 24.0;
+const double kCountdownCircleDiameter = 56.0;
 
 // --- MEMORIZATION ---
 // WHY: Number of words to show initially when memorization mode starts.

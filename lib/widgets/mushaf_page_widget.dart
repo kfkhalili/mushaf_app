@@ -2,7 +2,7 @@ import 'dart:collection'; // For SplayTreeMap
 import 'dart:math'; // For min()
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers.dart';
+import '../providers.dart'; // WHY: Add this import to find your new providers
 import '../utils/helpers.dart';
 import 'line_widget.dart';
 import '../constants.dart'; // Import constants
@@ -20,6 +20,7 @@ class MushafPageWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // WHY: This line will now work because of the added import.
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
     final memorizationState = ref.watch(memorizationProvider);
     final isMemorizing = memorizationState.isMemorizationMode;

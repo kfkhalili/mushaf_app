@@ -44,7 +44,7 @@ class LineWidget extends StatelessWidget {
     final Color baseTextColor =
         theme.textTheme.bodyLarge?.color ?? Colors.black;
 
-    String? fontFamily = fallbackFontFamily; // For Basmallah
+    String? fontFamily = quranCommonFontFamily; // For Basmallah
     TextAlign lineAlignment = line.isCentered
         ? TextAlign.center
         : TextAlign.justify;

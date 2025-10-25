@@ -1,0 +1,102 @@
+---
+globs: *.dart
+description: Riverpod state management patterns and conventions
+---
+
+# Riverpod State Management
+
+This project uses **Riverpod with code generation** (version 3.0+).
+
+## Provider Declaration Pattern
+
+All providers in [providers.dart](mdc:lib/providers.dart) use code generation annotations:
+
+```dart
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+part 'providers.g.dart';
+```
+
+### Stateful Notifier Pattern
+
+```dart
+@Riverpod(keepAlive: true)
+class CurrentPage extends _$CurrentPage {
+  @override
+  int build() {
+    return 1;
+  }
+
+  void setPage(int newPage) {
+    state = newPage;
+  }
+}
+```
+
+### Simple Provider Pattern
+
+Use unified `Ref` type for all providers (not `ProviderRef`, not `WidgetRef`):
+
+```dart
+@Riverpod(keepAlive: true)
+DatabaseService databaseService(Ref ref) {
+  return DatabaseService();
+}
+```
+
+### Async Provider Pattern
+
+Auto-disposing providers (no `keepAlive`):
+
+```dart
+@riverpod
+Future<PageData> pageData(Ref ref, int pageNumber) async {
+  final dbService = ref.watch(databaseServiceProvider);
+  return dbService.getPageLayout(pageNumber);
+}
+```
+
+## Provider Types
+
+- **`@Riverpod(keepAlive: true)`**: Long-lived providers (services, global state)
+- **`@riverpod`** (lowercase): Auto-disposing providers (page-specific data)
+
+## Code Generation
+
+After modifying [providers.dart](mdc:lib/providers.dart), regenerate with:
+
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+## Consumer Widget Pattern
+
+Use `ConsumerWidget` or `ConsumerStatefulWidget`:
+
+```dart
+class MyWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(someProvider);
+    return Widget();
+  }
+}
+```
+
+## Accessing Providers
+
+- **Watch**: `ref.watch(provider)` - Rebuilds when provider changes
+- **Read**: `ref.read(provider)` - One-time read, no rebuild
+- **Listen**: For callbacks without rebuilding UI
+
+## Legacy StateNotifier
+
+For complex state like memorization mode in [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart):
+
+```dart
+import 'package:flutter_riverpod/legacy.dart';
+
+final memorizationProvider =
+    StateNotifierProvider<MemorizationNotifier, MemorizationState>(
+      (ref) => MemorizationNotifier(),
+);
+```

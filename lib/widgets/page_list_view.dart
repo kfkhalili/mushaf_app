@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers.dart';
+import '../providers.dart'; // WHY: Add this import to find your new providers
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
 import '../constants.dart';
+import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
 class PageListView extends StatelessWidget {
   const PageListView({super.key});
@@ -27,12 +28,11 @@ class PageListItem extends ConsumerWidget {
 
   const PageListItem({super.key, required this.pageNumber});
 
-  // REMOVED: _navigateToPage, now uses helper
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     // Watch provider for preview text.
+    // WHY: These lines will now work because of the added import.
     final pagePreviewAsync = ref.watch(pagePreviewProvider(pageNumber));
     // Watch provider for the correct font family name.
     final pageFontFamilyAsync = ref.watch(pageFontFamilyProvider(pageNumber));
@@ -51,37 +51,26 @@ class PageListItem extends ConsumerWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      leading: Text(
-        convertToEasternArabicNumerals(pageNumber.toString()),
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.primary,
-        ),
-      ),
+      // WHY: Use the new reusable LeadingNumberText widget.
+      leading: LeadingNumberText(number: pageNumber),
       // WHY: Build the trailing widget based on the combined state of both providers.
       trailing: pagePreviewAsync.when(
         data: (previewText) {
           // WHY: Only proceed to check font if preview text is loaded.
           return pageFontFamilyAsync.when(
             data: (fontFamilyName) {
-              // WHY: Only display text if BOTH text and font are successfully loaded.
-              if (fontFamilyName != fallbackFontFamily) {
-                return Text(
-                  previewText,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontFamily: fontFamilyName, // Use the specific page font
-                    fontSize: 22,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                );
-              } else {
-                // WHY: If the font service returned the fallback, treat it as an error/loading state for the preview.
-                return loadingWidget;
-              }
+              // WHY: Display text with the specific page font when both text and font are successfully loaded.
+              return Text(
+                previewText,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: fontFamilyName, // Use the specific page font
+                  fontSize: 22,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              );
             },
             // WHY: Show loading indicator while the font is loading.
             loading: () => loadingWidget,

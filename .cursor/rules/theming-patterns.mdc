@@ -1,0 +1,130 @@
+---
+description: Theme management and styling conventions
+---
+
+# Theming Patterns
+
+The app supports three themes defined in [themes.dart](mdc:lib/themes.dart):
+
+## Theme Definitions
+
+### Light Theme
+
+```dart
+final lightTheme = ThemeData(
+  primarySwatch: Colors.teal,
+  brightness: Brightness.light,
+  scaffoldBackgroundColor: Colors.white,
+);
+```
+
+### Dark Theme
+
+```dart
+final darkTheme = ThemeData(
+  primarySwatch: Colors.teal,
+  brightness: Brightness.dark,
+  scaffoldBackgroundColor: const Color(0xFF121212),
+);
+```
+
+### Sepia Theme
+
+```dart
+final sepiaTheme = ThemeData(
+  primarySwatch: Colors.brown,
+  brightness: Brightness.light,
+  scaffoldBackgroundColor: const Color(0xFFF1E8D9), // Warm parchment
+);
+```
+
+## Theme State Management
+
+Theme selection is managed by `ThemeNotifier` in [providers/theme_provider.dart](mdc:lib/providers/theme_provider.dart).
+
+### Theme Mode Enum
+
+```dart
+enum AppThemeMode { system, light, dark, sepia }
+```
+
+### Theme Persistence
+
+Theme preference is saved to SharedPreferences:
+
+```dart
+final prefs = await SharedPreferences.getInstance();
+await prefs.setString('theme_mode', themeMode.name);
+```
+
+Loaded at app startup in [main.dart](mdc:lib/main.dart):
+
+```dart
+final String savedTheme = prefs.getString('theme_mode') ?? 'system';
+final AppThemeMode initialTheme = AppThemeMode.values.firstWhere(
+  (e) => e.name == savedTheme,
+  orElse: () => AppThemeMode.system,
+);
+```
+
+## Theme Application
+
+The sepia theme requires special handling since it's a light variant:
+
+```dart
+themeMode: currentThemeMode == AppThemeMode.sepia
+    ? ThemeMode.light
+    : currentThemeMode == AppThemeMode.light
+    ? ThemeMode.light
+    : currentThemeMode == AppThemeMode.dark
+    ? ThemeMode.dark
+    : ThemeMode.system,
+builder: (context, child) {
+  if (currentThemeMode == AppThemeMode.sepia) {
+    return Theme(data: sepiaTheme, child: child!);
+  }
+  return child!;
+},
+```
+
+## System Overlay Style
+
+Each theme defines status bar appearance:
+
+```dart
+appBarTheme: const AppBarTheme(
+  foregroundColor: Colors.black87,
+  systemOverlayStyle: SystemUiOverlayStyle.dark, // or .light
+),
+```
+
+## Theme Color Usage
+
+When styling widgets, respect theme colors:
+
+```dart
+// Good - uses theme
+color: Theme.of(context).scaffoldBackgroundColor,
+color: Theme.of(context).iconTheme.color,
+
+// Avoid - hardcoded colors (unless intentional)
+color: Colors.white,
+```
+
+## Theme-Specific Text Styles
+
+Define text theme for consistency:
+
+```dart
+textTheme: const TextTheme(
+  bodyLarge: TextStyle(color: Colors.white70),
+  bodyMedium: TextStyle(color: Colors.white70),
+),
+```
+
+## Adding New Themes
+
+1. Define `ThemeData` in [themes.dart](mdc:lib/themes.dart)
+2. Add to `AppThemeMode` enum in [providers/theme_provider.dart](mdc:lib/providers/theme_provider.dart)
+3. Update theme application logic in [main.dart](mdc:lib/main.dart)
+4. Handle special cases in MaterialApp builder if needed

@@ -1,0 +1,202 @@
+---
+description: Asset management and font loading patterns
+---
+
+# Assets and Fonts
+
+The Mushaf app uses a sophisticated font system with page-specific fonts for authentic Quran rendering.
+
+## Asset Structure
+
+### Databases (`assets/db/`)
+
+- `uthmani-15-lines.db` - Page layout data
+- `qpc-v2.db` - Quran text (words)
+- `quran-metadata-surah-name.sqlite` - Surah metadata
+- `quran-metadata-juz.sqlite` - Juz divisions (30 parts)
+- `quran-metadata-hizb.sqlite` - Hizb divisions (60 parts)
+
+### Fonts (`assets/fonts/`)
+
+- `qpc-v2-page-by-page-fonts/` - **604 page-specific fonts** (one per Quran page)
+- `surah-name-v4.ttf` - Surah name glyphs
+- `quran-common.ttf` - Common Quran characters (Basmallah, etc.)
+
+### Static Fonts (`fonts/`)
+
+- `QPCV2.ttf` - Fallback font for Quran text
+
+## Font Configuration
+
+Fonts are declared in [pubspec.yaml](mdc:pubspec.yaml):
+
+```yaml
+fonts:
+  - family: QPCV2
+    fonts:
+      - asset: fonts/QPCV2.ttf
+
+  - family: SurahNames
+    fonts:
+      - asset: assets/fonts/surah-name-v4.ttf
+
+  - family: QuranCommon
+    fonts:
+      - asset: assets/fonts/quran-common.ttf
+```
+
+Page-specific fonts are loaded dynamically (not declared in pubspec).
+
+## Dynamic Font Loading
+
+See [services/font_service.dart](mdc:lib/services/font_service.dart) for implementation.
+
+### Font Loading Pattern
+
+```dart
+Future<String> loadFontForPage(int pageNumber) async {
+  final fontName = 'QCF_P${pageNumber.toString().padLeft(3, '0')}';
+
+  // Check cache first
+  if (_loadedFonts.contains(fontName)) {
+    return fontName;
+  }
+
+  // Load font from assets
+  final fontPath = 'assets/fonts/qpc-v2-page-by-page-fonts/$fontName.ttf';
+  final ByteData data = await rootBundle.load(fontPath);
+  final fontLoader = FontLoader(fontName);
+  fontLoader.addFont(Future.value(data));
+  await fontLoader.load();
+
+  _loadedFonts.add(fontName);
+  return fontName;
+}
+```
+
+### Font Naming Convention
+
+Page-specific fonts follow the pattern: `QCF_P001`, `QCF_P002`, ..., `QCF_P604`
+
+- Always 3-digit zero-padded page numbers
+- 604 total pages in the Mushaf
+
+## Font Usage in Widgets
+
+### Font Constants
+
+Use constants from [constants.dart](mdc:lib/constants.dart):
+
+```dart
+const String surahNameFontFamily = 'SurahNames';
+const String quranCommonFontFamily = 'QuranCommon';
+```
+
+**Note**: There is no fallback font for Quran text. Page-specific fonts must load successfully or the app will display an error.
+
+### Applying Page-Specific Fonts
+
+```dart
+final pageData = ref.watch(pageDataProvider(pageNumber));
+
+Text(
+  word.text,
+  style: TextStyle(
+    fontFamily: pageData.pageFontFamily, // Dynamic font
+    fontSize: calculatedSize,
+  ),
+)
+```
+
+### Basmallah Rendering
+
+Use the special Unicode character from [constants.dart](mdc:lib/constants.dart):
+
+```dart
+const String basmallah = '\uFDFD'; // ﷽
+
+Text(
+  basmallah,
+  style: TextStyle(
+    fontFamily: quranCommonFontFamily,
+    fontSize: basmallahSize,
+  ),
+)
+```
+
+### Surah Name Rendering
+
+Surah names use font glyphs (not text):
+
+```dart
+Text(
+  surahName, // Arabic name from database
+  style: TextStyle(
+    fontFamily: surahNameFontFamily,
+    fontSize: surahNameSize,
+  ),
+)
+```
+
+## Asset Registration
+
+Assets must be declared in [pubspec.yaml](mdc:pubspec.yaml):
+
+```yaml
+flutter:
+  assets:
+    - assets/db/uthmani-15-lines.db
+    - assets/db/qpc-v2.db
+    - assets/db/quran-metadata-surah-name.sqlite
+    - assets/db/quran-metadata-juz.sqlite
+    - assets/db/quran-metadata-hizb.sqlite
+    - assets/fonts/qpc-v2-page-by-page-fonts/
+    - assets/fonts/surah-name-v4.ttf
+    - assets/fonts/quran-common.ttf
+```
+
+**Note**: Directory paths end with `/` to include all files in the directory.
+
+## Font Loading Best Practices
+
+1. **Lazy Loading**: Load fonts only when needed (per-page basis)
+2. **Caching**: Track loaded fonts to avoid reloading
+3. **Error Handling**: Page-specific fonts must load successfully or display error
+4. **Pre-declaration**: Static fonts (SurahNames, QuranCommon) declared in pubspec
+5. **Dynamic Fonts**: Page-specific fonts loaded at runtime via FontLoader
+6. **No Fallback**: Quran text requires exact page-specific fonts for proper rendering
+
+## Font Size Scaling
+
+Font sizes adapt to screen size using responsive constants:
+
+```dart
+final screenWidth = MediaQuery.of(context).size.width;
+final scaleFactor = screenWidth / referenceScreenWidth;
+final fontSize = (baseFontSize * scaleFactor).clamp(
+  minAyahFontSize,
+  maxAyahFontSize,
+);
+```
+
+See [constants.dart](mdc:lib/constants.dart) for all scaling constants.
+
+## Database Copying Pattern
+
+Databases are copied from assets to app documents directory at startup:
+
+```dart
+Future<void> _copyDbFromAssets({
+  required String assetFileName,
+  required String destinationPath,
+}) async {
+  final dbFile = File(destinationPath);
+  if (await dbFile.exists()) return; // Skip if exists
+
+  final ByteData data = await rootBundle.load('assets/db/$assetFileName');
+  final bytes = data.buffer.asUint8List();
+  await dbFile.writeAsBytes(bytes, flush: true);
+}
+```
+
+This allows read-only database access via sqflite.

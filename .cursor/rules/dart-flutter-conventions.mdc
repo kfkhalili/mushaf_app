@@ -1,0 +1,258 @@
+---
+globs: *.dart
+---
+
+# Dart and Flutter Conventions
+
+## Dart Language Version
+
+SDK: `^3.9.2` (see [pubspec.yaml](mdc:pubspec.yaml))
+
+## Null Safety
+
+All code must be null-safe:
+
+```dart
+// Good
+Database? _db;
+String? name;
+
+// Required null checks
+if (_db != null) {
+  await _db!.query(...);
+}
+
+// Null-aware operators
+final text = data?.text ?? 'default';
+```
+
+## Immutability
+
+Use `@immutable` annotation for data classes:
+
+```dart
+import 'package:flutter/foundation.dart';
+
+@immutable
+class Word {
+  final String text;
+  final int surahNumber;
+
+  const Word({required this.text, required this.surahNumber});
+}
+```
+
+## Equality Implementation
+
+Implement equality for data classes:
+
+```dart
+@override
+bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is Word &&
+        text == other.text &&
+        surahNumber == other.surahNumber;
+
+@override
+int get hashCode => Object.hash(text, surahNumber);
+```
+
+For lists, use `listEquals`:
+
+```dart
+import 'package:flutter/foundation.dart';
+
+@override
+bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is PageLayout &&
+        pageNumber == other.pageNumber &&
+        listEquals(lines, other.lines);
+```
+
+## Async Patterns
+
+### Future Methods
+
+```dart
+Future<void> init() async {
+  await someAsyncOperation();
+}
+```
+
+### Async Initialization
+
+Use `Future.microtask` in `initState` to schedule provider updates:
+
+```dart
+@override
+void initState() {
+  super.initState();
+  Future.microtask(
+    () => ref.read(currentPageProvider.notifier).state = initialPage,
+  );
+}
+```
+
+### Async Cleanup
+
+```dart
+Future<void> cleanup() async {
+  await closeConnections();
+}
+```
+
+## Error Handling
+
+```dart
+try {
+  final result = await operation();
+  return result;
+} catch (e) {
+  if (kDebugMode) {
+    print("Error: $e");
+  }
+  return defaultValue;
+}
+```
+
+Throw exceptions for critical failures:
+
+```dart
+if (_db == null) {
+  throw Exception("Database not initialized");
+}
+```
+
+## Collections
+
+Use const for immutable collections:
+
+```dart
+const List<int> pages = [1, 2, 3];
+const Map<String, int> mapping = {};
+```
+
+Use collection literals:
+
+```dart
+// Good
+final list = <String>[];
+final map = <String, int>{};
+
+// Avoid
+final list = List<String>();
+final map = Map<String, int>();
+```
+
+## String Interpolation
+
+```dart
+// Good
+final message = "Surah $surahNumber, Ayah $ayahNumber";
+
+// For complex expressions
+final key = "${word.surahNumber.toString().padLeft(3, '0')}:${word.ayahNumber}";
+```
+
+## Late Initialization
+
+Use `late` for non-nullable fields initialized in `initState`:
+
+```dart
+class _MyState extends State<MyWidget> {
+  late final PageController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController();
+  }
+}
+```
+
+## Private Members
+
+Prefix private members with underscore:
+
+```dart
+int _privateField;
+void _privateMethod() {}
+class _PrivateClass {}
+```
+
+## Method Organization
+
+Order class members as:
+
+1. Static fields
+2. Instance fields (public then private)
+3. Constructors
+4. Public methods
+5. Private methods
+6. Overridden methods (grouped at bottom)
+
+## Documentation
+
+Use `///` for public API documentation:
+
+```dart
+/// Retrieves the page layout for the specified [pageNumber].
+///
+/// Throws [Exception] if the database is not initialized.
+Future<PageLayout> getPageLayout(int pageNumber) async { }
+```
+
+Use `//` for implementation notes:
+
+```dart
+// WHY: This ensures single initialization
+if (_isInitialized) return;
+```
+
+## Import Organization
+
+```dart
+// 1. Dart/Flutter SDK imports
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// 2. Package imports
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// 3. Relative imports
+import '../models.dart';
+import '../constants.dart';
+```
+
+## Const Constructors
+
+Always use `const` constructors when possible:
+
+```dart
+const MyWidget({super.key, required this.param});
+```
+
+## Named Parameters
+
+Use named parameters for better readability:
+
+```dart
+// Good
+PageLayout({required this.pageNumber, required this.lines});
+
+// Usage
+PageLayout(pageNumber: 1, lines: []);
+```
+
+## Package Dependencies
+
+See [pubspec.yaml](mdc:pubspec.yaml) for current versions:
+
+- `flutter_riverpod: ^3.0.3`
+- `sqflite: ^2.3.3`
+- `path_provider: ^2.1.3`
+- `shared_preferences: ^2.2.3`
+- Code generation: `build_runner`, `riverpod_generator`

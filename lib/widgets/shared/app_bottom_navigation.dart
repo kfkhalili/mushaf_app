@@ -1,0 +1,269 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/theme_provider.dart';
+import '../../screens/mushaf_screen.dart'; // For memorizationProvider
+import '../../constants.dart';
+import '../countdown_circle.dart';
+
+/// Shared bottom navigation widget that can be used across different screens
+/// Supports both selection screen navigation and mushaf screen navigation
+class AppBottomNavigation extends ConsumerWidget {
+  final AppBottomNavigationType type;
+  final VoidCallback? onBackButtonPressed;
+  final int? currentPageNumber;
+  final int? selectedIndex;
+  final ValueChanged<int>? onIndexChanged;
+
+  const AppBottomNavigation({
+    super.key,
+    required this.type,
+    this.onBackButtonPressed,
+    this.currentPageNumber,
+    this.selectedIndex,
+    this.onIndexChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppThemeMode currentTheme = ref.watch(themeProvider);
+    final isMemorizing = ref.watch(
+      memorizationProvider.select((s) => s.isMemorizationMode),
+    );
+
+    if (type == AppBottomNavigationType.mushaf) {
+      return SizedBox(
+        height: kBottomNavBarHeight + (kCountdownCircleDiameter / 2),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            _buildMushafNavigation(context, ref, currentTheme, isMemorizing),
+            if (isMemorizing)
+              Positioned(
+                bottom: kBottomNavBarHeight - (kCountdownCircleDiameter / 2),
+                left: 0,
+                right: 0,
+                child: const CountdownCircle(),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return _buildSelectionNavigation(context, ref, currentTheme);
+  }
+
+  Widget _buildSelectionNavigation(
+    BuildContext context,
+    WidgetRef ref,
+    AppThemeMode currentTheme,
+  ) {
+    return BottomAppBar(
+      color: const Color(0xFF212121),
+      padding: EdgeInsets.zero,
+      height: kBottomNavBarHeight,
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: kBottomNavBarHeight,
+        child: DefaultTextStyle(
+          style: TextStyle(
+            fontSize: kBottomNavLabelFontSize,
+            color: Colors.grey.shade400,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              _buildSelectionNavItem(
+                context,
+                index: 0,
+                label: 'الصفحات',
+                isSelected: selectedIndex == 0,
+                onTap: () => onIndexChanged?.call(0),
+              ),
+              _buildSelectionNavItem(
+                context,
+                index: 1,
+                label: 'الأجزاء',
+                isSelected: selectedIndex == 1,
+                onTap: () => onIndexChanged?.call(1),
+              ),
+              _buildSelectionNavItem(
+                context,
+                index: 2,
+                label: 'السور',
+                isSelected: selectedIndex == 2,
+                onTap: () => onIndexChanged?.call(2),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionNavItem(
+    BuildContext context, {
+    required int index,
+    required String label,
+    required bool isSelected,
+    required VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    final Color color = isSelected
+        ? theme.colorScheme.primary
+        : Colors.grey.shade400;
+
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size(50, kBottomNavBarHeight),
+        foregroundColor: color,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: kBottomNavLabelFontSize, color: color),
+      ),
+    );
+  }
+
+  Widget _buildMushafNavigation(
+    BuildContext context,
+    WidgetRef ref,
+    AppThemeMode currentTheme,
+    bool isMemorizing,
+  ) {
+    final theme = Theme.of(context);
+    final Color unselectedIconColor = Colors.grey.shade400;
+    final Color selectedIconColor = theme.colorScheme.primary;
+
+    return BottomAppBar(
+      color: const Color(0xFF212121),
+      padding: EdgeInsets.zero,
+      height: kBottomNavBarHeight,
+      clipBehavior: Clip.none,
+      child: SizedBox(
+        height: kBottomNavBarHeight,
+        child: IconTheme(
+          data: IconThemeData(
+            color: unselectedIconColor,
+            size: kBottomNavIconSize,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              // Left Buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildThemeMenu(ref, currentTheme),
+                  _buildBookmarkButton(),
+                  _buildMemorizationButton(
+                    ref,
+                    isMemorizing,
+                    selectedIconColor,
+                    unselectedIconColor,
+                  ),
+                ],
+              ),
+              // Right Button
+              _buildBackButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeMenu(WidgetRef ref, AppThemeMode currentTheme) {
+    return SizedBox(
+      height: kBottomNavBarHeight,
+      child: PopupMenuButton<AppThemeMode>(
+        icon: const Icon(Icons.more_vert),
+        onSelected: (AppThemeMode mode) {
+          ref.read(themeProvider.notifier).setTheme(mode);
+        },
+        padding: EdgeInsets.zero,
+        tooltip: 'More options',
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<AppThemeMode>>[
+          CheckedPopupMenuItem<AppThemeMode>(
+            value: AppThemeMode.light,
+            checked: currentTheme == AppThemeMode.light,
+            child: const Text('Light'),
+          ),
+          CheckedPopupMenuItem<AppThemeMode>(
+            value: AppThemeMode.dark,
+            checked: currentTheme == AppThemeMode.dark,
+            child: const Text('Dark'),
+          ),
+          CheckedPopupMenuItem<AppThemeMode>(
+            value: AppThemeMode.sepia,
+            checked: currentTheme == AppThemeMode.sepia,
+            child: const Text('Sepia'),
+          ),
+          const PopupMenuDivider(),
+          CheckedPopupMenuItem<AppThemeMode>(
+            value: AppThemeMode.system,
+            checked: currentTheme == AppThemeMode.system,
+            child: const Text('Auto (System)'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookmarkButton() {
+    return SizedBox(
+      height: kBottomNavBarHeight,
+      child: IconButton(
+        tooltip: 'Bookmark',
+        icon: const Icon(Icons.bookmark_border),
+        onPressed: () {
+          // Placeholder
+        },
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildMemorizationButton(
+    WidgetRef ref,
+    bool isMemorizing,
+    Color selectedIconColor,
+    Color unselectedIconColor,
+  ) {
+    return SizedBox(
+      height: kBottomNavBarHeight,
+      child: IconButton(
+        tooltip: isMemorizing ? 'Exit Memorization' : 'Memorization Mode',
+        color: isMemorizing ? selectedIconColor : unselectedIconColor,
+        icon: Icon(isMemorizing ? Icons.school : Icons.school_outlined),
+        onPressed: () {
+          ref
+              .read(memorizationProvider.notifier)
+              .toggleMode(currentPageNumber: currentPageNumber);
+        },
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return SizedBox(
+      height: kBottomNavBarHeight,
+      child: IconButton(
+        tooltip: 'Back',
+        icon: const Icon(Icons.arrow_forward_ios),
+        onPressed: onBackButtonPressed,
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+}
+
+enum AppBottomNavigationType { selection, mushaf }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// REMOVED: import 'package:shared_preferences/shared_preferences.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
-import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
+import '../utils/helpers.dart';
+import 'shared/async_list_view.dart'; // WHY: Import the new reusable widget
+import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
 class JuzListView extends ConsumerWidget {
   const JuzListView({super.key});
@@ -13,19 +14,13 @@ class JuzListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final juzListAsync = ref.watch(juzListProvider);
 
-    return juzListAsync.when(
-      data: (juzList) => ListView.separated(
-        itemCount: juzList.length,
-        itemBuilder: (context, index) {
-          final juzInfo = juzList[index];
-          return JuzListItem(juzInfo: juzInfo);
-        },
-        separatorBuilder: (context, index) =>
-            const Divider(height: 1, indent: 24, endIndent: 24),
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) =>
-          Center(child: Text('Error loading Juz list: $err')),
+    // WHY: Use the generic AsyncListView to handle loading/error/data states.
+    return AsyncListView<JuzInfo>(
+      asyncValue: juzListAsync,
+      errorText: 'Error loading Juz list',
+      itemBuilder: (context, juzInfo) {
+        return JuzListItem(juzInfo: juzInfo);
+      },
     );
   }
 }
@@ -34,9 +29,6 @@ class JuzListItem extends StatelessWidget {
   final JuzInfo juzInfo;
 
   const JuzListItem({super.key, required this.juzInfo});
-
-  // REMOVED: The _navigateToJuz method is no longer needed.
-  // Future<void> _navigateToJuz(BuildContext context, int pageNumber) async { ... }
 
   @override
   Widget build(BuildContext context) {
@@ -56,14 +48,8 @@ class JuzListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic, // Align baselines
         children: [
-          Text(
-            convertToEasternArabicNumerals(juzInfo.juzNumber.toString()),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-          ),
+          // WHY: Use the new reusable LeadingNumberText widget.
+          LeadingNumberText(number: juzInfo.juzNumber),
           const SizedBox(width: 8),
           // WHY: Add the Juz' name glyph using QuranCommon font.
           Text(

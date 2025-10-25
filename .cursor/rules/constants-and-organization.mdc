@@ -1,0 +1,124 @@
+---
+description: Constants usage and code organization patterns
+---
+
+# Constants and Code Organization
+
+All application constants are centralized in [constants.dart](mdc:lib/constants.dart).
+
+## Database Constants
+
+Use the `DbConstants` class for all database identifiers:
+
+```dart
+class DbConstants {
+  // Table Names
+  static const String pagesTable = 'pages';
+  static const String wordsTable = 'words';
+  static const String chaptersTable = 'chapters';
+
+  // Column Names
+  static const String pageNumberCol = 'page_number';
+  static const String surahNumberCol = 'surah_number';
+  static const String textCol = 'text';
+
+  // Query Helpers
+  static const String startPageAlias = 'start_page';
+}
+```
+
+**NEVER hardcode database table or column names** in queries. Always use `DbConstants`.
+
+## File Constants
+
+```dart
+const String layoutDbFileName = 'uthmani-15-lines.db';
+const String scriptDbFileName = 'qpc-v2.db';
+```
+
+## Font Constants
+
+```dart
+const String surahNameFontFamily = 'SurahNames';
+const String quranCommonFontFamily = 'QuranCommon';
+const String fallbackFontFamily = 'QPCV2';
+```
+
+Font families are declared in [pubspec.yaml](mdc:pubspec.yaml) under `flutter.fonts`.
+
+## Text Constants
+
+```dart
+const String basmallah = '\uFDFD'; // ﷽
+```
+
+## App Configuration
+
+```dart
+const int totalPages = 604;
+const int initialWordCount = 15; // For memorization mode
+```
+
+## Responsive Design Constants
+
+```dart
+const double baseFontSize = 20.0;
+const double referenceScreenWidth = 428.0;
+const double referenceScreenHeight = 926.0;
+const double maxLineContentWidth = 600.0;
+```
+
+## Styling Constants
+
+```dart
+// Font size multipliers
+const double surahNameScaleFactor = 1.4;
+const double headerScaleFactor = 2.0;
+const double basmallahScaleFactor = 0.95;
+
+// Font size bounds
+const double minAyahFontSize = 16.0;
+const double maxAyahFontSize = 30.0;
+
+// Line height
+const double baseLineHeight = 2.2;
+
+// Padding
+const double pageHorizontalPadding = 16.0;
+const double pageBottomPadding = 45.0;
+```
+
+## Code Organization Rules
+
+1. **Import Order**:
+
+   - Flutter SDK imports
+   - Package imports
+   - Relative imports (local files)
+
+2. **File Structure**:
+
+   - Imports
+   - Constants (if file-specific)
+   - Data classes / Models
+   - State management
+   - Widget classes
+
+3. **WHY Comments**: Use inline comments explaining intent:
+
+   ```dart
+   // WHY: This ensures the database is initialized before any operations.
+   await init();
+   ```
+
+4. **Const Constructors**: Use `const` wherever possible:
+
+   ```dart
+   const MyWidget({super.key});
+   ```
+
+5. **Private Members**: Prefix with underscore:
+   ```dart
+   int _parseInt(dynamic value) { }
+   Database? _layoutDb;
+   ```
