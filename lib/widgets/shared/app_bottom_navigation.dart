@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/theme_provider.dart';
 import '../../screens/mushaf_screen.dart'; // For memorizationProvider
 import '../../constants.dart';
-import '../countdown_circle.dart';
+// import '../countdown_circle.dart'; // No longer needed here
 
 /// Shared bottom navigation widget that can be used across different screens
 /// Supports both selection screen navigation and mushaf screen navigation
@@ -31,23 +31,10 @@ class AppBottomNavigation extends ConsumerWidget {
     );
 
     if (type == AppBottomNavigationType.mushaf) {
-      return SizedBox(
-        height: kBottomNavBarHeight + (kCountdownCircleDiameter / 2),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.bottomCenter,
-          children: [
-            _buildMushafNavigation(context, ref, currentTheme, isMemorizing),
-            if (isMemorizing)
-              Positioned(
-                bottom: kBottomNavBarHeight - (kCountdownCircleDiameter / 2),
-                left: 0,
-                right: 0,
-                child: const CountdownCircle(),
-              ),
-          ],
-        ),
-      );
+      // WHY: Removed the SizedBox wrapper and Stack.
+      // This widget is now only responsible for building the bar itself,
+      // which has a fixed height, ensuring consistency.
+      return _buildMushafNavigation(context, ref, currentTheme, isMemorizing);
     }
 
     return _buildSelectionNavigation(context, ref, currentTheme);
@@ -142,7 +129,8 @@ class AppBottomNavigation extends ConsumerWidget {
       color: const Color(0xFF212121),
       padding: EdgeInsets.zero,
       height: kBottomNavBarHeight,
-      clipBehavior: Clip.none,
+      clipBehavior:
+          Clip.none, // Keep clip.none if you ever want overflow effects
       child: SizedBox(
         height: kBottomNavBarHeight,
         child: IconTheme(

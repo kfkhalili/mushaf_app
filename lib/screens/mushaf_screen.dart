@@ -201,46 +201,63 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
 
-    // Read state needed ONLY for the back button logic here
+    // Read state needed for back button logic AND circle visibility
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
 
-    return Scaffold(
-      body: GestureDetector(
-        onTap: _handleMemorizationTap,
-        child: PageView.builder(
-          controller: _pageController,
-          // WHY: Use the named constant for total page count.
-          itemCount: totalPages,
-          reverse: true,
-          onPageChanged: (index) {
-            final int newPageNumber = index + 1;
-            // WHY: Update the global state provider.
-            ref.read(currentPageProvider.notifier).setPage(newPageNumber);
-            _savePageToPrefs(newPageNumber);
-          },
-          itemBuilder: (context, index) {
-            return MushafPageWidget(pageNumber: index + 1);
-          },
+    return Stack(
+      children: [
+        Scaffold(
+          body: GestureDetector(
+            onTap: _handleMemorizationTap,
+            child: PageView.builder(
+              controller: _pageController,
+              // WHY: Use the named constant for total page count.
+              itemCount: totalPages,
+              reverse: true,
+              onPageChanged: (index) {
+                final int newPageNumber = index + 1;
+                // WHY: Update the global state provider.
+                ref.read(currentPageProvider.notifier).setPage(newPageNumber);
+                _savePageToPrefs(newPageNumber);
+              },
+              itemBuilder: (context, index) {
+                return MushafPageWidget(pageNumber: index + 1);
+              },
+            ),
+          ),
+          bottomNavigationBar: AppBottomNavigation(
+            type: AppBottomNavigationType.mushaf,
+            currentPageNumber: currentPageNumber,
+            onBackButtonPressed: () async {
+              final memorizationNotifier = ref.read(
+                memorizationProvider.notifier,
+              );
+              if (Navigator.canPop(context)) {
+                await _clearLastPage();
+                if (isMemorizing) {
+                  memorizationNotifier.disableMode();
+                }
+                if (context.mounted) {
+                  // WHY: This line was fixed. It was Navigator.pop(H(context))
+                  Navigator.pop(context);
+                }
+              }
+            },
+          ),
         ),
-      ),
-      bottomNavigationBar: AppBottomNavigation(
-        type: AppBottomNavigationType.mushaf,
-        currentPageNumber: currentPageNumber,
-        onBackButtonPressed: () async {
-          final memorizationNotifier = ref.read(memorizationProvider.notifier);
-          if (Navigator.canPop(context)) {
-            await _clearLastPage();
-            if (isMemorizing) {
-              memorizationNotifier.disableMode();
-            }
-            if (context.mounted) {
-              Navigator.pop(context);
-            }
-          }
-        },
-      ),
+        if (isMemorizing)
+          Positioned(
+            // WHY: To raise the circle, we INCREASE the bottom value
+            // by subtracting LESS from kBottomNavBarHeight.
+            // This makes it overlap by 33% instead of 50%.
+            bottom: kBottomNavBarHeight - (kCountdownCircleDiameter / 3),
+            left: 0,
+            right: 0,
+            child: const CountdownCircle(),
+          ),
+      ],
     );
   }
 }
