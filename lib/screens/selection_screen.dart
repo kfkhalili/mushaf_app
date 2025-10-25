@@ -15,22 +15,44 @@ class SelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _SelectionScreenState extends ConsumerState<SelectionScreen> {
-  Widget _buildCurrentView(int currentIndex) {
-    switch (currentIndex) {
-      case 0: // Page
-        return const PageListView();
-      case 1: // Juz'
-        return const JuzListView();
-      case 2: // Surah (Default)
-      default:
-        return const SurahListView();
-    }
+  late PageController _pageController;
+  late final List<Widget> _preloadedViews;
+
+  @override
+  void initState() {
+    super.initState();
+    _preloadedViews = [
+      const PageListView(),
+      const JuzListView(),
+      const SurahListView(),
+    ];
+
+    // Initialize PageController with reverse order (Pages=0, Juz=1, Surah=2)
+    _pageController = PageController(initialPage: 2);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentIndex = ref.watch(selectionTabIndexProvider);
+
+    // Sync PageController with current index
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pageController.hasClients &&
+          _pageController.page?.round() != currentIndex) {
+        _pageController.animateToPage(
+          currentIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -47,7 +69,17 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                 ),
               ),
             ),
-            Expanded(child: _buildCurrentView(currentIndex)),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  ref
+                      .read(selectionTabIndexProvider.notifier)
+                      .setTabIndex(index);
+                },
+                children: _preloadedViews,
+              ),
+            ),
           ],
         ),
       ),
