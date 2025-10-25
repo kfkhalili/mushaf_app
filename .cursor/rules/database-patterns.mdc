@@ -1,0 +1,97 @@
+---
+description: Database service patterns and SQLite conventions
+---
+
+# Database Patterns
+
+The app uses multiple SQLite databases defined in [constants.dart](mdc:lib/constants.dart):
+
+## Database Files (in `assets/db/`)
+
+- `uthmani-15-lines.db` - Page layout (lines, word ranges)
+- `qpc-v2.db` - Quran text and word data
+- `quran-metadata-surah-name.sqlite` - Surah information
+- `quran-metadata-juz.sqlite` - Juz divisions
+- `quran-metadata-hizb.sqlite` - Hizb divisions
+
+## DatabaseService Pattern
+
+See [database_service.dart](mdc:lib/services/database_service.dart)
+
+### Initialization
+
+```dart
+// Single initialization guard pattern
+Future<void>? _initFuture;
+bool _isInitialized = false;
+
+Future<void> init() async {
+  if (_isInitialized) return;
+  _initFuture ??= _doInit();
+  await _initFuture;
+}
+```
+
+**ALWAYS** call `await init()` at the start of every public method.
+
+### Database Constants
+
+Use `DbConstants` class from [constants.dart](mdc:lib/constants.dart) for all table and column names:
+
+```dart
+// Good
+await db.query(DbConstants.pagesTable,
+  where: '${DbConstants.pageNumberCol} = ?',
+  whereArgs: [pageNumber.toString()],
+);
+
+// Bad - hardcoded strings
+await db.query('pages', where: 'page_number = ?');
+```
+
+### Safe Parsing
+
+Always use the `_parseInt` helper for dynamic values:
+
+```dart
+int _parseInt(dynamic value) {
+  if (value == null) return 0;
+  return int.tryParse(value.toString()) ?? 0;
+}
+```
+
+### Caching Pattern
+
+Load static data once during initialization:
+
+```dart
+List<Map<String, dynamic>> _juzCache = [];
+
+// In _doInit():
+if (_juzCache.isEmpty && _juzDb != null) {
+  _juzCache = await _juzDb!.query(
+    DbConstants.juzTable,
+    orderBy: '${DbConstants.juzNumberCol} ASC',
+  );
+}
+```
+
+### Error Handling
+
+- Return sensible defaults on errors (e.g., empty string, 0)
+- Use `kDebugMode` for debug logging
+- Throw exceptions for critical failures with descriptive messages
+
+### Query Patterns
+
+**Always convert arguments to strings** when using `whereArgs`:
+
+```dart
+whereArgs: [pageNumber.toString(), 'ayah']
+```
+
+Use `orderBy` for consistent results:
+
+```dart
+orderBy: '${DbConstants.lineNumberCol} ASC'
+```

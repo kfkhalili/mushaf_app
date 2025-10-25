@@ -1,0 +1,135 @@
+---
+globs: lib/widgets/**,lib/screens/**
+description: Widget structure and UI component conventions
+---
+
+# Widget Conventions
+
+## Widget Hierarchy
+
+1. **Screens** (`/lib/screens/`) - Top-level navigation targets
+2. **Widgets** (`/lib/widgets/`) - Reusable components
+3. **Shared Widgets** (`/lib/widgets/shared/`) - Generic components
+
+## ConsumerWidget Pattern
+
+Prefer `ConsumerWidget` over `StatelessWidget` for provider access:
+
+```dart
+class MyWidget extends ConsumerWidget {
+  const MyWidget({super.key, required this.param});
+
+  final int param;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(someProvider);
+    return Widget();
+  }
+}
+```
+
+## ConsumerStatefulWidget Pattern
+
+For stateful widgets needing provider access:
+
+```dart
+class MyWidget extends ConsumerStatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  ConsumerState<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends ConsumerState<MyWidget> {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Widget();
+  }
+}
+```
+
+## Responsive Sizing
+
+Use constants from [constants.dart](mdc:lib/constants.dart) for responsive design:
+
+```dart
+final screenWidth = MediaQuery.of(context).size.width;
+final scaleFactor = screenWidth / referenceScreenWidth;
+final fontSize = (baseFontSize * scaleFactor).clamp(
+  minAyahFontSize,
+  maxAyahFontSize,
+);
+```
+
+### Key Sizing Constants
+
+- `referenceScreenWidth` / `referenceScreenHeight` - Base dimensions
+- `baseFontSize` - Starting font size
+- `min/maxAyahFontSize` - Font size bounds
+- `baseLineHeight` - Line height multiplier
+
+## RTL Layout
+
+The app uses RTL by default (set in [main.dart](mdc:lib/main.dart)):
+
+```dart
+home: const Directionality(
+  textDirection: TextDirection.rtl,
+  child: SplashScreen(),
+),
+```
+
+Widgets should respect RTL layout automatically. Use `Align` and `Padding` instead of hardcoded left/right positioning.
+
+## AsyncValue Handling
+
+When consuming async providers:
+
+```dart
+final asyncValue = ref.watch(pageDataProvider(pageNumber));
+
+return asyncValue.when(
+  data: (data) => BuildWidget(data),
+  loading: () => const CircularProgressIndicator(),
+  error: (error, stack) => ErrorWidget(error),
+);
+```
+
+Or use `.whenData()` for specific scenarios in [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart):
+
+```dart
+asyncPageData.whenData((PageData pageData) {
+  // Handle data
+});
+```
+
+## Immutability
+
+All data passed to widgets should be immutable:
+
+```dart
+@immutable
+class MyData {
+  final String text;
+  const MyData({required this.text});
+}
+```
+
+## Key Usage
+
+Use `super.key` in constructors:
+
+```dart
+const MyWidget({super.key, required this.param});
+```
+
+## BuildContext Safety
+
+Check `context.mounted` before async navigation:
+
+```dart
+if (context.mounted) {
+  Navigator.pop(context);
+}
+```
