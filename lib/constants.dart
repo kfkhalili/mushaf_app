@@ -11,7 +11,6 @@ const String basmallah = '\uFDFD'; // ﷽
 // --- FONT CONSTANTS ---
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
-const String fallbackFontFamily = 'QPCV2'; // Used for Quran text fallback
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;

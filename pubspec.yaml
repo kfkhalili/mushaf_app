@@ -83,10 +83,6 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # Fallback font
-    - family: QPCV2
-      fonts:
-        - asset: fonts/QPCV2.ttf
     # Surah Name font
     - family: SurahNames
       fonts:

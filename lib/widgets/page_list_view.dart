@@ -59,23 +59,18 @@ class PageListItem extends ConsumerWidget {
           // WHY: Only proceed to check font if preview text is loaded.
           return pageFontFamilyAsync.when(
             data: (fontFamilyName) {
-              // WHY: Only display text if BOTH text and font are successfully loaded.
-              if (fontFamilyName != fallbackFontFamily) {
-                return Text(
-                  previewText,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontFamily: fontFamilyName, // Use the specific page font
-                    fontSize: 22,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                );
-              } else {
-                // WHY: If the font service returned the fallback, treat it as an error/loading state for the preview.
-                return loadingWidget;
-              }
+              // WHY: Display text with the specific page font when both text and font are successfully loaded.
+              return Text(
+                previewText,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: fontFamilyName, // Use the specific page font
+                  fontSize: 22,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              );
             },
             // WHY: Show loading indicator while the font is loading.
             loading: () => loadingWidget,
