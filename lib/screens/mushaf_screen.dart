@@ -147,7 +147,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
     // WHY: Initialize the global page state provider.
     Future.microtask(
-      () => ref.read(currentPageProvider.notifier).state = widget.initialPage,
+      () => ref.read(currentPageProvider.notifier).setPage(widget.initialPage),
     );
   }
 
@@ -216,7 +216,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           onPageChanged: (index) {
             final int newPageNumber = index + 1;
             // WHY: Update the global state provider.
-            ref.read(currentPageProvider.notifier).state = newPageNumber;
+            ref.read(currentPageProvider.notifier).setPage(newPageNumber);
             _savePageToPrefs(newPageNumber);
           },
           itemBuilder: (context, index) {
