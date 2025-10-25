@@ -147,7 +147,6 @@ class AppBottomNavigation extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildThemeMenu(ref, currentTheme),
-                  _buildBookmarkButton(),
                   _buildMemorizationButton(
                     ref,
                     isMemorizing,
@@ -202,21 +201,6 @@ class AppBottomNavigation extends ConsumerWidget {
     );
   }
 
-  Widget _buildBookmarkButton() {
-    return SizedBox(
-      height: kBottomNavBarHeight,
-      child: IconButton(
-        tooltip: 'Bookmark',
-        icon: const Icon(Icons.bookmark_border),
-        onPressed: () {
-          // Placeholder
-        },
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-      ),
-    );
-  }
-
   Widget _buildMemorizationButton(
     WidgetRef ref,
     bool isMemorizing,
@@ -247,7 +231,7 @@ class AppBottomNavigation extends ConsumerWidget {
         tooltip: 'Back',
         icon: const Icon(Icons.arrow_forward_ios),
         onPressed: onBackButtonPressed,
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.only(right: footerRightPadding),
         visualDensity: VisualDensity.compact,
       ),
     );
