@@ -43,7 +43,12 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Text('السمة', style: theme.textTheme.titleMedium),
+                            Text(
+                              'السمة',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<AppThemeMode>(
                               value: currentTheme,
@@ -83,7 +88,9 @@ class SettingsScreen extends ConsumerWidget {
                             const SizedBox(height: 16),
                             Text(
                               'تخطيط المصحف',
-                              style: theme.textTheme.titleMedium,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<MushafLayout>(
@@ -134,7 +141,9 @@ class SettingsScreen extends ConsumerWidget {
                             const SizedBox(height: 16),
                             Text(
                               'حجم الخط',
-                              style: theme.textTheme.titleMedium,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             const FontSizeDropdown(),
