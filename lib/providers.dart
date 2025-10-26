@@ -3,6 +3,7 @@
 // WHY: These are the only two imports you need for this file.
 // 'riverpod_annotation' provides the @riverpod annotation and the 'Ref' type.
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'models.dart';
@@ -10,6 +11,12 @@ import 'constants.dart';
 
 // WHY: This directive points to the file that code-gen will create.
 part 'providers.g.dart';
+
+// --- Shared Preferences Provider ---
+@Riverpod(keepAlive: true)
+Future<SharedPreferences> sharedPreferences(Ref ref) async {
+  return SharedPreferences.getInstance();
+}
 
 // --- Current Page Provider ---
 // WHY: This syntax for a Notifier class is correct.
@@ -142,12 +149,34 @@ class MushafLayoutSetting extends _$MushafLayoutSetting {
 }
 
 // --- Font Size Provider ---
-// WHY: This is a keepAlive provider for managing font size preference.
+// WHY: This is a keepAlive provider for managing font size preference per layout.
 @Riverpod(keepAlive: true)
 class FontSizeSetting extends _$FontSizeSetting {
+  static const String _fontSizeKeyPrefix = 'font_size_';
+
   @override
   double build() {
     final layout = ref.watch(mushafLayoutSettingProvider);
+    return _getFontSizeForLayout(layout);
+  }
+
+  double _getFontSizeForLayout(MushafLayout layout) {
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    final key = '$_fontSizeKeyPrefix${layout.name}';
+    final savedSize = prefs?.getDouble(key);
+
+    if (savedSize != null) {
+      final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
+      final minSize = layoutOptions.first;
+      final maxSize = layoutOptions.last;
+
+      // Return saved size if it's within valid range, otherwise use default
+      if (savedSize >= minSize && savedSize <= maxSize) {
+        return savedSize;
+      }
+    }
+
+    // Return layout-specific default if no valid saved size
     return layoutDefaultFontSizes[layout] ?? 18.0;
   }
 
@@ -158,7 +187,14 @@ class FontSizeSetting extends _$FontSizeSetting {
     // Clamp font size to layout-specific valid range
     final minSize = layoutOptions.first;
     final maxSize = layoutOptions.last;
-    state = fontSize.clamp(minSize, maxSize);
+    final clampedSize = fontSize.clamp(minSize, maxSize);
+
+    // Save to preferences
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    final key = '$_fontSizeKeyPrefix${layout.name}';
+    prefs?.setDouble(key, clampedSize);
+
+    state = clampedSize;
   }
 
   void increaseFontSize() {
@@ -167,7 +203,7 @@ class FontSizeSetting extends _$FontSizeSetting {
     final currentIndex = layoutOptions.indexOf(state);
 
     if (currentIndex < layoutOptions.length - 1) {
-      state = layoutOptions[currentIndex + 1];
+      setFontSize(layoutOptions[currentIndex + 1]);
     }
   }
 
@@ -177,7 +213,7 @@ class FontSizeSetting extends _$FontSizeSetting {
     final currentIndex = layoutOptions.indexOf(state);
 
     if (currentIndex > 0) {
-      state = layoutOptions[currentIndex - 1];
+      setFontSize(layoutOptions[currentIndex - 1]);
     }
   }
 }
