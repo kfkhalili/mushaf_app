@@ -622,7 +622,7 @@ final class FontSizeSettingProvider
   }
 }
 
-String _$fontSizeSettingHash() => r'a3b4364ae636c4a17d016f4df9f9650730b118ea';
+String _$fontSizeSettingHash() => r'4065a8149dd30b86e572f024cf91ec6762c94f9a';
 
 abstract class _$FontSizeSetting extends $Notifier<double> {
   double build();
@@ -636,6 +636,229 @@ abstract class _$FontSizeSetting extends $Notifier<double> {
             as $ClassProviderElement<
               AnyNotifier<double, double>,
               double,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(searchService)
+const searchServiceProvider = SearchServiceProvider._();
+
+final class SearchServiceProvider
+    extends $FunctionalProvider<SearchService, SearchService, SearchService>
+    with $Provider<SearchService> {
+  const SearchServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<SearchService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SearchService create(Ref ref) {
+    return searchService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SearchService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SearchService>(value),
+    );
+  }
+}
+
+String _$searchServiceHash() => r'207d8b64eef13d406bccb1ef7d50a367fd04d74c';
+
+@ProviderFor(SearchQuery)
+const searchQueryProvider = SearchQueryProvider._();
+
+final class SearchQueryProvider extends $NotifierProvider<SearchQuery, String> {
+  const SearchQueryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchQueryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchQueryHash();
+
+  @$internal
+  @override
+  SearchQuery create() => SearchQuery();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$searchQueryHash() => r'571879970eb0165e4d4b70b1d76bcf86eb2146be';
+
+abstract class _$SearchQuery extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(searchResults)
+const searchResultsProvider = SearchResultsFamily._();
+
+final class SearchResultsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<SearchResult>>,
+          List<SearchResult>,
+          FutureOr<List<SearchResult>>
+        >
+    with
+        $FutureModifier<List<SearchResult>>,
+        $FutureProvider<List<SearchResult>> {
+  const SearchResultsProvider._({
+    required SearchResultsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'searchResultsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchResultsHash();
+
+  @override
+  String toString() {
+    return r'searchResultsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<SearchResult>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<SearchResult>> create(Ref ref) {
+    final argument = this.argument as String;
+    return searchResults(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchResultsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchResultsHash() => r'c3436c513cf168955cc0cfef696ae27037610c71';
+
+final class SearchResultsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<SearchResult>>, String> {
+  const SearchResultsFamily._()
+    : super(
+        retry: null,
+        name: r'searchResultsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SearchResultsProvider call(String query) =>
+      SearchResultsProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'searchResultsProvider';
+}
+
+@ProviderFor(SearchHistory)
+const searchHistoryProvider = SearchHistoryProvider._();
+
+final class SearchHistoryProvider
+    extends $NotifierProvider<SearchHistory, List<String>> {
+  const SearchHistoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchHistoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchHistoryHash();
+
+  @$internal
+  @override
+  SearchHistory create() => SearchHistory();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<String>>(value),
+    );
+  }
+}
+
+String _$searchHistoryHash() => r'c7980f60480a959d302188e674c25bcc87df4695';
+
+abstract class _$SearchHistory extends $Notifier<List<String>> {
+  List<String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<String>, List<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<String>, List<String>>,
+              List<String>,
               Object?,
               Object?
             >;

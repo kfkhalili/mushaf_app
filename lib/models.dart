@@ -1,5 +1,44 @@
 import 'package:flutter/foundation.dart';
 
+// --- Search Result Model ---
+@immutable
+class SearchResult {
+  final String text;
+  final int surahNumber;
+  final int ayahNumber;
+  final int pageNumber;
+  final String surahName;
+  final String context; // Surrounding text for context
+  final int wordPosition; // Position of the word in the ayah
+
+  const SearchResult({
+    required this.text,
+    required this.surahNumber,
+    required this.ayahNumber,
+    required this.pageNumber,
+    required this.surahName,
+    required this.context,
+    required this.wordPosition,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SearchResult &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber &&
+          pageNumber == other.pageNumber;
+
+  @override
+  int get hashCode =>
+      text.hashCode ^
+      surahNumber.hashCode ^
+      ayahNumber.hashCode ^
+      pageNumber.hashCode;
+}
+
 // --- New Model for Surah List ---
 @immutable
 class SurahInfo {

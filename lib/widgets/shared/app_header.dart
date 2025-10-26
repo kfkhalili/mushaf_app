@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math'; // For min()
 import '../../constants.dart';
 import '../../screens/settings_screen.dart';
+import '../../screens/search_screen.dart';
 
 class AppHeader extends StatelessWidget {
   final String title;
@@ -76,7 +77,30 @@ class AppHeader extends StatelessWidget {
                 ),
               if (onSearchPressed != null)
                 IconButton(
-                  onPressed: onSearchPressed,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const SearchScreen(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(-1.0, 0.0);
+                              const end = Offset(0.0, 0.0);
+                              const curve = Curves.easeInOut;
+
+                              var tween = Tween(
+                                begin: begin,
+                                end: end,
+                              ).chain(CurveTween(curve: curve));
+
+                              return SlideTransition(
+                                position: animation.drive(tween),
+                                child: child,
+                              );
+                            },
+                      ),
+                    );
+                  },
                   icon: Icon(
                     Icons.search,
                     size: kAppHeaderIconSize,

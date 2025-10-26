@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
+import 'services/search_service.dart';
 import 'models.dart';
 import 'constants.dart';
 
@@ -215,5 +216,93 @@ class FontSizeSetting extends _$FontSizeSetting {
     if (currentIndex > 0) {
       setFontSize(layoutOptions[currentIndex - 1]);
     }
+  }
+}
+
+// --- Search Service Provider ---
+@Riverpod(keepAlive: true)
+SearchService searchService(Ref ref) {
+  final layout = ref.watch(mushafLayoutSettingProvider);
+  final service = SearchService();
+  service.init(layout: layout);
+  return service;
+}
+
+// --- Search Query Provider ---
+@Riverpod(keepAlive: true)
+class SearchQuery extends _$SearchQuery {
+  @override
+  String build() {
+    return '';
+  }
+
+  void setQuery(String query) {
+    state = query.trim();
+  }
+
+  void clearQuery() {
+    state = '';
+  }
+}
+
+// --- Search Results Provider ---
+@riverpod
+Future<List<SearchResult>> searchResults(Ref ref, String query) async {
+  if (query.trim().isEmpty) return [];
+
+  final searchService = ref.watch(searchServiceProvider);
+  return searchService.searchText(query);
+}
+
+// --- Search History Provider ---
+@Riverpod(keepAlive: true)
+class SearchHistory extends _$SearchHistory {
+  static const String _searchHistoryKey = 'search_history';
+  static const int _maxHistoryItems = 20;
+
+  @override
+  List<String> build() {
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    final historyJson = prefs?.getStringList(_searchHistoryKey) ?? [];
+    return historyJson.take(_maxHistoryItems).toList();
+  }
+
+  void addToHistory(String query) {
+    if (query.trim().isEmpty) return;
+
+    final trimmedQuery = query.trim();
+    final currentHistory = List<String>.from(state);
+
+    // Remove if already exists
+    currentHistory.remove(trimmedQuery);
+
+    // Add to beginning
+    currentHistory.insert(0, trimmedQuery);
+
+    // Limit to max items
+    if (currentHistory.length > _maxHistoryItems) {
+      currentHistory.removeRange(_maxHistoryItems, currentHistory.length);
+    }
+
+    state = currentHistory;
+
+    // Save to preferences
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    prefs?.setStringList(_searchHistoryKey, currentHistory);
+  }
+
+  void clearHistory() {
+    state = [];
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    prefs?.remove(_searchHistoryKey);
+  }
+
+  void removeFromHistory(String query) {
+    final currentHistory = List<String>.from(state);
+    currentHistory.remove(query);
+    state = currentHistory;
+
+    final prefs = ref.read(sharedPreferencesProvider).value;
+    prefs?.setStringList(_searchHistoryKey, currentHistory);
   }
 }
