@@ -54,6 +54,11 @@ const double kBottomNavLabelFontSize = 22.0;
 const double kBottomNavIconSize = 34.0;
 const double kCountdownCircleDiameter = 56.0;
 
+// --- APP HEADER ---
+const double kAppHeaderHeight = 56.0;
+const double kAppHeaderTitleFontSize = 20.0;
+const double kAppHeaderIconSize = 24.0;
+
 // --- MEMORIZATION ---
 // WHY: Number of words to show initially when memorization mode starts.
 const int initialWordCount = 15;

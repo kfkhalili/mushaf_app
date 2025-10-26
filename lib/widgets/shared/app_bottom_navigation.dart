@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/theme_provider.dart';
 import '../../screens/mushaf_screen.dart'; // For memorizationProvider
 import '../../constants.dart';
 // import '../countdown_circle.dart'; // No longer needed here
@@ -25,7 +24,6 @@ class AppBottomNavigation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AppThemeMode currentTheme = ref.watch(themeProvider);
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
@@ -34,17 +32,13 @@ class AppBottomNavigation extends ConsumerWidget {
       // WHY: Removed the SizedBox wrapper and Stack.
       // This widget is now only responsible for building the bar itself,
       // which has a fixed height, ensuring consistency.
-      return _buildMushafNavigation(context, ref, currentTheme, isMemorizing);
+      return _buildMushafNavigation(context, ref, isMemorizing);
     }
 
-    return _buildSelectionNavigation(context, ref, currentTheme);
+    return _buildSelectionNavigation(context, ref);
   }
 
-  Widget _buildSelectionNavigation(
-    BuildContext context,
-    WidgetRef ref,
-    AppThemeMode currentTheme,
-  ) {
+  Widget _buildSelectionNavigation(BuildContext context, WidgetRef ref) {
     return BottomAppBar(
       color: const Color(0xFF212121),
       padding: EdgeInsets.zero,
@@ -118,7 +112,6 @@ class AppBottomNavigation extends ConsumerWidget {
   Widget _buildMushafNavigation(
     BuildContext context,
     WidgetRef ref,
-    AppThemeMode currentTheme,
     bool isMemorizing,
   ) {
     final theme = Theme.of(context);
@@ -146,12 +139,14 @@ class AppBottomNavigation extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildThemeMenu(ref, currentTheme),
-                  _buildMemorizationButton(
-                    ref,
-                    isMemorizing,
-                    selectedIconColor,
-                    unselectedIconColor,
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: _buildMemorizationButton(
+                      ref,
+                      isMemorizing,
+                      selectedIconColor,
+                      unselectedIconColor,
+                    ),
                   ),
                 ],
               ),
@@ -160,43 +155,6 @@ class AppBottomNavigation extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildThemeMenu(WidgetRef ref, AppThemeMode currentTheme) {
-    return SizedBox(
-      height: kBottomNavBarHeight,
-      child: PopupMenuButton<AppThemeMode>(
-        icon: const Icon(Icons.more_vert),
-        onSelected: (AppThemeMode mode) {
-          ref.read(themeProvider.notifier).setTheme(mode);
-        },
-        padding: EdgeInsets.zero,
-        tooltip: 'More options',
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<AppThemeMode>>[
-          CheckedPopupMenuItem<AppThemeMode>(
-            value: AppThemeMode.light,
-            checked: currentTheme == AppThemeMode.light,
-            child: const Text('Light'),
-          ),
-          CheckedPopupMenuItem<AppThemeMode>(
-            value: AppThemeMode.dark,
-            checked: currentTheme == AppThemeMode.dark,
-            child: const Text('Dark'),
-          ),
-          CheckedPopupMenuItem<AppThemeMode>(
-            value: AppThemeMode.sepia,
-            checked: currentTheme == AppThemeMode.sepia,
-            child: const Text('Sepia'),
-          ),
-          const PopupMenuDivider(),
-          CheckedPopupMenuItem<AppThemeMode>(
-            value: AppThemeMode.system,
-            checked: currentTheme == AppThemeMode.system,
-            child: const Text('Auto (System)'),
-          ),
-        ],
       ),
     );
   }

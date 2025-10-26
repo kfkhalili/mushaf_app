@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
+import '../widgets/shared/app_header.dart';
 import '../widgets/countdown_circle.dart';
 import '../providers.dart';
 import '../models.dart';
@@ -230,22 +231,43 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     return Stack(
       children: [
         Scaffold(
-          body: GestureDetector(
-            onTap: _handleMemorizationTap,
-            child: PageView.builder(
-              controller: _pageController,
-              // WHY: Use the named constant for total page count.
-              itemCount: totalPages,
-              reverse: true,
-              onPageChanged: (index) {
-                final int newPageNumber = index + 1;
-                // WHY: Update the global state provider.
-                ref.read(currentPageProvider.notifier).setPage(newPageNumber);
-                _savePageToPrefs(newPageNumber);
-              },
-              itemBuilder: (context, index) {
-                return MushafPageWidget(pageNumber: index + 1);
-              },
+          body: SafeArea(
+            child: Column(
+              children: [
+                AppHeader(
+                  title: 'Page $currentPageNumber',
+                  onSearchPressed: () {
+                    // TODO: Implement search functionality
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Search functionality coming soon'),
+                      ),
+                    );
+                  },
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _handleMemorizationTap,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      // WHY: Use the named constant for total page count.
+                      itemCount: totalPages,
+                      reverse: true,
+                      onPageChanged: (index) {
+                        final int newPageNumber = index + 1;
+                        // WHY: Update the global state provider.
+                        ref
+                            .read(currentPageProvider.notifier)
+                            .setPage(newPageNumber);
+                        _savePageToPrefs(newPageNumber);
+                      },
+                      itemBuilder: (context, index) {
+                        return MushafPageWidget(pageNumber: index + 1);
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           bottomNavigationBar: AppBottomNavigation(

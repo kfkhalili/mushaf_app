@@ -5,6 +5,7 @@ import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
 import '../widgets/page_list_view.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
+import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 
 class SelectionScreen extends ConsumerStatefulWidget {
@@ -37,6 +38,19 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     super.dispose();
   }
 
+  String _getScreenTitle(int currentIndex) {
+    switch (currentIndex) {
+      case 0:
+        return '';
+      case 1:
+        return '';
+      case 2:
+        return '';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,16 +72,16 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Text(
-                'quran',
-                style: TextStyle(
-                  fontFamily: quranCommonFontFamily,
-                  fontSize: 50,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
+            AppHeader(
+              title: _getScreenTitle(currentIndex),
+              onSearchPressed: () {
+                // TODO: Implement search functionality
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Search functionality coming soon'),
+                  ),
+                );
+              },
             ),
             Expanded(
               child: PageView(
