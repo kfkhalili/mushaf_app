@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants.dart';
 import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
 import '../widgets/page_list_view.dart';
@@ -53,7 +52,6 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final currentIndex = ref.watch(selectionTabIndexProvider);
 
     // Sync PageController with current index
