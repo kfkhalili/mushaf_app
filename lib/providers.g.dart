@@ -581,7 +581,7 @@ final class FontSizeSettingProvider
   }
 }
 
-String _$fontSizeSettingHash() => r'6101fd32720bd0658ad150b510808af2f464f678';
+String _$fontSizeSettingHash() => r'75b9443475220384919a009c7400771523e4581f';
 
 abstract class _$FontSizeSetting extends $Notifier<double> {
   double build();

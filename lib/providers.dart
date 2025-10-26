@@ -147,19 +147,37 @@ class MushafLayoutSetting extends _$MushafLayoutSetting {
 class FontSizeSetting extends _$FontSizeSetting {
   @override
   double build() {
-    return defaultFontSize; // Default font size
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    return layoutDefaultFontSizes[layout] ?? 18.0;
   }
 
   void setFontSize(double fontSize) {
-    // Clamp font size to valid range
-    state = fontSize.clamp(minFontSize, maxFontSize);
+    final layout = ref.read(mushafLayoutSettingProvider);
+    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
+
+    // Clamp font size to layout-specific valid range
+    final minSize = layoutOptions.first;
+    final maxSize = layoutOptions.last;
+    state = fontSize.clamp(minSize, maxSize);
   }
 
   void increaseFontSize() {
-    setFontSize(state + fontSizeStep);
+    final layout = ref.read(mushafLayoutSettingProvider);
+    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
+    final currentIndex = layoutOptions.indexOf(state);
+
+    if (currentIndex < layoutOptions.length - 1) {
+      state = layoutOptions[currentIndex + 1];
+    }
   }
 
   void decreaseFontSize() {
-    setFontSize(state - fontSizeStep);
+    final layout = ref.read(mushafLayoutSettingProvider);
+    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
+    final currentIndex = layoutOptions.indexOf(state);
+
+    if (currentIndex > 0) {
+      state = layoutOptions[currentIndex - 1];
+    }
   }
 }

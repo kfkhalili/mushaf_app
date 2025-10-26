@@ -9,7 +9,12 @@ class FontSizeDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentFontSize = ref.watch(fontSizeSettingProvider);
+    final currentLayout = ref.watch(mushafLayoutSettingProvider);
     final theme = Theme.of(context);
+
+    // Get layout-specific font size options
+    final fontSizeOptions =
+        layoutFontSizeOptions[currentLayout] ?? [16.0, 18.0, 20.0];
 
     return DropdownButtonFormField<double>(
       isExpanded: true,

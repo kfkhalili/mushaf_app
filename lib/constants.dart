@@ -63,23 +63,28 @@ const double referenceScreenHeight = 926.0;
 const double maxLineContentWidth = 600.0;
 
 // --- FONT SIZE SETTINGS ---
-const double minFontSize = 12.0;
-const double maxFontSize = 24.0;
-const double defaultFontSize = 20.0;
+const double minFontSize = 16.0;
 const double fontSizeStep = 2.0;
 
-// Font size options for dropdown
-const List<double> fontSizeOptions = [12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0];
+// Layout-specific font size configurations
+const Map<MushafLayout, List<double>> layoutFontSizeOptions = {
+  MushafLayout.uthmani15Lines: [16.0, 18.0, 20.0],
+  MushafLayout.indopak13Lines: [16.0, 18.0, 20.0, 22.0, 24.0],
+};
+
+// Layout-specific default font sizes
+const Map<MushafLayout, double> layoutDefaultFontSizes = {
+  MushafLayout.uthmani15Lines: 18.0,
+  MushafLayout.indopak13Lines: 20.0,
+};
 
 // Font size labels in Arabic
 final Map<double, String> fontSizeLabels = {
-  12.0: 'صغير جداً',
-  14.0: 'صغير',
-  16.0: 'صغير متوسط',
+  16.0: 'صغير',
   18.0: 'متوسط صغير',
   20.0: 'متوسط',
   22.0: 'متوسط كبير',
-  24.0: 'كبير جداً',
+  24.0: 'كبير',
 };
 
 // Preview text (first verse of Al-Fatiha)
