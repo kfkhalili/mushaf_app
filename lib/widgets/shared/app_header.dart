@@ -51,7 +51,7 @@ class AppHeader extends StatelessWidget {
                             const SettingsScreen(),
                         transitionsBuilder:
                             (context, animation, secondaryAnimation, child) {
-                              const begin = Offset(1.0, 0.0);
+                              const begin = Offset(-1.0, 0.0);
                               const end = Offset(0.0, 0.0);
                               const curve = Curves.easeInOut;
 
