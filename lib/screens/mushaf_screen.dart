@@ -227,6 +227,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     final isMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
+    final asyncPageData = ref.watch(pageDataProvider(currentPageNumber));
 
     return Stack(
       children: [
@@ -235,7 +236,25 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             child: Column(
               children: [
                 AppHeader(
-                  title: 'Page $currentPageNumber',
+                  title: asyncPageData.when(
+                    data: (pageData) {
+                      final String juzGlyphString =
+                          'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                      final String surahNameGlyphString =
+                          (pageData.pageSurahNumber > 0)
+                          ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
+                          : '';
+
+                      // Build the complete title with juz and surah glyphs only
+                      String title = juzGlyphString;
+                      if (surahNameGlyphString.isNotEmpty) {
+                        title += ' $surahNameGlyphString';
+                      }
+                      return title;
+                    },
+                    loading: () => '',
+                    error: (_, __) => '',
+                  ),
                   onSearchPressed: () {
                     // TODO: Implement search functionality
                     ScaffoldMessenger.of(context).showSnackBar(

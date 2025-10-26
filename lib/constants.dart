@@ -36,7 +36,7 @@ const double minBasmallahFontSize = 15.0;
 const maxBasmallahFontSize = 28.0;
 
 // Line Height
-const double baseLineHeight = 2.0; // For Ayah text
+const double baseLineHeight = 2.1; // For Ayah text
 // const double tightLineHeight = 1.5; // Used directly in line_widget.dart
 
 // Padding Values

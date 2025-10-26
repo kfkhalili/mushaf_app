@@ -123,47 +123,10 @@ class MushafPageWidget extends ConsumerWidget {
             }
           }
         }
-        final String juzGlyphString =
-            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-        final String surahNameGlyphString = (pageData.pageSurahNumber > 0)
-            ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
-            : '';
+
         final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
         return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: null,
-            centerTitle: false,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            leading: Padding(
-              padding: EdgeInsets.symmetric(horizontal: dynamicHeaderPadding),
-              child: Center(
-                child: Text(
-                  juzGlyphString,
-                  style: juzHizbStyle.copyWith(
-                    fontFamily: quranCommonFontFamily,
-                  ),
-                ),
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: dynamicHeaderPadding),
-                child: Center(
-                  child: Text(
-                    surahNameGlyphString,
-                    style: surahNameHeaderStyle.copyWith(
-                      fontFamily: surahNameFontFamily,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-            ],
-          ),
           body: Stack(
             fit: StackFit.expand,
             children: [
