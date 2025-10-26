@@ -5,8 +5,32 @@ import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
 import '../constants.dart';
 import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
-class PageListView extends StatelessWidget {
+class PageListView extends ConsumerStatefulWidget {
   const PageListView({super.key});
+
+  @override
+  ConsumerState<PageListView> createState() => _PageListViewState();
+}
+
+class _PageListViewState extends ConsumerState<PageListView> {
+  static const int _preloadBuffer = 10; // Pages to preload ahead
+  final Set<int> _loadedPages = {};
+
+  void _preloadPage(int pageNumber) {
+    if (!_loadedPages.contains(pageNumber) &&
+        pageNumber >= 1 &&
+        pageNumber <= totalPages) {
+      _loadedPages.add(pageNumber);
+      // Trigger loading by reading the provider
+      ref.read(pagePreviewProvider(pageNumber).future);
+    }
+  }
+
+  void _preloadRange(int startPage, int endPage) {
+    for (int pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+      _preloadPage(pageNumber);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +39,13 @@ class PageListView extends StatelessWidget {
       itemCount: totalPages,
       itemBuilder: (context, index) {
         final int pageNumber = index + 1;
+
+        // Preload current page and a few ahead
+        _preloadRange(
+          pageNumber,
+          (pageNumber + _preloadBuffer).clamp(1, totalPages),
+        );
+
         return PageListItem(pageNumber: pageNumber);
       },
       separatorBuilder: (context, index) =>
