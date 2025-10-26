@@ -18,6 +18,15 @@ class FontSizeDropdown extends ConsumerWidget {
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
+      selectedItemBuilder: (BuildContext context) {
+        return fontSizeOptions.map<Widget>((double fontSize) {
+          return Text(
+            fontSizeLabels[fontSize] ?? fontSize.toString(),
+            style: theme.textTheme.bodyMedium,
+            overflow: TextOverflow.ellipsis,
+          );
+        }).toList();
+      },
       items: fontSizeOptions.map((fontSize) {
         return DropdownMenuItem<double>(
           value: fontSize,

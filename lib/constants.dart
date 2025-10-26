@@ -64,24 +64,12 @@ const double maxLineContentWidth = 600.0;
 
 // --- FONT SIZE SETTINGS ---
 const double minFontSize = 12.0;
-const double maxFontSize = 32.0;
+const double maxFontSize = 24.0;
 const double defaultFontSize = 20.0;
 const double fontSizeStep = 2.0;
 
 // Font size options for dropdown
-const List<double> fontSizeOptions = [
-  12.0,
-  14.0,
-  16.0,
-  18.0,
-  20.0,
-  22.0,
-  24.0,
-  26.0,
-  28.0,
-  30.0,
-  32.0,
-];
+const List<double> fontSizeOptions = [12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0];
 
 // Font size labels in Arabic
 final Map<double, String> fontSizeLabels = {
@@ -91,11 +79,7 @@ final Map<double, String> fontSizeLabels = {
   18.0: 'متوسط صغير',
   20.0: 'متوسط',
   22.0: 'متوسط كبير',
-  24.0: 'كبير',
-  26.0: 'كبير جداً',
-  28.0: 'كبير جداً جداً',
-  30.0: 'ضخم',
-  32.0: 'ضخم جداً',
+  24.0: 'كبير جداً',
 };
 
 // Preview text (first verse of Al-Fatiha)
