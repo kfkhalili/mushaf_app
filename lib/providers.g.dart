@@ -61,14 +61,12 @@ abstract class _$CurrentPage extends $Notifier<int> {
   }
 }
 
-@ProviderFor(databaseService)
-const databaseServiceProvider = DatabaseServiceProvider._();
+@ProviderFor(DatabaseServiceNotifier)
+const databaseServiceProvider = DatabaseServiceNotifierProvider._();
 
-final class DatabaseServiceProvider
-    extends
-        $FunctionalProvider<DatabaseService, DatabaseService, DatabaseService>
-    with $Provider<DatabaseService> {
-  const DatabaseServiceProvider._()
+final class DatabaseServiceNotifierProvider
+    extends $NotifierProvider<DatabaseServiceNotifier, DatabaseService> {
+  const DatabaseServiceNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -80,17 +78,11 @@ final class DatabaseServiceProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$databaseServiceHash();
+  String debugGetCreateSourceHash() => _$databaseServiceNotifierHash();
 
   @$internal
   @override
-  $ProviderElement<DatabaseService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  DatabaseService create(Ref ref) {
-    return databaseService(ref);
-  }
+  DatabaseServiceNotifier create() => DatabaseServiceNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(DatabaseService value) {
@@ -101,7 +93,27 @@ final class DatabaseServiceProvider
   }
 }
 
-String _$databaseServiceHash() => r'323927c4138725be4427216964fece6d70043b46';
+String _$databaseServiceNotifierHash() =>
+    r'7d050374e9e3d2d5a836ebe85abc0446e6b89f4b';
+
+abstract class _$DatabaseServiceNotifier extends $Notifier<DatabaseService> {
+  DatabaseService build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<DatabaseService, DatabaseService>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<DatabaseService, DatabaseService>,
+              DatabaseService,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
 
 @ProviderFor(fontService)
 const fontServiceProvider = FontServiceProvider._();
@@ -194,7 +206,7 @@ final class PageDataProvider
   }
 }
 
-String _$pageDataHash() => r'07f5ba651c22a869e1aed06957dd48d6eda9a3b9';
+String _$pageDataHash() => r'34fef09de4d86ba503e2f60d103a3eec9988acb4';
 
 final class PageDataFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PageData>, int> {
@@ -410,7 +422,7 @@ final class PageFontFamilyProvider
   }
 }
 
-String _$pageFontFamilyHash() => r'15d7834df90b4dd3d7c52c440a95fbe86b9a4f3e';
+String _$pageFontFamilyHash() => r'f562dda973a4542f6996503eabca7e96d3e76f16';
 
 final class PageFontFamilyFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, int> {
@@ -530,6 +542,59 @@ abstract class _$MushafLayoutSetting extends $Notifier<MushafLayout> {
             as $ClassProviderElement<
               AnyNotifier<MushafLayout, MushafLayout>,
               MushafLayout,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(FontSizeSetting)
+const fontSizeSettingProvider = FontSizeSettingProvider._();
+
+final class FontSizeSettingProvider
+    extends $NotifierProvider<FontSizeSetting, double> {
+  const FontSizeSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'fontSizeSettingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$fontSizeSettingHash();
+
+  @$internal
+  @override
+  FontSizeSetting create() => FontSizeSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(double value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<double>(value),
+    );
+  }
+}
+
+String _$fontSizeSettingHash() => r'6101fd32720bd0658ad150b510808af2f464f678';
+
+abstract class _$FontSizeSetting extends $Notifier<double> {
+  double build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<double, double>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<double, double>,
+              double,
               Object?,
               Object?
             >;

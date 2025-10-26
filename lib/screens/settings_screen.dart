@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
+import '../widgets/shared/font_size_dropdown.dart';
 import '../providers.dart';
 import '../constants.dart';
 
@@ -107,6 +108,8 @@ class SettingsScreen extends ConsumerWidget {
                                         mushafLayoutSettingProvider.notifier,
                                       )
                                       .setLayout(layout);
+                                  // WHY: Invalidate database service to reload with new layout
+                                  ref.invalidate(databaseServiceProvider);
                                 }
                               },
                             ),
@@ -129,22 +132,13 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            ListTile(
-                              leading: const Icon(Icons.format_size),
-                              title: const Text('حجم الخط'),
-                              subtitle: const Text('تعديل حجم النص للقراءة'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                // TODO: Implement font size settings
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Font size settings coming soon',
-                                    ),
-                                  ),
-                                );
-                              },
+                            Text(
+                              'حجم الخط',
+                              style: theme.textTheme.titleMedium,
                             ),
+                            const SizedBox(height: 8),
+                            const FontSizeDropdown(),
+                            const SizedBox(height: 16),
                             const Divider(),
                             ListTile(
                               leading: const Icon(Icons.bookmark),

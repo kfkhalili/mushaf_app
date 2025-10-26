@@ -24,19 +24,37 @@ class DatabaseService {
   Future<void>? _initFuture;
 
   // WHY: This is the new public 'init' method. It acts as a gatekeeper.
-  Future<void> init() async {
+  Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
     if (_isInitialized) return;
-    _initFuture ??= _doInit();
+    _initFuture ??= _doInit(layout);
     await _initFuture;
   }
 
-  Future<void> _doInit() async {
+  // WHY: Switch to a different layout after initialization
+  Future<void> switchLayout(MushafLayout layout) async {
+    if (!_isInitialized) {
+      await init(layout: layout);
+      return;
+    }
+
+    // Close existing databases
+    await _closeDatabases();
+
+    // Reset initialization state
+    _isInitialized = false;
+    _initFuture = null;
+
+    // Initialize with new layout
+    await init(layout: layout);
+  }
+
+  Future<void> _doInit(MushafLayout layout) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     const dbAssetPath = 'assets/db';
 
     final databases = await Future.wait([
-      _initDb(documentsDirectory, dbAssetPath, layoutDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, scriptDbFileName),
+      _initDb(documentsDirectory, dbAssetPath, layout.layoutDatabaseFileName),
+      _initDb(documentsDirectory, dbAssetPath, layout.scriptDatabaseFileName),
       _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
       _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
       _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
@@ -63,6 +81,18 @@ class DatabaseService {
     }
 
     _isInitialized = true;
+  }
+
+  Future<void> _closeDatabases() async {
+    await Future.wait(
+      [
+        _layoutDb?.close(),
+        _scriptDb?.close(),
+        _metadataDb?.close(),
+        _juzDb?.close(),
+        _hizbDb?.close(),
+      ].where((future) => future != null).cast<Future<void>>(),
+    );
   }
 
   Future<Database> _initDb(

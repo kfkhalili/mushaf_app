@@ -26,10 +26,22 @@ class CurrentPage extends _$CurrentPage {
 }
 
 // --- Database Service Provider ---
-// WHY: All provider functions now use the unified 'Ref' type.
+// WHY: This is a keepAlive provider for managing database operations with layout switching.
 @Riverpod(keepAlive: true)
-DatabaseService databaseService(Ref ref) {
-  return DatabaseService();
+class DatabaseServiceNotifier extends _$DatabaseServiceNotifier {
+  @override
+  DatabaseService build() {
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    final service = DatabaseService();
+    service.init(layout: layout);
+    return service;
+  }
+
+  // WHY: Method to switch layout and reinitialize database service
+  Future<void> switchLayout(MushafLayout layout) async {
+    await state.switchLayout(layout);
+    ref.invalidateSelf();
+  }
 }
 
 // --- Font Loader Service Provider ---
@@ -46,14 +58,18 @@ FontService fontService(Ref ref) {
 Future<PageData> pageData(Ref ref, int pageNumber) async {
   final dbService = ref.watch(databaseServiceProvider);
   final fontService = ref.watch(fontServiceProvider);
+  final layout = ref.watch(mushafLayoutSettingProvider);
 
-  String pageFontFamilyName = await fontService.loadFontForPage(pageNumber);
+  String pageFontFamilyName = await fontService.loadFontForPage(
+    pageNumber,
+    layout: layout,
+  );
 
-  final layout = await dbService.getPageLayout(pageNumber);
+  final layoutData = await dbService.getPageLayout(pageNumber);
   final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
 
   return PageData(
-    layout: layout,
+    layout: layoutData,
     pageFontFamily: pageFontFamilyName,
     pageSurahName: headerInfo['surahName'] as String? ?? '',
     pageSurahNumber: headerInfo['surahNumber'] as int? ?? 0,
@@ -93,7 +109,8 @@ Future<String> pagePreview(Ref ref, int pageNumber) async {
 @riverpod
 Future<String> pageFontFamily(Ref ref, int pageNumber) async {
   final fontService = ref.watch(fontServiceProvider);
-  return fontService.loadFontForPage(pageNumber);
+  final layout = ref.watch(mushafLayoutSettingProvider);
+  return fontService.loadFontForPage(pageNumber, layout: layout);
 }
 
 // --- Navigation Provider ---
@@ -121,5 +138,28 @@ class MushafLayoutSetting extends _$MushafLayoutSetting {
 
   void setLayout(MushafLayout layout) {
     state = layout;
+  }
+}
+
+// --- Font Size Provider ---
+// WHY: This is a keepAlive provider for managing font size preference.
+@Riverpod(keepAlive: true)
+class FontSizeSetting extends _$FontSizeSetting {
+  @override
+  double build() {
+    return defaultFontSize; // Default font size
+  }
+
+  void setFontSize(double fontSize) {
+    // Clamp font size to valid range
+    state = fontSize.clamp(minFontSize, maxFontSize);
+  }
+
+  void increaseFontSize() {
+    setFontSize(state + fontSizeStep);
+  }
+
+  void decreaseFontSize() {
+    setFontSize(state - fontSizeStep);
   }
 }

@@ -1,18 +1,31 @@
 // --- DATABASE FILENAMES ---
 const String layoutDbFileName = 'uthmani-15-lines.db';
+const String indopakLayoutDbFileName = 'indopak-13-lines-layout-qudratullah.db';
 const String scriptDbFileName = 'qpc-v2.db';
+const String indopakScriptDbFileName = 'indopak-nastaleeq.db';
 const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 
 // --- MUSHAF LAYOUT OPTIONS ---
-enum MushafLayout { uthmani15Lines }
+enum MushafLayout { uthmani15Lines, indopak13Lines }
 
 extension MushafLayoutExtension on MushafLayout {
-  String get databaseFileName {
+  String get layoutDatabaseFileName {
     switch (this) {
       case MushafLayout.uthmani15Lines:
         return layoutDbFileName;
+      case MushafLayout.indopak13Lines:
+        return indopakLayoutDbFileName;
+    }
+  }
+
+  String get scriptDatabaseFileName {
+    switch (this) {
+      case MushafLayout.uthmani15Lines:
+        return scriptDbFileName;
+      case MushafLayout.indopak13Lines:
+        return indopakScriptDbFileName;
     }
   }
 
@@ -20,6 +33,17 @@ extension MushafLayoutExtension on MushafLayout {
     switch (this) {
       case MushafLayout.uthmani15Lines:
         return 'عثماني (١٥ سطر)';
+      case MushafLayout.indopak13Lines:
+        return 'إندوباك (١٣ سطر)';
+    }
+  }
+
+  String get fontFamily {
+    switch (this) {
+      case MushafLayout.uthmani15Lines:
+        return quranCommonFontFamily;
+      case MushafLayout.indopak13Lines:
+        return indopakFontFamily;
     }
   }
 }
@@ -30,12 +54,52 @@ const String basmallah = '\uFDFD'; // ﷽
 // --- FONT CONSTANTS ---
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
+const String indopakFontFamily = 'IndopakFont';
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;
 const double referenceScreenWidth = 428.0;
 const double referenceScreenHeight = 926.0;
 const double maxLineContentWidth = 600.0;
+
+// --- FONT SIZE SETTINGS ---
+const double minFontSize = 12.0;
+const double maxFontSize = 32.0;
+const double defaultFontSize = 20.0;
+const double fontSizeStep = 2.0;
+
+// Font size options for dropdown
+const List<double> fontSizeOptions = [
+  12.0,
+  14.0,
+  16.0,
+  18.0,
+  20.0,
+  22.0,
+  24.0,
+  26.0,
+  28.0,
+  30.0,
+  32.0,
+];
+
+// Font size labels in Arabic
+final Map<double, String> fontSizeLabels = {
+  12.0: 'صغير جداً',
+  14.0: 'صغير',
+  16.0: 'صغير متوسط',
+  18.0: 'متوسط صغير',
+  20.0: 'متوسط',
+  22.0: 'متوسط كبير',
+  24.0: 'كبير',
+  26.0: 'كبير جداً',
+  28.0: 'كبير جداً جداً',
+  30.0: 'ضخم',
+  32.0: 'ضخم جداً',
+};
+
+// Preview text (first verse of Al-Fatiha)
+const String fontPreviewText = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
 
 // --- STYLING CONSTANTS ---
 

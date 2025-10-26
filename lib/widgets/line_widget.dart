@@ -1,9 +1,11 @@
 import 'dart:math'; // For min()
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../providers.dart';
 
-class LineWidget extends StatelessWidget {
+class LineWidget extends ConsumerWidget {
   final LineInfo line;
   final String pageFontFamily;
   final bool isMemorizationMode;
@@ -39,7 +41,7 @@ class LineWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final Color baseTextColor =
         theme.textTheme.bodyLarge?.color ?? Colors.black;
@@ -55,7 +57,10 @@ class LineWidget extends StatelessWidget {
     final double widthScale = screenWidth / referenceScreenWidth;
     final double heightScale = screenHeight / referenceScreenHeight;
     final double scaleFactor = min(widthScale, heightScale);
-    final double unclampedDynamicFontSize = baseFontSize * scaleFactor;
+
+    // Get user's preferred font size
+    final double userFontSize = ref.watch(fontSizeSettingProvider);
+    final double unclampedDynamicFontSize = userFontSize * scaleFactor;
     double defaultDynamicFontSize = unclampedDynamicFontSize.clamp(
       minAyahFontSize,
       maxAyahFontSize,
