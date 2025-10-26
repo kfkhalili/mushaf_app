@@ -1,0 +1,108 @@
+---
+alwaysApply: true
+---
+
+# Commit Conventions
+
+This project follows the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) for all commit messages.
+
+## Commit Message Structure
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+## Required Types
+
+- **`feat:`** - A new feature (correlates with MINOR in Semantic Versioning)
+- **`fix:`** - A bug fix (correlates with PATCH in Semantic Versioning)
+
+## Additional Types
+
+- **`build:`** - Changes to build system or external dependencies
+- **`chore:`** - Changes to auxiliary tools and libraries
+- **`ci:`** - Changes to CI configuration files and scripts
+- **`docs:`** - Documentation only changes
+- **`style:`** - Changes that do not affect the meaning of the code
+- **`refactor:`** - Code change that neither fixes a bug nor adds a feature
+- **`perf:`** - Code change that improves performance
+- **`test:`** - Adding missing tests or correcting existing tests
+
+## Breaking Changes
+
+Breaking changes MUST be indicated in one of two ways:
+
+1. **Footer**: `BREAKING CHANGE: <description>`
+2. **Type prefix**: Append `!` after type/scope (e.g., `feat!:`, `fix(api)!:`)
+
+## Examples
+
+### Feature commit
+
+```
+feat: add swipe navigation to selection screen
+```
+
+### Bug fix commit
+
+```
+fix: resolve font loading delay in PageListView
+```
+
+### Feature with scope
+
+```
+feat(header): add settings screen navigation
+```
+
+### Breaking change with footer
+
+```
+feat: redesign navigation system
+
+BREAKING CHANGE: Navigation API has been completely rewritten
+```
+
+### Breaking change with exclamation
+
+```
+feat!: remove fallback font support
+```
+
+### Documentation commit
+
+```
+docs: update README with new installation steps
+```
+
+### Refactor commit
+
+```
+refactor(ui): extract shared header component
+```
+
+## Guidelines
+
+1. **Always use conventional commits** - Every commit message MUST follow this specification
+2. **Be descriptive** - The description should clearly explain what changed
+3. **Use present tense** - "add feature" not "added feature"
+4. **Lowercase** - Use lowercase for type and scope
+5. **No period** - Don't end the description with a period
+6. **Body optional** - Use body for complex changes that need more explanation
+7. **Scope optional** - Use scope to indicate which part of the codebase changed
+
+## Benefits
+
+- **Automated changelogs** - Tools can generate changelogs from commit history
+- **Semantic versioning** - Automatic version bumps based on commit types
+- **Clear communication** - Team members understand the nature of changes
+- **Build automation** - Trigger different processes based on commit types
+- **Better project history** - Structured commit history for easier navigation
+
+## Enforcement
+
+All commit messages in this project MUST follow the Conventional Commits specification. This ensures consistency and enables automated tooling for version management and changelog generation.

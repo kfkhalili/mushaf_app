@@ -126,6 +126,21 @@ Asset management and the unique page-specific font loading system (604 fonts!).
 
 ---
 
+### 9. **commit-conventions.mdc** 📝 Always Applied
+
+Commit message conventions following the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
+
+**Key Topics:**
+
+- Commit message structure (`<type>[scope]: <description>`)
+- Required types (`feat:`, `fix:`)
+- Additional types (`build:`, `chore:`, `docs:`, etc.)
+- Breaking change notation (`BREAKING CHANGE:` or `!`)
+- Commit message examples and guidelines
+- Benefits for automated tooling
+
+---
+
 ## Rule Activation
 
 - **Always Applied**: Applied to every AI request automatically
