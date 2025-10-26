@@ -18,6 +18,9 @@ class AppHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final Color iconColor = theme.brightness == Brightness.dark
+        ? Colors.grey.shade400
+        : Colors.grey.shade600;
 
     return Container(
       height: kAppHeaderHeight,
@@ -68,9 +71,7 @@ class AppHeader extends StatelessWidget {
                   icon: Icon(
                     Icons.settings,
                     size: kAppHeaderIconSize,
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black87,
+                    color: iconColor,
                   ),
                 ),
               if (onSearchPressed != null)
@@ -79,9 +80,7 @@ class AppHeader extends StatelessWidget {
                   icon: Icon(
                     Icons.search,
                     size: kAppHeaderIconSize,
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black87,
+                    color: iconColor,
                   ),
                 ),
             ],
@@ -95,9 +94,7 @@ class AppHeader extends StatelessWidget {
               icon: Icon(
                 Icons.arrow_forward_ios,
                 size: kAppHeaderIconSize,
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black87,
+                color: iconColor,
               ),
             ),
         ],

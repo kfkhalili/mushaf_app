@@ -38,19 +38,10 @@ class MushafPageWidget extends ConsumerWidget {
     final double heightScale = screenHeight / referenceScreenHeight;
     final double scaleFactor = min(widthScale, heightScale);
 
-    final juzHizbStyle = TextStyle(
-      fontSize: 24 * scaleFactor,
-      color: textColor,
-    );
-    final surahNameHeaderStyle = TextStyle(
-      fontSize: 28 * scaleFactor,
-      color: textColor,
-    );
     final footerTextStyle = TextStyle(
       fontSize: 16 * scaleFactor,
       color: textColor,
     );
-    final double dynamicHeaderPadding = headerHorizontalPadding * scaleFactor;
     final double dynamicPageBottomPadding = pageBottomPadding * scaleFactor;
     final double dynamicFooterBottomPadding = footerBottomPadding * scaleFactor;
     final double dynamicFooterRightPadding = footerRightPadding * scaleFactor;
