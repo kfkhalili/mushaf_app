@@ -39,8 +39,10 @@ class AppBottomNavigation extends ConsumerWidget {
   }
 
   Widget _buildSelectionNavigation(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     return BottomAppBar(
-      color: const Color(0xFF212121),
+      color: theme.scaffoldBackgroundColor,
       padding: EdgeInsets.zero,
       height: kBottomNavBarHeight,
       clipBehavior: Clip.antiAlias,
@@ -49,7 +51,9 @@ class AppBottomNavigation extends ConsumerWidget {
         child: DefaultTextStyle(
           style: TextStyle(
             fontSize: kBottomNavLabelFontSize,
-            color: Colors.grey.shade400,
+            color: theme.brightness == Brightness.dark
+                ? Colors.grey.shade400
+                : Colors.grey.shade600,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -93,7 +97,9 @@ class AppBottomNavigation extends ConsumerWidget {
     final theme = Theme.of(context);
     final Color color = isSelected
         ? theme.colorScheme.primary
-        : Colors.grey.shade400;
+        : (theme.brightness == Brightness.dark
+              ? Colors.grey.shade400
+              : Colors.grey.shade600);
 
     return TextButton(
       onPressed: onTap,
@@ -115,11 +121,13 @@ class AppBottomNavigation extends ConsumerWidget {
     bool isMemorizing,
   ) {
     final theme = Theme.of(context);
-    final Color unselectedIconColor = Colors.grey.shade400;
+    final Color unselectedIconColor = theme.brightness == Brightness.dark
+        ? Colors.grey.shade400
+        : Colors.grey.shade600;
     final Color selectedIconColor = theme.colorScheme.primary;
 
     return BottomAppBar(
-      color: const Color(0xFF212121),
+      color: theme.scaffoldBackgroundColor,
       padding: EdgeInsets.zero,
       height: kBottomNavBarHeight,
       clipBehavior:
