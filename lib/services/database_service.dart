@@ -15,8 +15,8 @@ class DatabaseService {
   Database? _juzDb;
   Database? _hizbDb;
 
-  List<Map<String, dynamic>> _juzCache = [];
-  List<Map<String, dynamic>> _hizbCache = [];
+  List<Map<String, dynamic>> _juzCache = const [];
+  List<Map<String, dynamic>> _hizbCache = const [];
 
   bool _isInitialized = false;
 
@@ -155,12 +155,14 @@ class DatabaseService {
     );
 
     // 3. Create a quick lookup map for page numbers (Surah Number -> Start Page).
-    final Map<int, int> pageMap = {
-      for (var row in surahStartPages)
-        _parseInt(row[DbConstants.surahNumberCol]): _parseInt(
-          row[DbConstants.startPageAlias],
+    final Map<int, int> pageMap = Map.fromEntries(
+      surahStartPages.map(
+        (row) => MapEntry(
+          _parseInt(row[DbConstants.surahNumberCol]),
+          _parseInt(row[DbConstants.startPageAlias]),
         ),
-    };
+      ),
+    );
     // WHY: Surah Al-Fatiha starts on page 1, which might not be picked up by the query.
     pageMap[1] = 1;
 

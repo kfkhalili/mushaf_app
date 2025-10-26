@@ -14,10 +14,6 @@ class MushafPageWidget extends ConsumerWidget {
 
   const MushafPageWidget({super.key, required this.pageNumber});
 
-  String _getAyahKey(int surah, int ayah) {
-    return "${surah.toString().padLeft(3, '0')}:${ayah.toString().padLeft(3, '0')}";
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // WHY: This line will now work because of the added import.
@@ -54,22 +50,13 @@ class MushafPageWidget extends ConsumerWidget {
 
         // Only prepare words to show if memorizing and text is not hidden
         if (isMemorizing && !memorizationState.isTextHidden) {
-          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
-          final List<Word> allQuranWordsOnPage = [];
-          for (final line in pageData.layout.lines) {
-            if (line.lineType == 'ayah') {
-              for (final word in line.words) {
-                if (word.ayahNumber > 0) {
-                  allQuranWordsOnPage.add(word);
-                  final String key = _getAyahKey(
-                    word.surahNumber,
-                    word.ayahNumber,
-                  );
-                  ayahsOnPageMap.putIfAbsent(key, () => []).add(word);
-                }
-              }
-            }
-          }
+          // Use pure functions for functional data processing
+          final allQuranWordsOnPage = extractQuranWordsFromPage(
+            pageData.layout,
+          );
+          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+            groupWordsByAyahKey(allQuranWordsOnPage),
+          );
           final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
           if (lastRevealedIndex == -1) {

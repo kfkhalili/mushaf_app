@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/mushaf_screen.dart';
+import '../models.dart';
 
 /// Converts Western Arabic numerals (1, 2, 3) to Eastern Arabic numerals (١, ٢, ٣).
 String convertToEasternArabicNumerals(String input) {
   const western = <String>['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const eastern = <String>['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
-  String result = input; // Work on a mutable copy
-  for (int i = 0; i < western.length; i++) {
-    result = result.replaceAll(western[i], eastern[i]);
-  }
-  return result;
+  // Functional approach: use splitMapJoin for character replacement
+  return input.splitMapJoin(
+    RegExp(r'[0-9]'),
+    onMatch: (match) {
+      final digit = match.group(0)!;
+      final index = western.indexOf(digit);
+      return eastern[index];
+    },
+  );
 }
 
 /// Navigates to the MushafScreen, initializing it to the specified page.
@@ -32,4 +37,27 @@ Future<void> navigateToMushafPage(BuildContext context, int pageNumber) async {
       builder: (context) => MushafScreen(initialPage: pageNumber),
     ),
   );
+}
+
+/// Pure function: generates ayah key from surah and ayah numbers
+String generateAyahKey(int surah, int ayah) {
+  return "${surah.toString().padLeft(3, '0')}:${ayah.toString().padLeft(3, '0')}";
+}
+
+/// Pure function: extracts all Quran words from page layout
+List<Word> extractQuranWordsFromPage(PageLayout layout) {
+  return layout.lines
+      .where((line) => line.lineType == 'ayah')
+      .expand((line) => line.words)
+      .where((word) => word.ayahNumber > 0)
+      .toList();
+}
+
+/// Pure function: groups words by ayah key
+Map<String, List<Word>> groupWordsByAyahKey(List<Word> words) {
+  return words.fold<Map<String, List<Word>>>({}, (map, word) {
+    final key = generateAyahKey(word.surahNumber, word.ayahNumber);
+    map.putIfAbsent(key, () => []).add(word);
+    return map;
+  });
 }

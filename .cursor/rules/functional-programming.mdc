@@ -1,0 +1,239 @@
+---
+alwaysApply: true
+---
+
+# Functional Programming Paradigms
+
+This project follows functional programming principles and constructs whenever possible.
+
+## Core Principles
+
+### Immutability
+
+- **Prefer immutable data structures** over mutable ones
+- Use `@immutable` annotation for data classes
+- Avoid side effects in functions
+- Use `copyWith()` methods for state updates
+
+```dart
+@immutable
+class UserState {
+  final String name;
+  final int age;
+
+  const UserState({required this.name, required this.age});
+
+  UserState copyWith({String? name, int? age}) {
+    return UserState(
+      name: name ?? this.name,
+      age: age ?? this.age,
+    );
+  }
+}
+```
+
+### Pure Functions
+
+- **Functions should be pure** - same input always produces same output
+- Avoid side effects (no I/O, no global state mutations)
+- Prefer function composition over imperative code
+
+```dart
+// Good - Pure function
+String formatUserName(String firstName, String lastName) {
+  return '$firstName $lastName'.trim();
+}
+
+// Avoid - Side effects
+String formatUserName(String firstName, String lastName) {
+  print('Formatting user name'); // Side effect!
+  return '$firstName $lastName'.trim();
+}
+```
+
+### Higher-Order Functions
+
+- **Use map, filter, reduce** instead of loops
+- Prefer function composition
+- Use closures and function passing
+
+```dart
+// Good - Functional approach
+final evenNumbers = numbers
+    .where((n) => n % 2 == 0)
+    .map((n) => n * 2)
+    .toList();
+
+// Avoid - Imperative approach
+final evenNumbers = <int>[];
+for (final number in numbers) {
+  if (number % 2 == 0) {
+    evenNumbers.add(number * 2);
+  }
+}
+```
+
+## Dart/Flutter Specific Patterns
+
+### Collection Operations
+
+```dart
+// Prefer functional collection methods
+final processedItems = items
+    .where((item) => item.isActive)
+    .map((item) => item.toDisplayFormat())
+    .where((formatted) => formatted.isNotEmpty)
+    .toList();
+
+// Use fold for complex reductions
+final total = items.fold(0, (sum, item) => sum + item.value);
+```
+
+### Async Functional Patterns
+
+```dart
+// Use async/await with functional patterns
+Future<List<String>> processItems(List<Item> items) async {
+  return await Future.wait(
+    items.map((item) => processItem(item))
+  );
+}
+
+// Prefer async generators for streams
+Stream<String> generateNames() async* {
+  for (final item in items) {
+    yield await processItem(item);
+  }
+}
+```
+
+### State Management (Riverpod)
+
+```dart
+// Functional state updates
+@riverpod
+class Counter extends _$Counter {
+  @override
+  int build() => 0;
+
+  void increment() {
+    state = state + 1; // Immutable update
+  }
+
+  void reset() {
+    state = 0; // Pure state transition
+  }
+}
+```
+
+## Widget Composition
+
+### Functional Widget Building
+
+```dart
+// Prefer composition over inheritance
+Widget buildUserCard(User user) {
+  return Card(
+    child: Column(
+      children: [
+        _buildUserHeader(user),
+        _buildUserDetails(user),
+        _buildUserActions(user),
+      ],
+    ),
+  );
+}
+
+// Extract pure widget builders
+Widget _buildUserHeader(User user) {
+  return Text(user.name);
+}
+```
+
+### Conditional Rendering
+
+```dart
+// Use functional conditional rendering
+Widget buildContent(AsyncValue<Data> data) {
+  return data.when(
+    data: (data) => DataWidget(data),
+    loading: () => LoadingWidget(),
+    error: (error, stack) => ErrorWidget(error),
+  );
+}
+```
+
+## Error Handling
+
+### Functional Error Handling
+
+```dart
+// Use Either pattern for error handling
+sealed class Result<T> {
+  const Result();
+}
+
+class Success<T> extends Result<T> {
+  final T value;
+  const Success(this.value);
+}
+
+class Failure<T> extends Result<T> {
+  final String error;
+  const Failure(this.error);
+}
+
+// Use Result in functions
+Result<String> parseUserInput(String input) {
+  if (input.isEmpty) {
+    return Failure('Input cannot be empty');
+  }
+  return Success(input.trim());
+}
+```
+
+## Performance Considerations
+
+### Lazy Evaluation
+
+```dart
+// Use lazy collections when appropriate
+final lazyNumbers = numbers.where((n) => n > 10).map((n) => expensiveOperation(n));
+
+// Use Iterable.generate for lazy sequences
+final fibonacci = Iterable.generate(10, (i) => _fibonacci(i));
+```
+
+### Memoization
+
+```dart
+// Cache expensive pure function results
+final memoizedResult = _memoize((int input) => expensiveCalculation(input));
+```
+
+## Best Practices
+
+1. **Prefer expressions over statements**
+2. **Use const constructors** whenever possible
+3. **Avoid mutable collections** in public APIs
+4. **Compose functions** instead of writing large functions
+5. **Use sealed classes** for type-safe pattern matching
+6. **Prefer records** for simple data structures
+7. **Use extension methods** for functional operations
+
+## When NOT to Use Functional Programming
+
+- **Performance-critical code** where imperative is faster
+- **Complex state machines** where OOP is clearer
+- **Legacy integration** where functional would complicate things
+- **Simple one-off operations** where functional adds unnecessary complexity
+
+## Examples in This Project
+
+- **Models**: All data models use `@immutable` and `copyWith()`
+- **Providers**: State updates are functional and immutable
+- **Widgets**: Composition over inheritance, pure widget builders
+- **Services**: Pure functions for data transformation
+- **Utilities**: Functional helpers for common operations
+
+The goal is to write code that is **predictable, testable, and maintainable** through functional programming principles.

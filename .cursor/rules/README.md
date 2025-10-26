@@ -141,6 +141,24 @@ Commit message conventions following the [Conventional Commits specification](ht
 
 ---
 
+### 10. **functional-programming.mdc** 🔄 Always Applied
+
+Functional programming paradigms, constructs, and structures to be used whenever possible.
+
+**Key Topics:**
+
+- Immutability principles and `@immutable` usage
+- Pure functions and avoiding side effects
+- Higher-order functions (map, filter, reduce)
+- Functional collection operations
+- Async functional patterns
+- Widget composition over inheritance
+- Functional error handling with Result types
+- Performance considerations (lazy evaluation, memoization)
+- When NOT to use functional programming
+
+---
+
 ## Rule Activation
 
 - **Always Applied**: Applied to every AI request automatically

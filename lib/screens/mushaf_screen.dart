@@ -9,6 +9,7 @@ import '../widgets/countdown_circle.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../utils/helpers.dart';
 import 'dart:collection';
 
 // --- State Management for Memorization Mode ---
@@ -190,20 +191,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
     asyncPageData.whenData((PageData pageData) {
-      final ayahsOnPageMap = SplayTreeMap<String, List<Word>>();
-      final List<Word> allQuranWordsOnPage = [];
-      for (final line in pageData.layout.lines) {
-        if (line.lineType == 'ayah') {
-          for (final word in line.words) {
-            if (word.ayahNumber > 0) {
-              allQuranWordsOnPage.add(word);
-              final String key =
-                  "${word.surahNumber.toString().padLeft(3, '0')}:${word.ayahNumber.toString().padLeft(3, '0')}";
-              ayahsOnPageMap.putIfAbsent(key, () => []).add(word);
-            }
-          }
-        }
-      }
+      // Use pure functions for functional data processing
+      final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
+      final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+        groupWordsByAyahKey(allQuranWordsOnPage),
+      );
       final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
       final int currentIndex =
           memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
