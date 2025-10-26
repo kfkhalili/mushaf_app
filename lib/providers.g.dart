@@ -482,3 +482,57 @@ abstract class _$SelectionTabIndex extends $Notifier<int> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(MushafLayoutSetting)
+const mushafLayoutSettingProvider = MushafLayoutSettingProvider._();
+
+final class MushafLayoutSettingProvider
+    extends $NotifierProvider<MushafLayoutSetting, MushafLayout> {
+  const MushafLayoutSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mushafLayoutSettingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$mushafLayoutSettingHash();
+
+  @$internal
+  @override
+  MushafLayoutSetting create() => MushafLayoutSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MushafLayout value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MushafLayout>(value),
+    );
+  }
+}
+
+String _$mushafLayoutSettingHash() =>
+    r'1dab6478f90439f86f7f1f720db9302a7e972a30';
+
+abstract class _$MushafLayoutSetting extends $Notifier<MushafLayout> {
+  MushafLayout build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<MushafLayout, MushafLayout>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<MushafLayout, MushafLayout>,
+              MushafLayout,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

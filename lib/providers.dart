@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'models.dart';
+import 'constants.dart';
 
 // WHY: This directive points to the file that code-gen will create.
 part 'providers.g.dart';
@@ -106,5 +107,19 @@ class SelectionTabIndex extends _$SelectionTabIndex {
 
   void setTabIndex(int index) {
     state = index;
+  }
+}
+
+// --- Mushaf Layout Provider ---
+// WHY: This is a keepAlive provider for managing mushaf layout preference.
+@Riverpod(keepAlive: true)
+class MushafLayoutSetting extends _$MushafLayoutSetting {
+  @override
+  MushafLayout build() {
+    return MushafLayout.uthmani15Lines; // Default to 15 lines
+  }
+
+  void setLayout(MushafLayout layout) {
+    state = layout;
   }
 }

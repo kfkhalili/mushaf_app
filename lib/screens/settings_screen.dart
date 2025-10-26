@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
+import '../providers.dart';
+import '../constants.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -74,6 +76,37 @@ class SettingsScreen extends ConsumerWidget {
                                   ref
                                       .read(themeProvider.notifier)
                                       .setTheme(mode);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'تخطيط المصحف',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<MushafLayout>(
+                              value: ref.watch(mushafLayoutSettingProvider),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              items: MushafLayout.values.map((layout) {
+                                return DropdownMenuItem(
+                                  value: layout,
+                                  child: Text(layout.displayName),
+                                );
+                              }).toList(),
+                              onChanged: (MushafLayout? layout) {
+                                if (layout != null) {
+                                  ref
+                                      .read(
+                                        mushafLayoutSettingProvider.notifier,
+                                      )
+                                      .setLayout(layout);
                                 }
                               },
                             ),

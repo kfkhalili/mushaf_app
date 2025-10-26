@@ -5,6 +5,25 @@ const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 
+// --- MUSHAF LAYOUT OPTIONS ---
+enum MushafLayout { uthmani15Lines }
+
+extension MushafLayoutExtension on MushafLayout {
+  String get databaseFileName {
+    switch (this) {
+      case MushafLayout.uthmani15Lines:
+        return layoutDbFileName;
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case MushafLayout.uthmani15Lines:
+        return 'عثماني (١٥ سطر)';
+    }
+  }
+}
+
 // --- TEXT CONSTANTS ---
 const String basmallah = '\uFDFD'; // ﷽
 
