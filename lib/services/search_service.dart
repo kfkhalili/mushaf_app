@@ -14,6 +14,7 @@ class SearchService {
   Database? _scriptDb;
   Database? _metadataDb;
   Database? _imlaeiDb; // Database with searchable Arabic text
+  Database? _imlaeiScriptDb; // Database with ayah-by-ayah script text
 
   // Cache for search results to improve performance
   final Map<String, List<SearchResult>> _searchCache = {};
@@ -65,12 +66,18 @@ class SearchService {
         _initDb(documentsDirectory, dbAssetPath, layout.scriptDatabaseFileName),
         _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
         _initDb(documentsDirectory, dbAssetPath, 'imlaei-simple.db'),
+        _initDb(
+          documentsDirectory,
+          dbAssetPath,
+          'imlaei-script-ayah-by-ayah.db',
+        ),
       ]);
 
       _layoutDb = databases[0];
       _scriptDb = databases[1];
       _metadataDb = databases[2];
       _imlaeiDb = databases[3];
+      _imlaeiScriptDb = databases[4];
 
       _isInitialized = true;
     } catch (e) {
@@ -88,12 +95,14 @@ class SearchService {
         _scriptDb?.close(),
         _metadataDb?.close(),
         _imlaeiDb?.close(),
+        _imlaeiScriptDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
     _layoutDb = null;
     _scriptDb = null;
     _metadataDb = null;
     _imlaeiDb = null;
+    _imlaeiScriptDb = null;
   }
 
   Future<Database> _initDb(
@@ -146,13 +155,16 @@ class SearchService {
       return _searchCache[cacheKey]!;
     }
 
-    if (_imlaeiDb == null || _layoutDb == null || _metadataDb == null) {
+    if (_imlaeiDb == null ||
+        _imlaeiScriptDb == null ||
+        _layoutDb == null ||
+        _metadataDb == null) {
       throw Exception('SearchService databases not initialized');
     }
 
     try {
-      // Search in imlaei-simple.db for Arabic text
-      List<SearchResult> results = await _searchInImlaeiDb(query);
+      // Search in both databases and combine results without duplicates
+      List<SearchResult> results = await _searchInBothDatabases(query);
 
       // Cache results
       _searchCache[cacheKey] = results;
@@ -166,30 +178,106 @@ class SearchService {
     }
   }
 
-  /// Search in imlaei-simple.db for Arabic text
-  Future<List<SearchResult>> _searchInImlaeiDb(String query) async {
+  /// Search in both imlaei databases and combine results without duplicates
+  Future<List<SearchResult>> _searchInBothDatabases(String query) async {
     final trimmedQuery = query.trim();
+    final strippedQuery = _stripDiacritics(trimmedQuery);
 
-    // Search for verses containing the query text
-    final List<Map<String, dynamic>> verseResults = await _imlaeiDb!.query(
+    // Step 1: Search in both databases using both original and stripped query for matching
+    final List<Map<String, dynamic>> simpleResults = await _imlaeiDb!.query(
       'verses',
       columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
-      where: 'text LIKE ?',
-      whereArgs: ['%$trimmedQuery%'],
+      where: 'text LIKE ? OR text LIKE ?',
+      whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
       orderBy: 'surah ASC, ayah ASC',
-      limit: 100, // Limit results for performance
+      limit: 100,
     );
 
-    if (verseResults.isEmpty) return [];
+    final List<Map<String, dynamic>> scriptResults = await _imlaeiScriptDb!
+        .query(
+          'verses',
+          columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
+          where: 'text LIKE ? OR text LIKE ?',
+          whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
+          orderBy: 'surah ASC, ayah ASC',
+          limit: 100,
+        );
 
-    // Convert verse results to SearchResult objects
+    // Step 2: Filter results by stripping diacritics and checking if stripped query matches
+    final List<Map<String, dynamic>> filteredSimpleResults = simpleResults
+        .where((verse) {
+          final strippedText = _stripDiacritics(verse['text'] as String);
+          return strippedText.contains(strippedQuery);
+        })
+        .toList();
+
+    final List<Map<String, dynamic>> filteredScriptResults = scriptResults
+        .where((verse) {
+          final strippedText = _stripDiacritics(verse['text'] as String);
+          return strippedText.contains(strippedQuery);
+        })
+        .toList();
+
+    // Step 3: Collect all unique verse keys from both databases
+    final Set<String> allFoundVerseKeys = {};
+    allFoundVerseKeys.addAll(
+      filteredSimpleResults.map((v) => v['verse_key'] as String),
+    );
+    allFoundVerseKeys.addAll(
+      filteredScriptResults.map((v) => v['verse_key'] as String),
+    );
+
+    if (allFoundVerseKeys.isEmpty) return [];
+
+    // Step 4: Retrieve results from script database with diacritics
     final List<SearchResult> results = [];
 
-    for (final verse in verseResults) {
-      final int surahNumber = _parseInt(verse['surah']);
-      final int ayahNumber = _parseInt(verse['ayah']);
-      final String verseText = verse['text'] as String;
-      final String verseKey = verse['verse_key'] as String;
+    for (final verseKey in allFoundVerseKeys) {
+      // Try to get the original diacritical text from script database
+      final List<Map<String, dynamic>> scriptVerse = await _imlaeiScriptDb!
+          .query(
+            'verses',
+            columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
+            where: 'verse_key = ?',
+            whereArgs: [verseKey],
+            limit: 1,
+          );
+
+      String verseText;
+      int surahNumber;
+      int ayahNumber;
+
+      if (scriptVerse.isNotEmpty) {
+        // Use script database text (with diacritics)
+        final verseData = scriptVerse.first;
+        verseText = verseData['text'] as String;
+        surahNumber = _parseInt(verseData['surah']);
+        ayahNumber = _parseInt(verseData['ayah']);
+      } else {
+        // Fallback to simple database if not found in script database
+        final List<Map<String, dynamic>> simpleVerse = await _imlaeiDb!.query(
+          'verses',
+          columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
+          where: 'verse_key = ?',
+          whereArgs: [verseKey],
+          limit: 1,
+        );
+
+        if (simpleVerse.isEmpty) continue;
+
+        final verseData = simpleVerse.first;
+        verseText = verseData['text'] as String;
+        surahNumber = _parseInt(verseData['surah']);
+        ayahNumber = _parseInt(verseData['ayah']);
+      }
+
+      // Debug: Check if text contains diacritics
+      if (kDebugMode && ayahNumber <= 3) {
+        print(
+          'Verse $verseKey: Text contains diacritics = ${verseText != _stripDiacritics(verseText)}',
+        );
+        print('  Text: $verseText');
+      }
 
       // Get Surah name
       final String surahName = await _getSurahName(surahNumber);
@@ -197,7 +285,7 @@ class SearchService {
       // Get page number for this verse
       final int pageNumber = await _getPageNumberForVerse(verseKey);
 
-      // Highlight the search term in context
+      // Use the verse text (prioritizing script database with diacritics)
       final String context = _highlightSearchTerm(verseText, trimmedQuery);
 
       results.add(
@@ -362,6 +450,47 @@ class SearchService {
     // For now, just return the full verse text
     // In the future, we could add highlighting with special characters
     return verseText;
+  }
+
+  /// Strip Arabic diacritics from text for search matching
+  String _stripDiacritics(String text) {
+    // Arabic diacritics Unicode ranges
+    const diacritics = [
+      '\u064B', // Fathatan
+      '\u064C', // Dammatan
+      '\u064D', // Kasratan
+      '\u064E', // Fatha
+      '\u064F', // Damma
+      '\u0650', // Kasra
+      '\u0651', // Shadda
+      '\u0652', // Sukun
+      '\u0653', // Maddah
+      '\u0654', // Hamza Above
+      '\u0655', // Hamza Below
+      '\u0656', // Subscript Alef
+      '\u0657', // Inverted Damma
+      '\u0658', // Mark Noon Ghunna
+      '\u0659', // Zwarakay
+      '\u065A', // Vowel Sign Small V Above
+      '\u065B', // Vowel Sign Inverted Small V Above
+      '\u065C', // Vowel Sign Dot Below
+      '\u065D', // Reversed Damma
+      '\u065E', // Fatha With Two Dots
+      '\u065F', // Wavy Hamza Below
+      '\u0670', // Superscript Alef
+    ];
+
+    String result = text;
+    for (final diacritic in diacritics) {
+      result = result.replaceAll(diacritic, '');
+    }
+
+    // Also normalize hamza variations
+    result = result.replaceAll('أ', 'ا'); // Alif with hamza above -> alif
+    result = result.replaceAll('إ', 'ا'); // Alif with hamza below -> alif
+    result = result.replaceAll('آ', 'ا'); // Alif with madda -> alif
+
+    return result;
   }
 
   /// Get Surah name with caching

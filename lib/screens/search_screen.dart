@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../models.dart';
-import '../constants.dart';
 import '../widgets/shared/app_header.dart';
 import '../screens/mushaf_screen.dart';
 import '../utils/helpers.dart';
@@ -279,7 +278,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 vertical: 8.0,
               ),
               child: Text(
-                '${results.length} نتيجة',
+                '${convertToEasternArabicNumerals(results.length.toString())} نتيجة',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

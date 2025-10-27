@@ -74,6 +74,7 @@ flutter:
     - assets/db/quran-metadata-juz.sqlite
     - assets/db/quran-metadata-hizb.sqlite
     - assets/db/imlaei-simple.db
+    - assets/db/imlaei-script-ayah-by-ayah.db
 
     - assets/fonts/qpc-v2-page-by-page-fonts/
     - assets/fonts/surah-name-v4.ttf
