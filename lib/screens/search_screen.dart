@@ -48,6 +48,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  String _formatResultCount(int count) {
+    final arabicNum = convertToEasternArabicNumerals(count.toString());
+    if (count == 1) {
+      return 'نتيجة واحدة';
+    } else if (count == 2) {
+      return 'نتيجتان';
+    } else if (count >= 3 && count <= 10) {
+      return '$arabicNum نتائج';
+    } else {
+      return '$arabicNum نتيجة';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -278,7 +291,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 vertical: 8.0,
               ),
               child: Text(
-                '${convertToEasternArabicNumerals(results.length.toString())} نتيجة',
+                _formatResultCount(results.length),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
