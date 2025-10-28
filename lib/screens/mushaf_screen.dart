@@ -118,12 +118,14 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
         ? 2 // If -1 (initial), next should show 2 ayahs
         : currentRevealedAyahCount + 1;
 
-    if (nextRevealedAyahCount > orderedKeys.length) {
-      return; // All ayahs revealed
-    }
+    // Cap the count to the total number of ayahs
+    final int finalRevealedAyahCount =
+        nextRevealedAyahCount > orderedKeys.length
+        ? orderedKeys.length
+        : nextRevealedAyahCount;
 
     final newMap = Map<int, int>.from(state.lastRevealedAyahIndexMap);
-    newMap[pageNumber] = nextRevealedAyahCount;
+    newMap[pageNumber] = finalRevealedAyahCount;
     state = state.copyWith(
       lastRevealedAyahIndexMap: newMap,
       currentRepetitions: state.repetitionGoal,
@@ -193,9 +195,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
       final int currentIndex =
           memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-      if (currentIndex >= orderedAyahKeys.length - 1) {
-        return;
-      } // Already fully revealed
+      if (currentIndex >= orderedAyahKeys.length) {
+        return; // Already fully revealed
+      }
       memorizationNotifier.revealNextStep(
         pageNumber,
         allQuranWordsOnPage,
