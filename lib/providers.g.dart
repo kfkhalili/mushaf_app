@@ -813,6 +813,60 @@ final class SearchResultsFamily extends $Family
   String toString() => r'searchResultsProvider';
 }
 
+@ProviderFor(BreathWordsSetting)
+const breathWordsSettingProvider = BreathWordsSettingProvider._();
+
+final class BreathWordsSettingProvider
+    extends $NotifierProvider<BreathWordsSetting, int> {
+  const BreathWordsSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'breathWordsSettingProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$breathWordsSettingHash();
+
+  @$internal
+  @override
+  BreathWordsSetting create() => BreathWordsSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$breathWordsSettingHash() =>
+    r'43f0f614ea23c0a8a336e380f11ae55cc7376502';
+
+abstract class _$BreathWordsSetting extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(SearchHistory)
 const searchHistoryProvider = SearchHistoryProvider._();
 

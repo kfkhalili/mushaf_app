@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/mushaf_screen.dart'; // For memorizationProvider
+import '../utils/helpers.dart';
 
 class CountdownCircle extends ConsumerWidget {
   final VoidCallback? onTap;
@@ -19,45 +20,44 @@ class CountdownCircle extends ConsumerWidget {
     final Color foregroundColor = theme.colorScheme.onPrimary;
 
     const double circleDiameter = 64.0;
-    const double fontSize = 20.0;
+    const double fontSize = 16.0;
 
     return GestureDetector(
       onTap: onTap,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: circleDiameter,
-            height: circleDiameter,
-            decoration: BoxDecoration(
-              // WHY: Solid primary color background.
-              color: backgroundColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                // WHY: Contrasting border color.
+      child: Container(
+        width: circleDiameter,
+        height: circleDiameter,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: foregroundColor, width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Transform.translate(
+            offset: const Offset(
+              0,
+              -2.0,
+            ), // Nudge text up to compensate for font metrics
+            child: Text(
+              convertToEasternArabicNumerals(currentCount.toString()),
+              textAlign: TextAlign.center,
+              style: TextStyle(
                 color: foregroundColor,
-                width: 2.0,
+                fontWeight: FontWeight.bold,
+                fontSize: fontSize,
+                fontFamily: 'quran-common', // Use a specific, reliable font
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
             ),
           ),
-          Text(
-            currentCount.toString(),
-            style: TextStyle(
-              // WHY: Contrasting text color.
-              color: foregroundColor,
-              fontWeight: FontWeight.bold,
-              fontSize: fontSize,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -235,6 +235,20 @@ Always use `const` constructors when possible:
 const MyWidget({super.key, required this.param});
 ```
 
+## Color Opacity
+
+Use `withValues()` instead of the deprecated `withOpacity()` method:
+
+```dart
+// Good - Use withValues() for better precision
+color: Colors.black.withValues(alpha: 0.3)
+
+// Avoid - Deprecated method
+color: Colors.black.withOpacity(0.3)
+```
+
+The `withValues()` method provides better precision and avoids deprecation warnings in newer Flutter versions.
+
 ## Named Parameters
 
 Use named parameters for better readability:

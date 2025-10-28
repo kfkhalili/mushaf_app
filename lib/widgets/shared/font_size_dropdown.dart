@@ -18,7 +18,7 @@ class FontSizeDropdown extends ConsumerWidget {
 
     return DropdownButtonFormField<double>(
       isExpanded: true,
-      value: currentFontSize,
+      initialValue: currentFontSize,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

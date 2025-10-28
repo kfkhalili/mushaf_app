@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
 import '../widgets/shared/font_size_dropdown.dart';
+import '../widgets/shared/repetition_goal_dropdown.dart';
 import '../providers.dart';
 import '../constants.dart';
 
@@ -51,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<AppThemeMode>(
-                              value: currentTheme,
+                              initialValue: currentTheme,
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 contentPadding: EdgeInsets.symmetric(
@@ -94,7 +95,9 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<MushafLayout>(
-                              value: ref.watch(mushafLayoutSettingProvider),
+                              initialValue: ref.watch(
+                                mushafLayoutSettingProvider,
+                              ),
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 contentPadding: EdgeInsets.symmetric(
@@ -147,6 +150,32 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
                             const FontSizeDropdown(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'الحفظ',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'عدد التكرار',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const RepetitionGoalDropdown(),
                             const SizedBox(height: 16),
                             const Divider(),
                             ListTile(

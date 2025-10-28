@@ -110,26 +110,20 @@ class MemorizationNotifier extends StateNotifier<MemorizationState> {
     List<Word> allWords,
     List<String> orderedKeys,
   ) {
-    final int currentIndex = state.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-    int nextIndex = currentIndex;
-    if (currentIndex == -1) {
-      if (allWords.isNotEmpty && initialWordCount > 0) {
-        int wordIndex = (initialWordCount - 1).clamp(0, allWords.length - 1);
-        Word lastWordInitiallyShown = allWords[wordIndex];
-        String lastAyahKey =
-            "${lastWordInitiallyShown.surahNumber.toString().padLeft(3, '0')}:${lastWordInitiallyShown.ayahNumber.toString().padLeft(3, '0')}";
-        nextIndex = orderedKeys.indexOf(lastAyahKey);
-      } else {
-        nextIndex = 0;
-      }
-      if (nextIndex < 0) nextIndex = 0;
-    } else if (currentIndex < orderedKeys.length - 1) {
-      nextIndex = currentIndex + 1;
-    } else {
-      return;
+    final int currentRevealedAyahCount =
+        state.lastRevealedAyahIndexMap[pageNumber] ?? -1;
+
+    // Increment the number of ayahs to reveal (start from 1 if -1)
+    final int nextRevealedAyahCount = currentRevealedAyahCount < 0
+        ? 2 // If -1 (initial), next should show 2 ayahs
+        : currentRevealedAyahCount + 1;
+
+    if (nextRevealedAyahCount > orderedKeys.length) {
+      return; // All ayahs revealed
     }
+
     final newMap = Map<int, int>.from(state.lastRevealedAyahIndexMap);
-    newMap[pageNumber] = nextIndex;
+    newMap[pageNumber] = nextRevealedAyahCount;
     state = state.copyWith(
       lastRevealedAyahIndexMap: newMap,
       currentRepetitions: state.repetitionGoal,

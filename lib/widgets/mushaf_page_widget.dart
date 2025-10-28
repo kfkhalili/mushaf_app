@@ -59,35 +59,17 @@ class MushafPageWidget extends ConsumerWidget {
           );
           final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
-          if (lastRevealedIndex == -1) {
-            // ** Initial State: Show first N words **
-            if (allQuranWordsOnPage.isNotEmpty) {
-              wordsToShow.addAll(allQuranWordsOnPage.take(initialWordCount));
-              // No hint
-            }
-          } else if (lastRevealedIndex >= 0) {
-            // ** Subsequent States: Show completed Ayahs + Hint **
-            int clampedLastRevealedIndex = lastRevealedIndex.clamp(
-              -1,
-              orderedAyahKeys.length - 1,
-            );
+          // lastRevealedIndex tracks how many ayahs to reveal
+          // -1 means initial state, show first ayah
+          // Otherwise show that many ayahs
+          final int ayahsToShow = lastRevealedIndex >= 0
+              ? lastRevealedIndex
+              : 1;
 
-            // --- Add words for fully revealed ayahs ---
-            for (int i = 0; i <= clampedLastRevealedIndex; i++) {
-              final String ayahKey = orderedAyahKeys[i];
-              wordsToShow.addAll(ayahsOnPageMap[ayahKey] ?? []);
-            }
-
-            // --- Add the hint word ---
-            // Hint is for the ayah *after* the last fully revealed one.
-            int hintAyahIndex = clampedLastRevealedIndex + 1;
-            if (hintAyahIndex < orderedAyahKeys.length) {
-              final String hintAyahKey = orderedAyahKeys[hintAyahIndex];
-              final List<Word>? hintWords = ayahsOnPageMap[hintAyahKey];
-              if (hintWords != null && hintWords.isNotEmpty) {
-                wordsToShow.add(hintWords.first);
-              }
-            }
+          // Show the specified number of ayahs
+          for (int i = 0; i < ayahsToShow && i < orderedAyahKeys.length; i++) {
+            final String ayahKey = orderedAyahKeys[i];
+            wordsToShow.addAll(ayahsOnPageMap[ayahKey] ?? []);
           }
         } else if (!isMemorizing) {
           // If not in memorization mode, show all words
