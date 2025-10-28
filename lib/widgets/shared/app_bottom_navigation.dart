@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../screens/mushaf_screen.dart'; // For memorizationProvider
 import '../../constants.dart';
-// import '../countdown_circle.dart'; // No longer needed here
 
 /// Shared bottom navigation widget that can be used across different screens
 /// Supports both selection screen navigation and mushaf screen navigation
@@ -130,8 +129,7 @@ class AppBottomNavigation extends ConsumerWidget {
       color: theme.scaffoldBackgroundColor,
       padding: EdgeInsets.zero,
       height: kBottomNavBarHeight,
-      clipBehavior:
-          Clip.none, // Keep clip.none if you ever want overflow effects
+      clipBehavior: Clip.antiAlias, // Properly clip content to prevent overlaps
       child: SizedBox(
         height: kBottomNavBarHeight,
         child: IconTheme(

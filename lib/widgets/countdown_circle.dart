@@ -19,14 +19,13 @@ class CountdownCircle extends ConsumerWidget {
     // WHY: Use a contrasting color (like white or black based on theme) for text and border.
     final Color foregroundColor = theme.colorScheme.onPrimary;
 
-    const double circleDiameter = 64.0;
-    const double fontSize = 16.0;
+    const double fontSize = 48.0; // Increased font size
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: circleDiameter,
-        height: circleDiameter,
+        width: 80.0, // Reduced circle size
+        height: 80.0, // Reduced circle size
         decoration: BoxDecoration(
           color: backgroundColor,
           shape: BoxShape.circle,
@@ -42,18 +41,28 @@ class CountdownCircle extends ConsumerWidget {
         ),
         child: Center(
           child: Transform.translate(
-            offset: const Offset(
-              0,
-              -2.0,
-            ), // Nudge text up to compensate for font metrics
-            child: Text(
-              convertToEasternArabicNumerals(currentCount.toString()),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: foregroundColor,
-                fontWeight: FontWeight.bold,
-                fontSize: fontSize,
-                fontFamily: 'quran-common', // Use a specific, reliable font
+            offset: const Offset(0, 7.0), // Nudge text down more to center itR
+            child: SizedBox(
+              width: 70.0, // Larger constrained text area for better centering
+              height: 70.0, // Larger constrained text area for better centering
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: convertToEasternArabicNumerals(
+                      currentCount.toString(),
+                    ),
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                      fontFamily: 'quran-common',
+                      height: 1.0,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

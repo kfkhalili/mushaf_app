@@ -297,10 +297,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         ),
         if (isMemorizing)
           Positioned(
-            // WHY: To raise the circle, we INCREASE the bottom value
-            // by subtracting LESS from kBottomNavBarHeight.
-            // This makes it overlap by 33% instead of 50%.
-            bottom: kBottomNavBarHeight - (kCountdownCircleDiameter / 3),
+            // WHY: Position the circle above the bottom navigation bar
+            // with a small gap to prevent overlap issues
+            bottom: kBottomNavBarHeight + 8.0,
             left: 0,
             right: 0,
             child: CountdownCircle(
