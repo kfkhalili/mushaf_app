@@ -16,7 +16,7 @@ class BreathWordsSettingWidget extends ConsumerWidget {
 
     return DropdownButtonFormField<int>(
       isExpanded: true,
-      value: breathWordOptions.contains(currentBreathWords)
+      initialValue: breathWordOptions.contains(currentBreathWords)
           ? currentBreathWords
           : breathWordOptions.first,
       decoration: const InputDecoration(
