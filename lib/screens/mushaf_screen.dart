@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+// legacy riverpod import removed
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
@@ -13,132 +13,7 @@ import 'dart:collection';
 import '../providers/memorization_provider.dart';
 import '../widgets/countdown_circle.dart';
 
-// --- State Management for Memorization Mode ---
-// (MemorizationState and Notifier remain the same)
-@immutable
-class MemorizationState {
-  final bool isMemorizationMode;
-  final Map<int, int> lastRevealedAyahIndexMap;
-  final int repetitionGoal;
-  final int currentRepetitions;
-  final bool isTextHidden;
-
-  const MemorizationState({
-    this.isMemorizationMode = false,
-    this.lastRevealedAyahIndexMap = const {},
-    this.repetitionGoal = 5,
-    this.currentRepetitions = 0,
-    this.isTextHidden = false,
-  });
-
-  MemorizationState copyWith({
-    bool? isMemorizationMode,
-    Map<int, int>? lastRevealedAyahIndexMap,
-    int? repetitionGoal,
-    int? currentRepetitions,
-    bool? isTextHidden,
-  }) {
-    return MemorizationState(
-      isMemorizationMode: isMemorizationMode ?? this.isMemorizationMode,
-      lastRevealedAyahIndexMap:
-          lastRevealedAyahIndexMap ?? this.lastRevealedAyahIndexMap,
-      repetitionGoal: repetitionGoal ?? this.repetitionGoal,
-      currentRepetitions: currentRepetitions ?? this.currentRepetitions,
-      isTextHidden: isTextHidden ?? this.isTextHidden,
-    );
-  }
-}
-
-class MemorizationNotifier extends StateNotifier<MemorizationState> {
-  MemorizationNotifier() : super(const MemorizationState());
-  void toggleMode({int? currentPageNumber}) {
-    final bool enabling = !state.isMemorizationMode;
-    Map<int, int> newMap = const {};
-    if (enabling && currentPageNumber != null) {
-      newMap = {currentPageNumber: -1};
-      state = state.copyWith(currentRepetitions: state.repetitionGoal);
-    } else {
-      state = state.copyWith(currentRepetitions: 0);
-    }
-    state = state.copyWith(
-      isMemorizationMode: enabling,
-      lastRevealedAyahIndexMap: newMap,
-      isTextHidden: false,
-    );
-  }
-
-  void disableMode() {
-    if (state.isMemorizationMode) {
-      state = state.copyWith(
-        isMemorizationMode: false,
-        lastRevealedAyahIndexMap: const {},
-        currentRepetitions: 0,
-        isTextHidden: false,
-      );
-    }
-  }
-
-  void decrementRepetitions(VoidCallback onRevealNext) {
-    if (state.currentRepetitions > 1) {
-      state = state.copyWith(currentRepetitions: state.currentRepetitions - 1);
-    } else {
-      if (!state.isTextHidden) {
-        state = state.copyWith(
-          isTextHidden: true,
-          currentRepetitions: state.repetitionGoal,
-        );
-      } else {
-        state = state.copyWith(
-          isTextHidden: false,
-          currentRepetitions: state.repetitionGoal,
-        );
-        onRevealNext();
-      }
-    }
-  }
-
-  void setRepetitionGoal(int goal) {
-    if (goal > 0) {
-      state = state.copyWith(repetitionGoal: goal);
-      if (state.isMemorizationMode) {
-        state = state.copyWith(currentRepetitions: goal);
-      }
-    }
-  }
-
-  void revealNextStep(
-    int pageNumber,
-    List<Word> allWords,
-    List<String> orderedKeys,
-  ) {
-    final int currentRevealedAyahCount =
-        state.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-
-    // Increment the number of ayahs to reveal (start from 1 if -1)
-    final int nextRevealedAyahCount = currentRevealedAyahCount < 0
-        ? 2 // If -1 (initial), next should show 2 ayahs
-        : currentRevealedAyahCount + 1;
-
-    // Cap the count to the total number of ayahs
-    final int finalRevealedAyahCount =
-        nextRevealedAyahCount > orderedKeys.length
-            ? orderedKeys.length
-            : nextRevealedAyahCount;
-
-    final newMap = Map<int, int>.from(state.lastRevealedAyahIndexMap);
-    newMap[pageNumber] = finalRevealedAyahCount;
-    state = state.copyWith(
-      lastRevealedAyahIndexMap: newMap,
-      currentRepetitions: state.repetitionGoal,
-    );
-  }
-}
-
-final memorizationProvider =
-    StateNotifierProvider<MemorizationNotifier, MemorizationState>(
-  (ref) => MemorizationNotifier(),
-);
-// --- End State Management ---
+// Legacy memorization removed
 
 class MushafScreen extends ConsumerStatefulWidget {
   final int initialPage;
@@ -246,34 +121,14 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       return;
     }
 
-    // Legacy mode fallback
-    _advanceLegacyMemorization();
+    // No legacy fallback
   }
 
-  void _advanceLegacyMemorization() {
-    final int pageNumber = ref.read(currentPageProvider);
-    final asyncPageData = ref.read(pageDataProvider(pageNumber));
-    asyncPageData.whenData((PageData pageData) {
-      final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
-      final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-        groupWordsByAyahKey(allQuranWordsOnPage),
-      );
-      final orderedKeys = ayahsOnPageMap.keys.toList();
-      ref
-          .read(memorizationProvider.notifier)
-          .revealNextStep(pageNumber, allQuranWordsOnPage, orderedKeys);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
-
-    // Legacy memorization mode state (standard)
-    final bool isLegacyMemorizing = ref.watch(
-      memorizationProvider.select((s) => s.isMemorizationMode),
-    );
 
     // Beta memorization session state
     final memorizationSession = ref.watch(memorizationSessionProvider);
@@ -289,12 +144,12 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
     // Capture memorization start page + base ayah if just enabled
     asyncPageData.whenData((pageData) {
-      if (_memorizationStartPage == null && (isLegacyMemorizing || isBetaMemorizing)) {
+      if (_memorizationStartPage == null && isBetaMemorizing) {
         _memorizationStartPage = currentPageNumber;
         _startAyahNumberOnStartPage = _firstAyahNumberOnPage(pageData);
       }
       // Reset start page if mode disabled
-      if (!isLegacyMemorizing && !isBetaMemorizing) {
+      if (!isBetaMemorizing) {
         _memorizationStartPage = null;
         _startAyahNumberOnStartPage = null;
       }
@@ -367,9 +222,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             onBackButtonPressed: () async {
               if (Navigator.canPop(context)) {
                 await _clearLastPage();
-                if (isLegacyMemorizing) {
-                  ref.read(memorizationProvider.notifier).disableMode();
-                }
                 if (isBetaMemorizing) {
                   await ref
                       .read(memorizationSessionProvider.notifier)
@@ -383,50 +235,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           ),
           floatingActionButton: null,
         ),
-        if (isLegacyMemorizing)
-          Positioned(
-            // WHY: Position the circle above the bottom navigation bar
-            // with a small gap to prevent overlap issues
-            bottom: kBottomNavBarHeight + 8.0,
-            left: 0,
-            right: 0,
-            child: Builder(
-              builder: (context) {
-                final asyncPageData = ref.watch(
-                  pageDataProvider(currentPageNumber),
-                );
-                String? centerLabel;
-                asyncPageData.whenData((pageData) {
-                  final allQuranWordsOnPage = extractQuranWordsFromPage(
-                    pageData.layout,
-                  );
-                  final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-                    groupWordsByAyahKey(allQuranWordsOnPage),
-                  );
-                  final totalAyatOnPage = ayahsOnPageMap.length;
-                  final revealedCount =
-                      ref.read(memorizationProvider).lastRevealedAyahIndexMap[
-                              currentPageNumber] ??
-                          0;
-                  final visibleEnd = revealedCount.clamp(1, totalAyatOnPage);
-                  final cumulativeEnd = _surahCumulativeEnd + visibleEnd;
-
-                  final int startAyah = _startAyahNumberOnStartPage ?? 1;
-                  final int endAyah = startAyah + cumulativeEnd - 1;
-
-                  centerLabel = cumulativeEnd <= 1
-                      ? convertToEasternArabicNumerals(startAyah.toString())
-                      : '${convertToEasternArabicNumerals(startAyah.toString())}–${convertToEasternArabicNumerals(endAyah.toString())}';
-                });
-                return CountdownCircle(
-                  onTap: () => ref
-                      .read(memorizationProvider.notifier)
-                      .decrementRepetitions(_advanceLegacyMemorization),
-                  centerLabel: centerLabel,
-                );
-              },
-            ),
-          ),
         if (isBetaMemorizing)
           Positioned(
             bottom: kBottomNavBarHeight + 8.0,

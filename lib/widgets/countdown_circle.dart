@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../screens/mushaf_screen.dart'; // For memorizationProvider
-import '../utils/helpers.dart';
+// Removed Riverpod dependency for beta-only widget
 
-class CountdownCircle extends ConsumerStatefulWidget {
+class CountdownCircle extends StatefulWidget {
   final VoidCallback? onTap;
   final bool showNumber;
   final String? centerLabel; // The only property added
@@ -16,10 +14,10 @@ class CountdownCircle extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CountdownCircle> createState() => _CountdownCircleState();
+  State<CountdownCircle> createState() => _CountdownCircleState();
 }
 
-class _CountdownCircleState extends ConsumerState<CountdownCircle>
+class _CountdownCircleState extends State<CountdownCircle>
     with SingleTickerProviderStateMixin {
   double _scale = 1.0;
 
@@ -34,9 +32,6 @@ class _CountdownCircleState extends ConsumerState<CountdownCircle>
 
   @override
   Widget build(BuildContext context) {
-    final int currentCount = ref.watch(
-      memorizationProvider.select((state) => state.currentRepetitions),
-    );
     final theme = Theme.of(context);
     // WHY: Use the primary color for the background.
     final Color backgroundColor = theme.colorScheme.primary;
@@ -46,8 +41,7 @@ class _CountdownCircleState extends ConsumerState<CountdownCircle>
     const double fontSize = 36.0; // Reduced base font size
 
     // Determine which text to display. This is the core of the minimal change.
-    final String textToShow =
-        widget.centerLabel ?? convertToEasternArabicNumerals(currentCount.toString());
+    final String textToShow = widget.centerLabel ?? '';
 
     return GestureDetector(
       onTap: _handleTap,

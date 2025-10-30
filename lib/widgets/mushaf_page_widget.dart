@@ -7,7 +7,6 @@ import '../utils/helpers.dart';
 import 'line_widget.dart';
 import '../constants.dart'; // Import constants
 import '../models.dart';
-import '../screens/mushaf_screen.dart'; // For legacy memorizationProvider
 import '../providers/memorization_provider.dart';
 
 class MushafPageWidget extends ConsumerWidget {
@@ -23,10 +22,7 @@ class MushafPageWidget extends ConsumerWidget {
     final bool isMemorizing =
         session != null && session.pageNumber == pageNumber;
 
-    // Legacy memorization state (standard mode)
-    final legacyState = ref.watch(memorizationProvider);
-    final bool isLegacyActive = legacyState.isMemorizationMode &&
-        legacyState.lastRevealedAyahIndexMap.containsKey(pageNumber);
+    // Legacy memorization removed
 
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
@@ -85,25 +81,6 @@ class MushafPageWidget extends ConsumerWidget {
               ayahOpacity[key] = window.opacities[i].clamp(0.0, 1.0);
             }
           }
-        } else if (isLegacyActive) {
-          // Legacy mode: reveal the first N ayat and toggle visibility with isTextHidden
-          final allQuranWordsOnPage = extractQuranWordsFromPage(
-            pageData.layout,
-          );
-          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-            groupWordsByAyahKey(allQuranWordsOnPage),
-          );
-          final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
-
-          final int revealedCount =
-              legacyState.lastRevealedAyahIndexMap[pageNumber] ?? 0;
-          final bool hideText = legacyState.isTextHidden;
-
-          for (int i = 0; i < revealedCount && i < orderedAyahKeys.length; i++) {
-            final String key = orderedAyahKeys[i];
-            wordsToShow.addAll(ayahsOnPageMap[key] ?? []);
-            ayahOpacity[key] = hideText ? 0.0 : 1.0;
-          }
         } else if (!isMemorizing) {
           // If not in memorization mode, show all words
           for (final line in pageData.layout.lines) {
@@ -137,7 +114,7 @@ class MushafPageWidget extends ConsumerWidget {
                     return LineWidget(
                       line: line,
                       pageFontFamily: pageData.pageFontFamily,
-                      isMemorizationMode: isMemorizing || isLegacyActive,
+                      isMemorizationMode: isMemorizing,
                       wordsToShow: wordsToShow,
                       ayahOpacities: ayahOpacity,
                     );

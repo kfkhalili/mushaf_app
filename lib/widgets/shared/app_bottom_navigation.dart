@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../screens/mushaf_screen.dart';
 import '../../providers/memorization_provider.dart';
 import '../../constants.dart';
 
@@ -121,10 +120,6 @@ class AppBottomNavigation extends ConsumerWidget {
         : Colors.grey.shade600;
     final Color selectedIconColor = theme.colorScheme.primary;
 
-    final bool isMemorizing = ref.watch(
-      memorizationProvider.select((s) => s.isMemorizationMode),
-    );
-
     return BottomAppBar(
       color: theme.scaffoldBackgroundColor,
       padding: EdgeInsets.zero,
@@ -147,15 +142,6 @@ class AppBottomNavigation extends ConsumerWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0),
-                    child: _buildMemorizationButton(
-                      ref,
-                      isMemorizing,
-                      selectedIconColor,
-                      unselectedIconColor,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
                     child: _buildMemorizationToggleButton(
                       context,
                       ref,
@@ -170,29 +156,6 @@ class AppBottomNavigation extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMemorizationButton(
-    WidgetRef ref,
-    bool isMemorizing,
-    Color selectedIconColor,
-    Color unselectedIconColor,
-  ) {
-    return SizedBox(
-      height: kBottomNavBarHeight,
-      child: IconButton(
-        tooltip: isMemorizing ? 'Exit Memorization' : 'Memorization Mode',
-        color: isMemorizing ? selectedIconColor : unselectedIconColor,
-        icon: Icon(isMemorizing ? Icons.school : Icons.school_outlined),
-        onPressed: () {
-          ref
-              .read(memorizationProvider.notifier)
-              .toggleMode(currentPageNumber: currentPageNumber);
-        },
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
       ),
     );
   }
