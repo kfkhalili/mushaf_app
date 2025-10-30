@@ -104,24 +104,7 @@ Future<List<JuzInfo>> juzList(Ref ref) async {
   return dbService.getAllJuzInfo();
 }
 
-// --- Page Preview Provider ---
-// WHY: This is an auto-disposing provider, but it
-// *still* uses the unified 'Ref' type.
-@riverpod
-Future<String> pagePreview(Ref ref, int pageNumber) async {
-  final dbService = ref.watch(databaseServiceProvider);
-  return dbService.getFirstWordsOfPage(pageNumber, count: 3);
-}
-
-// --- Page Font Family Provider ---
-// WHY: This is an auto-disposing provider, but it
-// *still* uses the unified 'Ref' type.
-@riverpod
-Future<String> pageFontFamily(Ref ref, int pageNumber) async {
-  final fontService = ref.watch(fontServiceProvider);
-  final layout = ref.watch(mushafLayoutSettingProvider);
-  return fontService.loadFontForPage(pageNumber, layout: layout);
-}
+// (Removed) pagePreview and pageFontFamily: no external references; use pageData.pageFontFamily instead
 
 // --- Navigation Provider ---
 // WHY: This is a keepAlive provider for managing selection screen tab state.
@@ -197,36 +180,7 @@ Future<List<SearchResult>> searchResults(Ref ref, String query) async {
   return searchService.searchText(query);
 }
 
-// --- Breath Words Provider ---
-// WHY: This is a keepAlive provider for managing breath words preference for memorization.
-@Riverpod(keepAlive: true)
-class BreathWordsSetting extends _$BreathWordsSetting {
-  static const String _breathWordsKey = 'breath_words';
-  static const int _defaultBreathWords = 5;
-  static const List<int> _validBreathWords = [5, 10, 15, 20, 30, 40];
-
-  @override
-  int build() {
-    final prefs = ref.read(sharedPreferencesProvider).value;
-    final savedWords = prefs?.getInt(_breathWordsKey) ?? _defaultBreathWords;
-
-    // If saved value is not in valid list, return default
-    if (_validBreathWords.contains(savedWords)) {
-      return savedWords;
-    }
-    return _defaultBreathWords;
-  }
-
-  void setBreathWords(int words) {
-    // Only accept valid breath words
-    if (_validBreathWords.contains(words)) {
-      state = words;
-      // Save to preferences
-      final prefs = ref.read(sharedPreferencesProvider).value;
-      prefs?.setInt(_breathWordsKey, words);
-    }
-  }
-}
+// (Removed) BreathWordsSetting: UI removed and no remaining references
 
 // --- Search History Provider ---
 @Riverpod(keepAlive: true)
