@@ -161,20 +161,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Icon(
               Icons.search,
               size: 64,
-              color: theme.iconTheme.color?.withOpacity(0.3),
+              color: theme.iconTheme.color?.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'ابدأ بالبحث في القرآن الكريم',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.6),
+                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'ابحث عن كلمة أو آية أو اسم سورة',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.4),
+                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -220,7 +220,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               return ListTile(
                 leading: Icon(
                   Icons.history,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
+                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
                   size: 20,
                 ),
                 title: Text(query, style: theme.textTheme.bodyLarge),
@@ -232,7 +232,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   },
                   icon: Icon(
                     Icons.close,
-                    color: theme.iconTheme.color?.withOpacity(0.6),
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6),
                     size: 18,
                   ),
                 ),
@@ -261,20 +261,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 Icon(
                   Icons.search_off,
                   size: 64,
-                  color: theme.iconTheme.color?.withOpacity(0.3),
+                  color: theme.iconTheme.color?.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'لم يتم العثور على نتائج',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodyLarge?.color?.withValues(
+                      alpha: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'جرب البحث بكلمات مختلفة',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.4),
+                    color: theme.textTheme.bodyLarge?.color?.withValues(
+                      alpha: 0.4,
+                    ),
                   ),
                 ),
               ],
@@ -340,7 +344,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Text(
               'يرجى المحاولة مرة أخرى',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.6),
+                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -389,13 +393,15 @@ class SearchResultItem extends StatelessWidget {
                 Icon(
                   Icons.book,
                   size: 16,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
+                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${result.surahName} - الآية ${convertToEasternArabicNumerals(result.ayahNumber.toString())}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                    color: theme.textTheme.bodyLarge?.color?.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                 ),
               ],
@@ -406,13 +412,15 @@ class SearchResultItem extends StatelessWidget {
                 Icon(
                   Icons.pageview,
                   size: 16,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
+                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'الصفحة ${convertToEasternArabicNumerals(result.pageNumber.toString())}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                    color: theme.textTheme.bodyLarge?.color?.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                 ),
               ],
@@ -422,7 +430,7 @@ class SearchResultItem extends StatelessWidget {
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: theme.iconTheme.color?.withOpacity(0.6),
+          color: theme.iconTheme.color?.withValues(alpha: 0.6),
         ),
         onTap: onTap,
       ),

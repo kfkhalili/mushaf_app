@@ -7,7 +7,8 @@ import '../utils/helpers.dart';
 import 'line_widget.dart';
 import '../constants.dart'; // Import constants
 import '../models.dart';
-import '../screens/mushaf_screen.dart'; // For memorizationProvider
+import '../screens/mushaf_screen.dart'; // For legacy memorizationProvider
+import '../providers/memorization_provider.dart';
 
 class MushafPageWidget extends ConsumerWidget {
   final int pageNumber;
@@ -18,11 +19,14 @@ class MushafPageWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // WHY: This line will now work because of the added import.
     final asyncPageData = ref.watch(pageDataProvider(pageNumber));
-    final memorizationState = ref.watch(memorizationProvider);
-    final isMemorizing = memorizationState.isMemorizationMode;
-    // WHY: Corrected to read from 'lastRevealedAyahIndexMap'. -1 is the initial state.
-    final int lastRevealedIndex =
-        memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
+    final session = ref.watch(memorizationSessionProvider);
+    final bool isMemorizing =
+        session != null && session.pageNumber == pageNumber;
+
+    // Legacy memorization state (standard mode)
+    final legacyState = ref.watch(memorizationProvider);
+    final bool isLegacyActive = legacyState.isMemorizationMode &&
+        legacyState.lastRevealedAyahIndexMap.containsKey(pageNumber);
 
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
@@ -47,9 +51,10 @@ class MushafPageWidget extends ConsumerWidget {
     return asyncPageData.when(
       data: (pageData) {
         final Set<Word> wordsToShow = {};
+        final Map<String, double> ayahOpacity = {};
 
-        // Only prepare words to show if memorizing and text is not hidden
-        if (isMemorizing && !memorizationState.isTextHidden) {
+        // Only prepare words to show if memorizing (beta chaining window)
+        if (isMemorizing) {
           // Use pure functions for functional data processing
           final allQuranWordsOnPage = extractQuranWordsFromPage(
             pageData.layout,
@@ -59,17 +64,45 @@ class MushafPageWidget extends ConsumerWidget {
           );
           final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
-          // lastRevealedIndex tracks how many ayahs to reveal
-          // -1 means initial state, show first ayah
-          // Otherwise show that many ayahs
-          final int ayahsToShow = lastRevealedIndex >= 0
-              ? lastRevealedIndex
-              : 1;
+          // Map absolute ayah indices -> ayah keys
+          // Our session stores indices from 0..N-1
+          final window = session.window;
+          for (final idx in window.ayahIndices) {
+            if (idx >= 0 && idx < orderedAyahKeys.length) {
+              final String ayahKey = orderedAyahKeys[idx];
+              wordsToShow.addAll(ayahsOnPageMap[ayahKey] ?? []);
+            }
+          }
+          // Fill opacities aligned with window order
+          for (
+            int i = 0;
+            i < window.ayahIndices.length && i < window.opacities.length;
+            i++
+          ) {
+            final int idx = window.ayahIndices[i];
+            if (idx >= 0 && idx < orderedAyahKeys.length) {
+              final String key = orderedAyahKeys[idx];
+              ayahOpacity[key] = window.opacities[i].clamp(0.0, 1.0);
+            }
+          }
+        } else if (isLegacyActive) {
+          // Legacy mode: reveal the first N ayat and toggle visibility with isTextHidden
+          final allQuranWordsOnPage = extractQuranWordsFromPage(
+            pageData.layout,
+          );
+          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+            groupWordsByAyahKey(allQuranWordsOnPage),
+          );
+          final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
-          // Show the specified number of ayahs
-          for (int i = 0; i < ayahsToShow && i < orderedAyahKeys.length; i++) {
-            final String ayahKey = orderedAyahKeys[i];
-            wordsToShow.addAll(ayahsOnPageMap[ayahKey] ?? []);
+          final int revealedCount =
+              legacyState.lastRevealedAyahIndexMap[pageNumber] ?? 0;
+          final bool hideText = legacyState.isTextHidden;
+
+          for (int i = 0; i < revealedCount && i < orderedAyahKeys.length; i++) {
+            final String key = orderedAyahKeys[i];
+            wordsToShow.addAll(ayahsOnPageMap[key] ?? []);
+            ayahOpacity[key] = hideText ? 0.0 : 1.0;
           }
         } else if (!isMemorizing) {
           // If not in memorization mode, show all words
@@ -104,8 +137,9 @@ class MushafPageWidget extends ConsumerWidget {
                     return LineWidget(
                       line: line,
                       pageFontFamily: pageData.pageFontFamily,
-                      isMemorizationMode: isMemorizing,
+                      isMemorizationMode: isMemorizing || isLegacyActive,
                       wordsToShow: wordsToShow,
+                      ayahOpacities: ayahOpacity,
                     );
                   }).toList(),
                 ),

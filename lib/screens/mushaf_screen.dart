@@ -5,12 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page_widget.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
-import '../widgets/countdown_circle.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
 import 'dart:collection';
+import '../providers/memorization_provider.dart';
+import '../widgets/countdown_circle.dart';
 
 // --- State Management for Memorization Mode ---
 // (MemorizationState and Notifier remain the same)
@@ -178,31 +179,36 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   }
 
   void _handleMemorizationTap() {
-    final memorizationNotifier = ref.read(memorizationProvider.notifier);
-    final memorizationState = ref.read(memorizationProvider);
-    if (!memorizationState.isMemorizationMode) return;
-
-    // WHY: Read the current page number directly from the provider.
+    // Route taps to the new memorization session controller (beta)
     final int pageNumber = ref.read(currentPageProvider);
+    final session = ref.read(memorizationSessionProvider);
+    if (session == null || session.pageNumber != pageNumber) return;
 
     final asyncPageData = ref.read(pageDataProvider(pageNumber));
     asyncPageData.whenData((PageData pageData) {
-      // Use pure functions for functional data processing
       final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
       final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
         groupWordsByAyahKey(allQuranWordsOnPage),
       );
-      final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
-      final int currentIndex =
-          memorizationState.lastRevealedAyahIndexMap[pageNumber] ?? -1;
-      if (currentIndex >= orderedAyahKeys.length) {
-        return; // Already fully revealed
-      }
-      memorizationNotifier.revealNextStep(
-        pageNumber,
-        allQuranWordsOnPage,
-        orderedAyahKeys,
+      final totalAyatOnPage = ayahsOnPageMap.length;
+      ref
+          .read(memorizationSessionProvider.notifier)
+          .onTap(totalAyatOnPage: totalAyatOnPage);
+    });
+  }
+
+  void _advanceLegacyMemorization() {
+    final int pageNumber = ref.read(currentPageProvider);
+    final asyncPageData = ref.read(pageDataProvider(pageNumber));
+    asyncPageData.whenData((PageData pageData) {
+      final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
+      final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+        groupWordsByAyahKey(allQuranWordsOnPage),
       );
+      final orderedKeys = ayahsOnPageMap.keys.toList();
+      ref
+          .read(memorizationProvider.notifier)
+          .revealNextStep(pageNumber, allQuranWordsOnPage, orderedKeys);
     });
   }
 
@@ -211,10 +217,18 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
 
-    // Read state needed for back button logic AND circle visibility
-    final isMemorizing = ref.watch(
+    // Legacy memorization mode state (standard)
+    final bool isLegacyMemorizing = ref.watch(
       memorizationProvider.select((s) => s.isMemorizationMode),
     );
+
+    // Beta memorization session state
+    final memorizationSession = ref.watch(memorizationSessionProvider);
+    final bool isBetaMemorizing =
+        enableMemorizationBeta &&
+        memorizationSession != null &&
+        memorizationSession.pageNumber == currentPageNumber;
+
     final asyncPageData = ref.watch(pageDataProvider(currentPageNumber));
 
     return Stack(
@@ -241,10 +255,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                       return title;
                     },
                     loading: () => '',
-                    error: (_, __) => '',
+                    error: (_, _) => '',
                   ),
                   onSearchPressed: () {
-                    // TODO: Implement search functionality
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Search functionality coming soon'),
@@ -254,7 +267,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                 ),
                 Expanded(
                   child: GestureDetector(
-                    onTap: _handleMemorizationTap,
+                    onTap: enableMemorizationBeta
+                        ? _handleMemorizationTap
+                        : null,
                     child: PageView.builder(
                       controller: _pageController,
                       // WHY: Use the named constant for total page count.
@@ -281,23 +296,25 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             type: AppBottomNavigationType.mushaf,
             currentPageNumber: currentPageNumber,
             onBackButtonPressed: () async {
-              final memorizationNotifier = ref.read(
-                memorizationProvider.notifier,
-              );
               if (Navigator.canPop(context)) {
                 await _clearLastPage();
-                if (isMemorizing) {
-                  memorizationNotifier.disableMode();
+                if (isLegacyMemorizing) {
+                  ref.read(memorizationProvider.notifier).disableMode();
+                }
+                if (isBetaMemorizing) {
+                  await ref
+                      .read(memorizationSessionProvider.notifier)
+                      .endSession();
                 }
                 if (context.mounted) {
-                  // WHY: This line was fixed. It was Navigator.pop(H(context))
                   Navigator.pop(context);
                 }
               }
             },
           ),
+          floatingActionButton: null,
         ),
-        if (isMemorizing)
+        if (isLegacyMemorizing)
           Positioned(
             // WHY: Position the circle above the bottom navigation bar
             // with a small gap to prevent overlap issues
@@ -307,7 +324,17 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             child: CountdownCircle(
               onTap: () => ref
                   .read(memorizationProvider.notifier)
-                  .decrementRepetitions(_handleMemorizationTap),
+                  .decrementRepetitions(_advanceLegacyMemorization),
+            ),
+          ),
+        if (isBetaMemorizing)
+          Positioned(
+            bottom: kBottomNavBarHeight + 8.0,
+            left: 0,
+            right: 0,
+            child: CountdownCircle(
+              onTap: _handleMemorizationTap,
+              showNumber: false,
             ),
           ),
       ],

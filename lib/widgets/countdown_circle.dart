@@ -3,13 +3,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/mushaf_screen.dart'; // For memorizationProvider
 import '../utils/helpers.dart';
 
-class CountdownCircle extends ConsumerWidget {
+class CountdownCircle extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
+  final bool showNumber;
 
-  const CountdownCircle({super.key, this.onTap});
+  const CountdownCircle({super.key, this.onTap, this.showNumber = true});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CountdownCircle> createState() => _CountdownCircleState();
+}
+
+class _CountdownCircleState extends ConsumerState<CountdownCircle>
+    with SingleTickerProviderStateMixin {
+  double _scale = 1.0;
+
+  Future<void> _handleTap() async {
+    if (mounted) {
+      setState(() => _scale = 0.92);
+      await Future.delayed(const Duration(milliseconds: 80));
+      if (mounted) setState(() => _scale = 1.0);
+    }
+    if (widget.onTap != null) widget.onTap!();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final int currentCount = ref.watch(
       memorizationProvider.select((state) => state.currentRepetitions),
     );
@@ -22,49 +40,60 @@ class CountdownCircle extends ConsumerWidget {
     const double fontSize = 48.0; // Increased font size
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 80.0, // Reduced circle size
-        height: 80.0, // Reduced circle size
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: foregroundColor, width: 2.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Transform.translate(
-            offset: const Offset(0, 7.0), // Nudge text down more to center itR
-            child: SizedBox(
-              width: 70.0, // Larger constrained text area for better centering
-              height: 70.0, // Larger constrained text area for better centering
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    text: convertToEasternArabicNumerals(
-                      currentCount.toString(),
-                    ),
-                    style: TextStyle(
-                      color: foregroundColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: fontSize,
-                      fontFamily: 'quran-common',
-                      height: 1.0,
-                    ),
-                  ),
-                ),
+      onTap: _handleTap,
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          width: 80.0, // Reduced circle size
+          height: 80.0, // Reduced circle size
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: foregroundColor, width: 2.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
               ),
-            ),
+            ],
+          ),
+          child: Center(
+            child: widget.showNumber
+                ? Transform.translate(
+                    offset: const Offset(0, 7.0), // Nudge text down more to center it
+                    child: SizedBox(
+                      width: 70.0, // Larger constrained text area for better centering
+                      height: 70.0, // Larger constrained text area for better centering
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            text: convertToEasternArabicNumerals(
+                              currentCount.toString(),
+                            ),
+                            style: TextStyle(
+                              color: foregroundColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: fontSize,
+                              fontFamily: 'quran-common',
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.check,
+                    color: foregroundColor,
+                    size: 36,
+                  ),
           ),
         ),
       ),

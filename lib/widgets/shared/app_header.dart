@@ -8,12 +8,14 @@ class AppHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onSearchPressed;
   final bool showBackButton;
+  final Widget? trailing;
 
   const AppHeader({
     super.key,
     required this.title,
     this.onSearchPressed,
     this.showBackButton = false,
+    this.trailing,
   });
 
   @override
@@ -111,6 +113,8 @@ class AppHeader extends StatelessWidget {
           ),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
+          // Optional trailing widget (e.g., Memorize toggle)
+          if (trailing != null) trailing!,
           // Back button (if enabled) - comes after title for RTL
           if (showBackButton)
             IconButton(

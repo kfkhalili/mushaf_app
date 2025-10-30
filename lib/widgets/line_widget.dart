@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../providers.dart';
+import '../utils/helpers.dart';
 
 class LineWidget extends ConsumerWidget {
   final LineInfo line;
@@ -11,6 +12,8 @@ class LineWidget extends ConsumerWidget {
   final bool isMemorizationMode;
   // WHY: Accept the set of words that should be visible.
   final Set<Word> wordsToShow;
+  // Optional per-ayah opacity map (key: 003:255)
+  final Map<String, double>? ayahOpacities;
 
   const LineWidget({
     super.key,
@@ -18,6 +21,7 @@ class LineWidget extends ConsumerWidget {
     required this.pageFontFamily,
     required this.isMemorizationMode,
     required this.wordsToShow, // Use this set to determine visibility
+    this.ayahOpacities,
   });
 
   // WHY: Simplified style helper - only needs visibility flag.
@@ -25,12 +29,11 @@ class LineWidget extends ConsumerWidget {
     required double fontSize,
     required double lineHeight,
     required Color baseColor,
-    required bool isVisible,
+    required double opacity,
   }) {
-    // WHY: Use transparent color if not visible in memorization mode.
-    Color wordColor = (isMemorizationMode && !isVisible)
-        ? Colors.transparent
-        : baseColor;
+    // Clamp opacity between 0 and 1; apply via withValues per project rule
+    final double clamped = opacity.clamp(0.0, 1.0);
+    final Color wordColor = baseColor.withValues(alpha: clamped);
 
     return TextStyle(
       fontFamily: pageFontFamily,
@@ -158,11 +161,23 @@ class LineWidget extends ConsumerWidget {
             break;
           }
 
-          // WHY: Determine visibility word by word based on wordsToShow set.
+          // Determine per-word opacity using ayahOpacities when in memorization mode
           if (!line.isCentered) {
             final List<Widget> wordWidgets = line.words.map((word) {
-              // WHY: Visibility is true if the word is in the set passed from parent.
-              final bool isVisible = wordsToShow.contains(word);
+              double opacity = 1.0;
+              if (isMemorizationMode) {
+                if (!wordsToShow.contains(word)) {
+                  opacity = 0.0;
+                } else {
+                  if (ayahOpacities != null) {
+                    final key = generateAyahKey(
+                      word.surahNumber,
+                      word.ayahNumber,
+                    );
+                    opacity = ayahOpacities![key] ?? 1.0;
+                  }
+                }
+              }
 
               // WHY: Use AnimatedSwitcher for fade effect.
               return AnimatedSwitcher(
@@ -170,13 +185,13 @@ class LineWidget extends ConsumerWidget {
                 child: Text(
                   word.text,
                   key: ValueKey(
-                    "${word.text}-$isVisible",
-                  ), // Key includes visibility
+                    "${word.text}-${opacity.toStringAsFixed(2)}",
+                  ), // Key includes opacity
                   style: _getWordStyle(
                     fontSize: defaultDynamicFontSize,
                     lineHeight: dynamicLineHeight, // Ayah line height
                     baseColor: baseTextColor,
-                    isVisible: isVisible, // Pass calculated visibility
+                    opacity: opacity, // Pass calculated opacity
                   ),
                   textScaler: const TextScaler.linear(1.0),
                 ),
@@ -194,14 +209,27 @@ class LineWidget extends ConsumerWidget {
           } else {
             // WHY: Centered lines use RichText (no animation per word).
             final List<TextSpan> spans = line.words.map((word) {
-              final bool isVisible = wordsToShow.contains(word);
+              double opacity = 1.0;
+              if (isMemorizationMode) {
+                if (!wordsToShow.contains(word)) {
+                  opacity = 0.0;
+                } else {
+                  if (ayahOpacities != null) {
+                    final key = generateAyahKey(
+                      word.surahNumber,
+                      word.ayahNumber,
+                    );
+                    opacity = ayahOpacities![key] ?? 1.0;
+                  }
+                }
+              }
               return TextSpan(
                 text: "${word.text} ", // Add space
                 style: _getWordStyle(
                   fontSize: defaultDynamicFontSize,
                   lineHeight: dynamicLineHeight, // Ayah line height
                   baseColor: baseTextColor,
-                  isVisible: isVisible,
+                  opacity: opacity,
                 ),
               );
             }).toList();

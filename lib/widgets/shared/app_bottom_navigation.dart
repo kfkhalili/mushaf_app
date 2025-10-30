@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../screens/mushaf_screen.dart'; // For memorizationProvider
+import '../../screens/mushaf_screen.dart';
+import '../../providers/memorization_provider.dart';
 import '../../constants.dart';
 
 /// Shared bottom navigation widget that can be used across different screens
@@ -23,15 +24,11 @@ class AppBottomNavigation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isMemorizing = ref.watch(
-      memorizationProvider.select((s) => s.isMemorizationMode),
-    );
-
     if (type == AppBottomNavigationType.mushaf) {
       // WHY: Removed the SizedBox wrapper and Stack.
       // This widget is now only responsible for building the bar itself,
       // which has a fixed height, ensuring consistency.
-      return _buildMushafNavigation(context, ref, isMemorizing);
+      return _buildMushafNavigation(context, ref);
     }
 
     return _buildSelectionNavigation(context, ref);
@@ -117,13 +114,16 @@ class AppBottomNavigation extends ConsumerWidget {
   Widget _buildMushafNavigation(
     BuildContext context,
     WidgetRef ref,
-    bool isMemorizing,
   ) {
     final theme = Theme.of(context);
     final Color unselectedIconColor = theme.brightness == Brightness.dark
         ? Colors.grey.shade400
         : Colors.grey.shade600;
     final Color selectedIconColor = theme.colorScheme.primary;
+
+    final bool isMemorizing = ref.watch(
+      memorizationProvider.select((s) => s.isMemorizationMode),
+    );
 
     return BottomAppBar(
       color: theme.scaffoldBackgroundColor,
@@ -150,6 +150,15 @@ class AppBottomNavigation extends ConsumerWidget {
                     child: _buildMemorizationButton(
                       ref,
                       isMemorizing,
+                      selectedIconColor,
+                      unselectedIconColor,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: _buildMemorizationToggleButton(
+                      context,
+                      ref,
                       selectedIconColor,
                       unselectedIconColor,
                     ),
@@ -196,6 +205,47 @@ class AppBottomNavigation extends ConsumerWidget {
         icon: const Icon(Icons.arrow_forward_ios),
         onPressed: onBackButtonPressed,
         padding: const EdgeInsets.only(right: footerRightPadding),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildMemorizationToggleButton(
+    BuildContext context,
+    WidgetRef ref,
+    Color selectedIconColor,
+    Color unselectedIconColor,
+  ) {
+    final session = ref.watch(memorizationSessionProvider);
+    final int page = currentPageNumber ?? 1;
+    final bool active = session != null && session.pageNumber == page;
+
+    final String tooltip = enableMemorizationBeta
+        ? (active ? 'End Memorization (Beta)' : 'Start Memorization (Beta)')
+        : 'Memorization (Beta) disabled';
+    final Color color = active ? selectedIconColor : unselectedIconColor;
+
+    return SizedBox(
+      height: kBottomNavBarHeight,
+      child: IconButton(
+        tooltip: tooltip,
+        color: color,
+        icon: Icon(active ? Icons.link : Icons.link_outlined),
+        onPressed: () async {
+          if (!enableMemorizationBeta) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Memorization (Beta) is disabled')),
+            );
+            return;
+          }
+          final notifier = ref.read(memorizationSessionProvider.notifier);
+          if (active) {
+            await notifier.endSession();
+          } else {
+            await notifier.startSession(pageNumber: page, firstAyahIndex: 0);
+          }
+        },
+        padding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
       ),
     );

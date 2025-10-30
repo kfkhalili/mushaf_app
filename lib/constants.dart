@@ -158,3 +158,6 @@ class DbConstants {
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
 }
+
+// Feature flags
+const bool enableMemorizationBeta = true;
