@@ -27,14 +27,11 @@ class MushafScreen extends ConsumerStatefulWidget {
 class _MushafScreenState extends ConsumerState<MushafScreen> {
   late final PageController _pageController;
 
-  // Surah-wide cumulative end (sum of fully completed pages' ayah counts)
-  int _surahCumulativeEnd = 0;
   int _currentSurahNumber = 0;
 
   // Track memorization start page to return user back if they wander
   int? _memorizationStartPage;
-  // Track the starting ayah number on the start page (for correct range base)
-  int? _startAyahNumberOnStartPage;
+  // Deprecated range base tracking removed in favor of per-surah computation
 
   // WHY: This function is only responsible for persistence.
   Future<void> _savePageToPrefs(int pageNumber) async {
@@ -65,21 +62,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     super.dispose();
   }
 
-  // Compute the first (minimum) ayah number on a page
-  int _firstAyahNumberOnPage(PageData pageData) {
-    final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
-    final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-      groupWordsByAyahKey(allQuranWordsOnPage),
-    );
-    if (ayahsOnPageMap.isEmpty) return 1;
-    final firstKey = ayahsOnPageMap.keys.first; // format: "surah:ayah"
-    final parts = firstKey.split(':');
-    if (parts.length == 2) {
-      final ayah = int.tryParse(parts[1]) ?? 1;
-      return ayah > 0 ? ayah : 1;
-    }
-    return 1;
-  }
+  // Deprecated helper removed (no longer used)
 
   // Update surah tracking when page or surah changes
   void _maybeResetSurahProgress(PageData pageData) {
@@ -87,9 +70,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     if (pageSurah <= 0) return;
     if (_currentSurahNumber != pageSurah) {
       _currentSurahNumber = pageSurah;
-      _surahCumulativeEnd = 0; // reset at surah boundary
-      // Reset base to first ayah of new page/surah when crossing boundary
-      _startAyahNumberOnStartPage = _firstAyahNumberOnPage(pageData);
     }
   }
 
@@ -118,7 +98,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             final bool windowEmpty =
                 updated.window.ayahIndices.isEmpty;
             if (atLastAyah && windowEmpty) {
-              _surahCumulativeEnd += totalAyatOnPage;
               final nextPage = currentPage + 1;
               if (nextPage <= totalPages) {
                 _pageController.animateToPage(
@@ -151,20 +130,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     ref.listen(memorizationSessionProvider, (prev, next) {
       // On session end: clear range tracking
       if (prev != null && next == null) {
-        _surahCumulativeEnd = 0;
         _memorizationStartPage = null;
-        _startAyahNumberOnStartPage = null;
         if (mounted) setState(() {});
       }
       // On session start: reset cumulative and compute start ayah m for current page
       if (prev == null && next != null) {
-        _surahCumulativeEnd = 0;
         _memorizationStartPage = next.pageNumber;
-        final asyncPageData = ref.read(pageDataProvider(next.pageNumber));
-        asyncPageData.whenData((PageData pageData) {
-          _startAyahNumberOnStartPage = _firstAyahNumberOnPage(pageData);
-          if (mounted) setState(() {});
-        });
+        if (mounted) setState(() {});
       }
     });
 
@@ -184,12 +156,10 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     asyncPageData.whenData((pageData) {
       if (_memorizationStartPage == null && isBetaMemorizing) {
         _memorizationStartPage = currentPageNumber;
-        _startAyahNumberOnStartPage = _firstAyahNumberOnPage(pageData);
       }
       // Reset start page if mode disabled
       if (!isBetaMemorizing) {
         _memorizationStartPage = null;
-        _startAyahNumberOnStartPage = null;
       }
     });
 
