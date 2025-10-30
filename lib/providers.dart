@@ -19,6 +19,8 @@ Future<SharedPreferences> sharedPreferences(Ref ref) async {
   return SharedPreferences.getInstance();
 }
 
+// (UI signals moved to utils/ui_signals.dart to avoid codegen dependencies.)
+
 // --- Current Page Provider ---
 // WHY: This syntax for a Notifier class is correct.
 @Riverpod(keepAlive: true)

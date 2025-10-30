@@ -6,12 +6,14 @@ import '../widgets/mushaf_page_widget.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
+import '../utils/ui_signals.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
 import 'dart:collection';
 import '../providers/memorization_provider.dart';
 import '../widgets/countdown_circle.dart';
+// duplicate import removed
 
 // Legacy memorization removed
 
@@ -104,7 +106,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       return;
     }
 
-    // Beta session tap handling (no auto-advance)
+    // Beta session tap handling with auto-advance
     final session = ref.read(memorizationSessionProvider);
     if (session != null && session.pageNumber == currentPage) {
       final asyncPageData = ref.read(pageDataProvider(currentPage));
@@ -116,7 +118,28 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
         final totalAyatOnPage = ayahsOnPageMap.length;
         ref
             .read(memorizationSessionProvider.notifier)
-            .onTap(totalAyatOnPage: totalAyatOnPage);
+            .onTap(totalAyatOnPage: totalAyatOnPage)
+            .then((_) async {
+          final updated = ref.read(memorizationSessionProvider);
+          if (updated != null && updated.pageNumber == currentPage) {
+            // If last ayah reached on this page, advance to next page
+            if (updated.lastAyahIndexShown >= totalAyatOnPage - 1) {
+              _surahCumulativeEnd += totalAyatOnPage;
+              final nextPage = currentPage + 1;
+              if (nextPage <= totalPages) {
+                _pageController.animateToPage(
+                  nextPage - 1,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                );
+                ref.read(currentPageProvider.notifier).setPage(nextPage);
+                await ref
+                    .read(memorizationSessionProvider.notifier)
+                    .startSession(pageNumber: nextPage, firstAyahIndex: 0);
+              }
+            }
+          }
+        });
       });
       return;
     }
@@ -194,11 +217,35 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                     onTap: enableMemorizationBeta
                         ? _handleMemorizationTap
                         : null,
+                    onHorizontalDragStart: (details) {
+                      final session = ref.read(memorizationSessionProvider);
+                      final int page = ref.read(currentPageProvider);
+                      final bool isBetaMemorizing = enableMemorizationBeta &&
+                          session != null &&
+                          session.pageNumber == page;
+                      if (isBetaMemorizing) {
+                        memorizationIconFlashTick.value = memorizationIconFlashTick.value + 1;
+                      }
+                    },
+                    onHorizontalDragUpdate: (details) {
+                      final session = ref.read(memorizationSessionProvider);
+                      final int page = ref.read(currentPageProvider);
+                      final bool isBetaMemorizing = enableMemorizationBeta &&
+                          session != null &&
+                          session.pageNumber == page;
+                      if (isBetaMemorizing) {
+                        // absorb gesture by doing nothing and flashing
+                        memorizationIconFlashTick.value = memorizationIconFlashTick.value + 1;
+                      }
+                    },
                     child: PageView.builder(
                       controller: _pageController,
                       // WHY: Use the named constant for total page count.
                       itemCount: totalPages,
                       reverse: true,
+                      physics: (enableMemorizationBeta && isBetaMemorizing)
+                          ? const NeverScrollableScrollPhysics()
+                          : const BouncingScrollPhysics(),
                       onPageChanged: (index) {
                         final int newPageNumber = index + 1;
                         // WHY: Update the global state provider.

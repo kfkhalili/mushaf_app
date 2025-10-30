@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/memorization_provider.dart';
+// providers.dart not needed here
+import '../../utils/ui_signals.dart';
 import '../../constants.dart';
 
 /// Shared bottom navigation widget that can be used across different screens
@@ -180,6 +182,7 @@ class AppBottomNavigation extends ConsumerWidget {
     Color unselectedIconColor,
   ) {
     final session = ref.watch(memorizationSessionProvider);
+    // Listen to global flash tick to animate icon briefly
     final int page = currentPageNumber ?? 1;
     final bool active = session != null && session.pageNumber == page;
 
@@ -190,11 +193,23 @@ class AppBottomNavigation extends ConsumerWidget {
 
     return SizedBox(
       height: kBottomNavBarHeight,
-      child: IconButton(
-        tooltip: tooltip,
-        color: color,
-        icon: Icon(active ? Icons.link : Icons.link_outlined),
-        onPressed: () async {
+      child: ValueListenableBuilder<int>(
+        valueListenable: memorizationIconFlashTick,
+        builder: (context, tick, child) {
+          return TweenAnimationBuilder<double>(
+            key: ValueKey(tick),
+            tween: Tween(begin: 1.15, end: 1.0),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+            child: child,
+          );
+        },
+        child: IconButton(
+          tooltip: tooltip,
+          color: color,
+          icon: Icon(active ? Icons.link : Icons.link_outlined),
+          onPressed: () async {
           if (!enableMemorizationBeta) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Memorization (Beta) is disabled')),
@@ -207,9 +222,10 @@ class AppBottomNavigation extends ConsumerWidget {
           } else {
             await notifier.startSession(pageNumber: page, firstAyahIndex: 0);
           }
-        },
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
+          },
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+        ),
       ),
     );
   }
