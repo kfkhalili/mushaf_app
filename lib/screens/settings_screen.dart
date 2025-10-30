@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
-import '../widgets/shared/repetition_goal_dropdown.dart';
 import '../providers.dart';
 import '../constants.dart';
 
@@ -120,50 +119,6 @@ class SettingsScreen extends ConsumerWidget {
                                   // WHY: Invalidate database service to reload with new layout
                                   ref.invalidate(databaseServiceProvider);
                                 }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'الحفظ',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'عدد التكرار',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const RepetitionGoalDropdown(),
-                            const SizedBox(height: 16),
-                            const Divider(),
-                            ListTile(
-                              leading: const Icon(Icons.bookmark),
-                              title: const Text('العلامات المرجعية'),
-                              subtitle: const Text('إدارة العلامات المرجعية'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                // TODO: Implement bookmarks management
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Bookmarks management coming soon',
-                                    ),
-                                  ),
-                                );
                               },
                             ),
                           ],
