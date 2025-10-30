@@ -57,15 +57,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       () => ref.read(currentPageProvider.notifier).setPage(widget.initialPage),
     );
 
-    // Reset circle values when memorization session ends
-    ref.listen(memorizationSessionProvider, (prev, next) {
-      if (next == null) {
-        _surahCumulativeEnd = 0;
-        _memorizationStartPage = null;
-        _startAyahNumberOnStartPage = null;
-        setState(() {});
-      }
-    });
   }
 
   @override
@@ -162,6 +153,16 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   Widget build(BuildContext context) {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
+
+    // Listen for session end to reset circle values (must be inside build)
+    ref.listen(memorizationSessionProvider, (prev, next) {
+      if (prev != null && next == null) {
+        _surahCumulativeEnd = 0;
+        _memorizationStartPage = null;
+        _startAyahNumberOnStartPage = null;
+        if (mounted) setState(() {});
+      }
+    });
 
     // Beta memorization session state
     final memorizationSession = ref.watch(memorizationSessionProvider);
