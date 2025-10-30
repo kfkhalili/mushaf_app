@@ -345,144 +345,6 @@ final class JuzListProvider
 
 String _$juzListHash() => r'7a13b0b3bab83527732a93f6f0e8fe45f0698fca';
 
-@ProviderFor(pagePreview)
-const pagePreviewProvider = PagePreviewFamily._();
-
-final class PagePreviewProvider
-    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
-    with $FutureModifier<String>, $FutureProvider<String> {
-  const PagePreviewProvider._({
-    required PagePreviewFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'pagePreviewProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$pagePreviewHash();
-
-  @override
-  String toString() {
-    return r'pagePreviewProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<String> create(Ref ref) {
-    final argument = this.argument as int;
-    return pagePreview(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is PagePreviewProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$pagePreviewHash() => r'c565a25b480e011bf067281ca5785eb84383a9f3';
-
-final class PagePreviewFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<String>, int> {
-  const PagePreviewFamily._()
-    : super(
-        retry: null,
-        name: r'pagePreviewProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  PagePreviewProvider call(int pageNumber) =>
-      PagePreviewProvider._(argument: pageNumber, from: this);
-
-  @override
-  String toString() => r'pagePreviewProvider';
-}
-
-@ProviderFor(pageFontFamily)
-const pageFontFamilyProvider = PageFontFamilyFamily._();
-
-final class PageFontFamilyProvider
-    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
-    with $FutureModifier<String>, $FutureProvider<String> {
-  const PageFontFamilyProvider._({
-    required PageFontFamilyFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'pageFontFamilyProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$pageFontFamilyHash();
-
-  @override
-  String toString() {
-    return r'pageFontFamilyProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<String> create(Ref ref) {
-    final argument = this.argument as int;
-    return pageFontFamily(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is PageFontFamilyProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$pageFontFamilyHash() => r'f562dda973a4542f6996503eabca7e96d3e76f16';
-
-final class PageFontFamilyFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<String>, int> {
-  const PageFontFamilyFamily._()
-    : super(
-        retry: null,
-        name: r'pageFontFamilyProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  PageFontFamilyProvider call(int pageNumber) =>
-      PageFontFamilyProvider._(argument: pageNumber, from: this);
-
-  @override
-  String toString() => r'pageFontFamilyProvider';
-}
-
 @ProviderFor(SelectionTabIndex)
 const selectionTabIndexProvider = SelectionTabIndexProvider._();
 
@@ -622,7 +484,7 @@ final class FontSizeSettingProvider
   }
 }
 
-String _$fontSizeSettingHash() => r'4065a8149dd30b86e572f024cf91ec6762c94f9a';
+String _$fontSizeSettingHash() => r'0c79919f437bc31a01258da08789868d27a46a00';
 
 abstract class _$FontSizeSetting extends $Notifier<double> {
   double build();
@@ -811,60 +673,6 @@ final class SearchResultsFamily extends $Family
 
   @override
   String toString() => r'searchResultsProvider';
-}
-
-@ProviderFor(BreathWordsSetting)
-const breathWordsSettingProvider = BreathWordsSettingProvider._();
-
-final class BreathWordsSettingProvider
-    extends $NotifierProvider<BreathWordsSetting, int> {
-  const BreathWordsSettingProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'breathWordsSettingProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$breathWordsSettingHash();
-
-  @$internal
-  @override
-  BreathWordsSetting create() => BreathWordsSetting();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
-    );
-  }
-}
-
-String _$breathWordsSettingHash() =>
-    r'43f0f614ea23c0a8a336e380f11ae55cc7376502';
-
-abstract class _$BreathWordsSetting extends $Notifier<int> {
-  int build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<int, int>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
 }
 
 @ProviderFor(SearchHistory)
