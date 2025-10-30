@@ -207,25 +207,10 @@ class AppBottomNavigation extends ConsumerWidget {
         child: IconButton(
           tooltip: tooltip,
           color: color,
-          icon: active
-              ? Container(
-                  width: kBottomNavIconSize + 8,
-                  height: kBottomNavIconSize + 8,
-                  decoration: BoxDecoration(
-                    color: selectedIconColor,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    FlutterIslamicIcons.quran2,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    size: kBottomNavIconSize - 2,
-                  ),
-                )
-              : Icon(
-                  FlutterIslamicIcons.quran2,
-                  size: kBottomNavIconSize,
-                ),
+          icon: Icon(
+            active ? FlutterIslamicIcons.quran2 : FlutterIslamicIcons.quran,
+            size: kBottomNavIconSize,
+          ),
           onPressed: () async {
             if (!enableMemorizationBeta) {
               ScaffoldMessenger.of(context).showSnackBar(
