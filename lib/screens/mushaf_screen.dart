@@ -154,13 +154,24 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
 
-    // Listen for session end to reset circle values (must be inside build)
+    // Listen for session transitions to reset circle values (inside build)
     ref.listen(memorizationSessionProvider, (prev, next) {
+      // On session end: clear range tracking
       if (prev != null && next == null) {
         _surahCumulativeEnd = 0;
         _memorizationStartPage = null;
         _startAyahNumberOnStartPage = null;
         if (mounted) setState(() {});
+      }
+      // On session start: reset cumulative and compute start ayah m for current page
+      if (prev == null && next != null) {
+        _surahCumulativeEnd = 0;
+        _memorizationStartPage = next.pageNumber;
+        final asyncPageData = ref.read(pageDataProvider(next.pageNumber));
+        asyncPageData.whenData((PageData pageData) {
+          _startAyahNumberOnStartPage = _firstAyahNumberOnPage(pageData);
+          if (mounted) setState(() {});
+        });
       }
     });
 
