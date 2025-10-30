@@ -1,0 +1,50 @@
+# Debugging Persistent Flutter Layout Errors
+
+## The Problem
+
+When a seemingly simple layout change introduces a persistent issue (like overflow warnings or incorrect positioning) that resists conventional fixes, it's easy to get stuck in a frustrating loop of trial and error. This often happens when the root cause is a subtle interaction between widgets or a fundamental miscalculation in the layout engine (e.g., with custom font metrics).
+
+## The Methodical Approach
+
+Instead of iterating on the broken state, adopt a more methodical diagnostic process to isolate the root cause.
+
+### Step 1: Revert to a Known-Good State
+
+Immediately stop tweaking the broken widget. Use `git` to revert the file to the last commit where it was working correctly. This provides a clean baseline.
+
+```bash
+# Example: Revert a single file to its state from the last commit
+git checkout HEAD^ -- path/to/your/widget.dart
+```
+
+### Step 2: Re-introduce the Minimal Change
+
+Apply the absolute smallest possible change required to re-introduce the desired functionality. This isolates the exact variable that is causing the problem.
+
+For example, if adding a new text label caused an overflow:
+-   Keep the original widget's size and layout structure.
+-   Add the new property (`String? newLabel`).
+-   Add a simple conditional to render the `newLabel` text *instead of* the old text, using the *exact same* `TextStyle` and layout widgets.
+
+If the error reappears, you have confirmed that the new content (e.g., a longer string) is the specific trigger.
+
+### Step 3: Use a `LayoutBuilder` to Inspect Constraints
+
+If the cause is still unclear, wrap the problematic widget in a `LayoutBuilder` to inspect the `BoxConstraints` it is receiving from its parent. Incorrect constraints are a common source of layout bugs.
+
+```dart
+LayoutBuilder(
+  builder: (context, constraints) {
+    // This will print the exact width and height available to the widget.
+    print("Constraints: w=${constraints.maxWidth}, h=${constraints.maxHeight}");
+
+    return YourWidget();
+  }
+)
+```
+
+This is especially useful for widgets inside a `Positioned`, `Flex`, or `Row`/`Column`, which can pass down unexpected (e.g., infinite or screen-wide) constraints.
+
+### Step 4: Apply a Targeted Fix
+
+Once the root cause has been identified (e.g., "the string is too long for the container" or "the container is receiving the wrong constraints"), apply a targeted fix based on that knowledge. This avoids blindly trying solutions and leads to a more robust outcome.

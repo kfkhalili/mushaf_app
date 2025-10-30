@@ -321,10 +321,37 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             bottom: kBottomNavBarHeight + 8.0,
             left: 0,
             right: 0,
-            child: CountdownCircle(
-              onTap: () => ref
-                  .read(memorizationProvider.notifier)
-                  .decrementRepetitions(_advanceLegacyMemorization),
+            child: Builder(
+              builder: (context) {
+                final asyncPageData = ref.watch(
+                  pageDataProvider(currentPageNumber),
+                );
+                String? centerLabel;
+                asyncPageData.whenData((pageData) {
+                  final allQuranWordsOnPage = extractQuranWordsFromPage(
+                    pageData.layout,
+                  );
+                  final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+                    groupWordsByAyahKey(allQuranWordsOnPage),
+                  );
+                  final totalAyatOnPage = ayahsOnPageMap.length;
+                  final revealedCount =
+                      ref
+                          .read(memorizationProvider)
+                          .lastRevealedAyahIndexMap[currentPageNumber] ??
+                      0;
+                  final end = revealedCount.clamp(1, totalAyatOnPage);
+                  centerLabel = end <= 1
+                      ? '١'
+                      : '١–${convertToEasternArabicNumerals(end.toString())}';
+                });
+                return CountdownCircle(
+                  onTap: () => ref
+                      .read(memorizationProvider.notifier)
+                      .decrementRepetitions(_advanceLegacyMemorization),
+                  centerLabel: centerLabel,
+                );
+              },
             ),
           ),
         if (isBetaMemorizing)
@@ -332,9 +359,28 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             bottom: kBottomNavBarHeight + 8.0,
             left: 0,
             right: 0,
-            child: CountdownCircle(
-              onTap: _handleMemorizationTap,
-              showNumber: false,
+            child: Builder(
+              builder: (context) {
+                final asyncPageData = ref.watch(
+                  pageDataProvider(currentPageNumber),
+                );
+                String? centerLabel;
+                asyncPageData.whenData((pageData) {
+                  final session = ref.read(memorizationSessionProvider);
+                  if (session != null &&
+                      session.pageNumber == currentPageNumber) {
+                    final end = (session.lastAyahIndexShown + 1).clamp(1, 999);
+                    centerLabel = end <= 1
+                        ? '١'
+                        : '١–${convertToEasternArabicNumerals(end.toString())}';
+                  }
+                });
+                return CountdownCircle(
+                  onTap: _handleMemorizationTap,
+                  showNumber: false,
+                  centerLabel: centerLabel,
+                );
+              },
             ),
           ),
       ],

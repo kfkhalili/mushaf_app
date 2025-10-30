@@ -1,0 +1,56 @@
+# Robustly Handling Text Overflow for Custom Fonts in Flutter
+
+## The Problem
+
+Flutter's layout engine can miscalculate the bounding box for text that uses certain custom fonts, particularly those with complex metrics like `quran-common`. This can lead to persistent, incorrect overflow warnings (yellow and black stripes) even when the text appears to fit visually. The `height` property in `TextStyle` can often exacerbate this miscalculation.
+
+## The Solution
+
+To create a robust layout that avoids these false overflow errors, do not rely on a single widget's properties (`Container.alignment`, `Container.padding`) or simple wrappers like `Padding` around a `FittedBox`. Instead, enforce an explicit and unambiguous hierarchy of constraints.
+
+### Recommended Widget Structure
+
+Contain the `Text` widget within the following strict hierarchy:
+
+1.  **`Container` (Outer Boundary):** This widget defines the overall fixed size and draws the decoration (e.g., the circle). It should **not** have `alignment` or `padding` properties.
+2.  **`Center`:** This widget reliably centers its child within the `Container`.
+3.  **`SizedBox` (Inner Boundary):** This widget creates a smaller, fixed-size box inside the `Container`, acting as explicit padding.
+4.  **`FittedBox` (Scaler):** With `fit: BoxFit.scaleDown`, this widget will only ever shrink its child `Text` widget to fit inside the `SizedBox`. It will never upscale the text, preventing it from becoming unexpectedly large.
+5.  **`Text`:** The final `Text` widget itself.
+
+### Example
+
+```dart
+// In lib/widgets/countdown_circle.dart
+
+// 1. Outer boundary
+Container(
+  width: 100.0,
+  height: 100.0,
+  decoration: BoxDecoration(
+    color: Colors.blue,
+    shape: BoxShape.circle,
+  ),
+  // 2. Center the content
+  child: Center(
+    // 3. Create an inner boundary (explicit padding)
+    child: SizedBox(
+      width: 90.0,
+      height: 90.0,
+      // 4. Scale the text down to fit the inner boundary
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        // 5. The text itself
+        child: Text(
+          "١–١٢٣",
+          style: TextStyle(fontSize: 48.0), // Use a large base font size
+        ),
+      ),
+    ),
+  ),
+)
+```
+
+## Why This Works
+
+This layered approach provides the Flutter layout engine with clear, non-conflicting constraints at each step, preventing the miscalculations that cause false overflow reports. It is more reliable than using a `LayoutBuilder` inside a `Positioned` widget, as `Positioned` can pass down unhelpful, screen-wide constraints that defeat the purpose of the `LayoutBuilder`.
