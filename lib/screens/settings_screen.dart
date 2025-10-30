@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
-import '../widgets/shared/font_size_dropdown.dart';
 import '../widgets/shared/repetition_goal_dropdown.dart';
 import '../providers.dart';
 import '../constants.dart';
@@ -123,33 +122,6 @@ class SettingsScreen extends ConsumerWidget {
                                 }
                               },
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Future settings sections can be added here
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'القراءة',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'حجم الخط',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const FontSizeDropdown(),
                           ],
                         ),
                       ),

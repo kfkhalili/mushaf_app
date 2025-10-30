@@ -150,72 +150,13 @@ class MushafLayoutSetting extends _$MushafLayoutSetting {
 }
 
 // --- Font Size Provider ---
-// WHY: This is a keepAlive provider for managing font size preference per layout.
+// WHY: This provider automatically sets font size to maximum for each layout.
 @Riverpod(keepAlive: true)
 class FontSizeSetting extends _$FontSizeSetting {
-  static const String _fontSizeKeyPrefix = 'font_size_';
-
   @override
   double build() {
     final layout = ref.watch(mushafLayoutSettingProvider);
-    return _getFontSizeForLayout(layout);
-  }
-
-  double _getFontSizeForLayout(MushafLayout layout) {
-    final prefs = ref.read(sharedPreferencesProvider).value;
-    final key = '$_fontSizeKeyPrefix${layout.name}';
-    final savedSize = prefs?.getDouble(key);
-
-    if (savedSize != null) {
-      final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
-      final minSize = layoutOptions.first;
-      final maxSize = layoutOptions.last;
-
-      // Return saved size if it's within valid range, otherwise use default
-      if (savedSize >= minSize && savedSize <= maxSize) {
-        return savedSize;
-      }
-    }
-
-    // Return layout-specific default if no valid saved size
-    return layoutDefaultFontSizes[layout] ?? 18.0;
-  }
-
-  void setFontSize(double fontSize) {
-    final layout = ref.read(mushafLayoutSettingProvider);
-    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
-
-    // Clamp font size to layout-specific valid range
-    final minSize = layoutOptions.first;
-    final maxSize = layoutOptions.last;
-    final clampedSize = fontSize.clamp(minSize, maxSize);
-
-    // Save to preferences
-    final prefs = ref.read(sharedPreferencesProvider).value;
-    final key = '$_fontSizeKeyPrefix${layout.name}';
-    prefs?.setDouble(key, clampedSize);
-
-    state = clampedSize;
-  }
-
-  void increaseFontSize() {
-    final layout = ref.read(mushafLayoutSettingProvider);
-    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
-    final currentIndex = layoutOptions.indexOf(state);
-
-    if (currentIndex < layoutOptions.length - 1) {
-      setFontSize(layoutOptions[currentIndex + 1]);
-    }
-  }
-
-  void decreaseFontSize() {
-    final layout = ref.read(mushafLayoutSettingProvider);
-    final layoutOptions = layoutFontSizeOptions[layout] ?? [16.0, 18.0, 20.0];
-    final currentIndex = layoutOptions.indexOf(state);
-
-    if (currentIndex > 0) {
-      setFontSize(layoutOptions[currentIndex - 1]);
-    }
+    return layoutMaxFontSizes[layout] ?? 20.0;
   }
 }
 

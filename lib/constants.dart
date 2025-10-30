@@ -62,33 +62,11 @@ const double referenceScreenWidth = 428.0;
 const double referenceScreenHeight = 926.0;
 const double maxLineContentWidth = 600.0;
 
-// --- FONT SIZE SETTINGS ---
-const double minFontSize = 16.0;
-const double fontSizeStep = 2.0;
-
-// Layout-specific font size configurations
-const Map<MushafLayout, List<double>> layoutFontSizeOptions = {
-  MushafLayout.uthmani15Lines: [16.0, 18.0, 20.0],
-  MushafLayout.indopak13Lines: [16.0, 18.0, 20.0, 22.0, 24.0],
+// Layout-specific maximum font sizes (automatically used)
+const Map<MushafLayout, double> layoutMaxFontSizes = {
+  MushafLayout.uthmani15Lines: 20.0,
+  MushafLayout.indopak13Lines: 24.0,
 };
-
-// Layout-specific default font sizes
-const Map<MushafLayout, double> layoutDefaultFontSizes = {
-  MushafLayout.uthmani15Lines: 18.0,
-  MushafLayout.indopak13Lines: 20.0,
-};
-
-// Font size labels in Arabic
-final Map<double, String> fontSizeLabels = {
-  16.0: 'صغير',
-  18.0: 'متوسط صغير',
-  20.0: 'متوسط',
-  22.0: 'متوسط كبير',
-  24.0: 'كبير',
-};
-
-// Preview text (first verse of Al-Fatiha)
-const String fontPreviewText = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
 
 // --- STYLING CONSTANTS ---
 
