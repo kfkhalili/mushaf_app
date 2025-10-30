@@ -36,11 +36,8 @@ class PageListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // Watch provider for preview text.
-    // WHY: These lines will now work because of the added import.
-    final pagePreviewAsync = ref.watch(pagePreviewProvider(pageNumber));
-    // Watch provider for the correct font family name.
-    final pageFontFamilyAsync = ref.watch(pageFontFamilyProvider(pageNumber));
+    // Use pageData to get both layout (for preview text) and font family.
+    final pageDataAsync = ref.watch(pageDataProvider(pageNumber));
 
     // WHY: Define common loading and error widgets.
     final loadingWidget = const SizedBox(
@@ -58,34 +55,42 @@ class PageListItem extends ConsumerWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       // WHY: Use the new reusable LeadingNumberText widget.
       leading: LeadingNumberText(number: pageNumber),
-      // WHY: Build the trailing widget based on the combined state of both providers.
-      trailing: pagePreviewAsync.when(
-        data: (previewText) {
-          // WHY: Only proceed to check font if preview text is loaded.
-          return pageFontFamilyAsync.when(
-            data: (fontFamilyName) {
-              // WHY: Display text with the specific page font when both text and font are successfully loaded.
-              return Text(
-                previewText,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontFamily: fontFamilyName, // Use the specific page font
-                  fontSize: 22,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              );
-            },
-            // WHY: Show loading indicator while the font is loading.
-            loading: () => loadingWidget,
-            // WHY: Show error icon if the font fails to load.
-            error: (err, stack) => errorWidget,
+      // Build trailing preview using pageData (font + layout-derived preview text).
+      trailing: pageDataAsync.when(
+        data: (pageData) {
+          // Derive preview text from first ayah words on the page.
+          String previewText = '';
+          int remaining = 3;
+          for (final line in pageData.layout.lines) {
+            if (line.lineType == 'ayah' && remaining > 0) {
+              for (final word in line.words) {
+                if (word.ayahNumber > 0) {
+                  if (previewText.isNotEmpty) previewText += ' ';
+                  previewText += word.text;
+                  remaining -= 1;
+                  if (remaining == 0) break;
+                }
+              }
+            }
+            if (remaining == 0) break;
+          }
+          if (previewText.isEmpty) {
+            previewText = '…';
+          }
+
+          return Text(
+            previewText,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: pageData.pageFontFamily,
+              fontSize: 22,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           );
         },
-        // WHY: Show loading indicator while preview text is loading.
         loading: () => loadingWidget,
-        // WHY: Show error icon if preview text fails to load.
         error: (err, stack) => errorWidget,
       ),
       onTap: () {
