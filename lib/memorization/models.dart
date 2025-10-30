@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 class MemorizationConfig {
   final int visibleWindowSize; // usually 3
   final double fadeStepPerTap; // e.g., 0.15
+  final int tapsPerReveal; // fixed taps required before revealing next ayah
   final double revealThresholdNext; // when current <= 0.40
   final double revealThresholdSecondNext; // when current <= 0.70 and next <= 0.40
 
   const MemorizationConfig({
     this.visibleWindowSize = 3,
     this.fadeStepPerTap = 0.15,
+    this.tapsPerReveal = 4,
     this.revealThresholdNext = 0.40,
     this.revealThresholdSecondNext = 0.70,
   });
@@ -17,12 +19,14 @@ class MemorizationConfig {
   MemorizationConfig copyWith({
     int? visibleWindowSize,
     double? fadeStepPerTap,
+    int? tapsPerReveal,
     double? revealThresholdNext,
     double? revealThresholdSecondNext,
   }) {
     return MemorizationConfig(
       visibleWindowSize: visibleWindowSize ?? this.visibleWindowSize,
       fadeStepPerTap: fadeStepPerTap ?? this.fadeStepPerTap,
+      tapsPerReveal: tapsPerReveal ?? this.tapsPerReveal,
       revealThresholdNext: revealThresholdNext ?? this.revealThresholdNext,
       revealThresholdSecondNext:
           revealThresholdSecondNext ?? this.revealThresholdSecondNext,
@@ -36,6 +40,7 @@ class MemorizationConfig {
           runtimeType == other.runtimeType &&
           visibleWindowSize == other.visibleWindowSize &&
           fadeStepPerTap == other.fadeStepPerTap &&
+          tapsPerReveal == other.tapsPerReveal &&
           revealThresholdNext == other.revealThresholdNext &&
           revealThresholdSecondNext == other.revealThresholdSecondNext;
 
@@ -43,6 +48,7 @@ class MemorizationConfig {
   int get hashCode => Object.hash(
         visibleWindowSize,
         fadeStepPerTap,
+        tapsPerReveal,
         revealThresholdNext,
         revealThresholdSecondNext,
       );

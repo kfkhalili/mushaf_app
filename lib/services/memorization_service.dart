@@ -17,10 +17,18 @@ class MemorizationService {
         .map((o) => (o - fade).clamp(0.0, 1.0))
         .toList(growable: false);
 
-    var window = state.window.copyWith(opacities: fadedOpacities);
+    // Increment per-ayah tap counters to enforce minimum one tap between reveals
+    final incrementedTaps = state.window.tapsSinceReveal
+        .map((t) => t + 1)
+        .toList(growable: false);
+
+    var window = state.window.copyWith(
+      opacities: fadedOpacities,
+      tapsSinceReveal: incrementedTaps,
+    );
     var lastShown = state.lastAyahIndexShown;
 
-    // Reveal logic
+    // Reveal logic (at most one reveal per tap)
     window = _maybeRevealNext(
       window: window,
       lastAyahIndexShown: lastShown,
@@ -60,43 +68,30 @@ class MemorizationService {
     if (window.ayahIndices.isEmpty) return window;
 
     final newest = window.ayahIndices.last;
+    final tapsSinceNewestReveal = window.tapsSinceReveal.isNotEmpty
+        ? window.tapsSinceReveal.last
+        : 0;
 
-    // Try reveal next (n+1)
+    // Enforce fixed taps per reveal for consistency
+    final bool enoughTapsForReveal =
+        tapsSinceNewestReveal >= config.tapsPerReveal;
+
+    // Try reveal next (n+1) - allow at most one reveal per tap
     if (newest + 1 < totalAyatOnPage) {
-      final oldestOpacity = window.opacities.first;
-      final canRevealNext = oldestOpacity <= config.revealThresholdNext;
+      final canRevealNext = enoughTapsForReveal;
       if (canRevealNext &&
           window.ayahIndices.length < config.visibleWindowSize) {
         final nextIndex = newest + 1;
         window = AyahWindowState(
           ayahIndices: [...window.ayahIndices, nextIndex],
           opacities: [...window.opacities, 1.0],
+          // Reset tap counter for the newly revealed ayah
           tapsSinceReveal: [...window.tapsSinceReveal, 0],
         );
         onRevealed(nextIndex);
-      }
-    }
 
-    // Try reveal second next (n+2) when window already has 2+ ayat
-    if (window.ayahIndices.length >= 2) {
-      final oldestOpacity = window.opacities.first;
-      final secondOpacity = window.opacities[1];
-      final latest = window.ayahIndices.last;
-      if (latest + 1 < totalAyatOnPage) {
-        final canRevealSecondNext =
-            oldestOpacity <= config.revealThresholdSecondNext &&
-            secondOpacity <= config.revealThresholdNext;
-        final withinWindow =
-            window.ayahIndices.length < config.visibleWindowSize;
-        if (canRevealSecondNext && withinWindow) {
-          final nextIndex = latest + 1;
-          window = AyahWindowState(
-            ayahIndices: [...window.ayahIndices, nextIndex],
-            opacities: [...window.opacities, 1.0],
-            tapsSinceReveal: [...window.tapsSinceReveal, 0],
-          );
-          onRevealed(nextIndex);
-        }
+        // Do NOT reveal another ayah in the same tap
+        return window;
       }
     }
 
