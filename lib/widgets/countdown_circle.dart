@@ -38,8 +38,7 @@ class _CountdownCircleState extends State<CountdownCircle>
     // WHY: Use a contrasting color (like white or black based on theme) for text and border.
     final Color foregroundColor = theme.colorScheme.onPrimary;
 
-    const double fontSize =
-        22.0; // Smaller to fit 3-digit ranges (e.g., 123–456)
+    const double fontSize = 18.0; // Even smaller to comfortably fit 3-digit ranges
 
     // Determine which text to display. This is the core of the minimal change.
     final String textToShow = widget.centerLabel ?? '';
@@ -69,10 +68,7 @@ class _CountdownCircleState extends State<CountdownCircle>
           child: Center(
             child: widget.centerLabel != null || widget.showNumber
                 ? Transform.translate(
-                    offset: const Offset(
-                      0,
-                      5.0,
-                    ), // Nudge text down more to center it
+                    offset: const Offset(0, 4.0), // Fine-tuned centering
                     child: SizedBox(
                       width:
                           70.0, // Constrained area (FittedBox will scale down further if needed)
