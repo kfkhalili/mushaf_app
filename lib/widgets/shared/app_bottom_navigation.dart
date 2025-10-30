@@ -113,10 +113,7 @@ class AppBottomNavigation extends ConsumerWidget {
     );
   }
 
-  Widget _buildMushafNavigation(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildMushafNavigation(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final Color unselectedIconColor = theme.brightness == Brightness.dark
         ? Colors.grey.shade400
@@ -202,27 +199,48 @@ class AppBottomNavigation extends ConsumerWidget {
             tween: Tween(begin: 1.15, end: 1.0),
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOut,
-            builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+            builder: (context, scale, child) =>
+                Transform.scale(scale: scale, child: child),
             child: child,
           );
         },
         child: IconButton(
           tooltip: tooltip,
           color: color,
-          icon: Icon(active ? FlutterIslamicIcons.quran : FlutterIslamicIcons.quran),
+          icon: active
+              ? Container(
+                  width: kBottomNavIconSize + 8,
+                  height: kBottomNavIconSize + 8,
+                  decoration: BoxDecoration(
+                    color: selectedIconColor,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    FlutterIslamicIcons.quran2,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: kBottomNavIconSize - 2,
+                  ),
+                )
+              : Icon(
+                  FlutterIslamicIcons.quran2,
+                  size: kBottomNavIconSize,
+                ),
           onPressed: () async {
-          if (!enableMemorizationBeta) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Memorization (Beta) is disabled')),
-            );
-            return;
-          }
-          final notifier = ref.read(memorizationSessionProvider.notifier);
-          if (active) {
-            await notifier.endSession();
-          } else {
-            await notifier.startSession(pageNumber: page, firstAyahIndex: 0);
-          }
+            if (!enableMemorizationBeta) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Memorization (Beta) is disabled'),
+                ),
+              );
+              return;
+            }
+            final notifier = ref.read(memorizationSessionProvider.notifier);
+            if (active) {
+              await notifier.endSession();
+            } else {
+              await notifier.startSession(pageNumber: page, firstAyahIndex: 0);
+            }
           },
           padding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
