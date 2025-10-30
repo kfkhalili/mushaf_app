@@ -9,7 +9,7 @@ import 'package:mushaf_app/main.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> _pumpApp(WidgetTester tester) async {
+  Future<void> pumpApp(WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: MushafApp()));
     // Allow initial frames and any splash navigation timers
     await tester.pump(const Duration(milliseconds: 600));
@@ -21,7 +21,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
-    await _pumpApp(tester);
+    await pumpApp(tester);
 
     // Verify Selection bottom nav labels exist
     expect(find.text('السور'), findsOneWidget);
@@ -64,7 +64,7 @@ void main() {
     // Preload last_page so Splash navigates to Selection then Mushaf
     SharedPreferences.setMockInitialValues(<String, Object>{'last_page': 1});
 
-    await _pumpApp(tester);
+    await pumpApp(tester);
 
     // Mushaf screen should be present (Back icon tooltip is 'Back')
     // Find the back IconButton used in the Mushaf bottom nav
