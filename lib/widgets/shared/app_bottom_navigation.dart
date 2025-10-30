@@ -4,6 +4,7 @@ import '../../providers/memorization_provider.dart';
 // providers.dart not needed here
 import '../../utils/ui_signals.dart';
 import '../../constants.dart';
+import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 
 /// Shared bottom navigation widget that can be used across different screens
 /// Supports both selection screen navigation and mushaf screen navigation
@@ -208,7 +209,7 @@ class AppBottomNavigation extends ConsumerWidget {
         child: IconButton(
           tooltip: tooltip,
           color: color,
-          icon: Icon(active ? Icons.link : Icons.link_outlined),
+          icon: Icon(active ? FlutterIslamicIcons.quran : FlutterIslamicIcons.quran),
           onPressed: () async {
           if (!enableMemorizationBeta) {
             ScaffoldMessenger.of(context).showSnackBar(
