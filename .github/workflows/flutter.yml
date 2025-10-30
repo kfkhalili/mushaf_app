@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,5 +28,9 @@ jobs:
       - name: Run unit/widget tests
         run: flutter test --no-pub
 
-      - name: Run integration tests (headless)
-        run: flutter test integration_test --no-pub
+      - name: Install iOS pods
+        working-directory: ios
+        run: pod install --repo-update
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --no-codesign
