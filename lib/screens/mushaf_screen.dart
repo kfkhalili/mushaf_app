@@ -99,9 +99,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     // Beta session tap handling with auto-advance
     final session = ref.read(memorizationSessionProvider);
     if (session != null && session.pageNumber == currentPage) {
-      // Only auto-advance on NEXT tap after the last ayah has already been shown
-      // i.e., if we were already on the last ayah BEFORE this tap.
-      bool wasOnLastAyahBeforeTap = false;
       final asyncPageData = ref.read(pageDataProvider(currentPage));
       asyncPageData.whenData((PageData pageData) {
         final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
@@ -109,17 +106,18 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
           groupWordsByAyahKey(allQuranWordsOnPage),
         );
         final totalAyatOnPage = ayahsOnPageMap.length;
-        wasOnLastAyahBeforeTap =
-            session.lastAyahIndexShown >= (totalAyatOnPage - 1);
-
         ref
             .read(memorizationSessionProvider.notifier)
             .onTap(totalAyatOnPage: totalAyatOnPage)
             .then((_) async {
           final updated = ref.read(memorizationSessionProvider);
           if (updated != null && updated.pageNumber == currentPage) {
-            // Advance only if we were already at the last ayah BEFORE this tap
-            if (wasOnLastAyahBeforeTap) {
+            // Advance only when the last ayah has fully faded out and slid away
+            final bool atLastAyah =
+                updated.lastAyahIndexShown >= (totalAyatOnPage - 1);
+            final bool windowEmpty =
+                updated.window.ayahIndices.isEmpty;
+            if (atLastAyah && windowEmpty) {
               _surahCumulativeEnd += totalAyatOnPage;
               final nextPage = currentPage + 1;
               if (nextPage <= totalPages) {
