@@ -38,7 +38,8 @@ class _CountdownCircleState extends State<CountdownCircle>
     // WHY: Use a contrasting color (like white or black based on theme) for text and border.
     final Color foregroundColor = theme.colorScheme.onPrimary;
 
-    const double fontSize = 18.0; // Even smaller to comfortably fit 3-digit ranges
+    const double fontSize =
+        18.0; // Even smaller to comfortably fit 3-digit ranges
 
     // Determine which text to display. This is the core of the minimal change.
     final String textToShow = widget.centerLabel ?? '';
@@ -92,7 +93,7 @@ class _CountdownCircleState extends State<CountdownCircle>
                       ),
                     ),
                   )
-                : Icon(Icons.check, color: foregroundColor, size: 36),
+                : const SizedBox.shrink(),
           ),
         ),
       ),

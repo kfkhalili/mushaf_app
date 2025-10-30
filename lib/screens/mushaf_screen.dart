@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // legacy riverpod import removed
 import 'package:shared_preferences/shared_preferences.dart';
-import '../widgets/mushaf_page_widget.dart';
+import '../widgets/mushaf_page.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
@@ -313,15 +313,43 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                   final session = ref.read(memorizationSessionProvider);
                   if (session != null &&
                       session.pageNumber == currentPageNumber) {
-                    final endOnPage = (session.lastAyahIndexShown + 1).clamp(1, 999);
-                    final cumulativeEnd = _surahCumulativeEnd + endOnPage;
+                    // Compute current ayah (n) and starting ayah (m) within the current surah context
+                    final allQuranWordsOnPage = extractQuranWordsFromPage(
+                      pageData.layout,
+                    );
+                    final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+                      groupWordsByAyahKey(allQuranWordsOnPage),
+                    );
+                    final orderedKeys = ayahsOnPageMap.keys.toList();
 
-                    final int startAyah = _startAyahNumberOnStartPage ?? 1;
-                    final int endAyah = startAyah + cumulativeEnd - 1;
+                    if (orderedKeys.isNotEmpty) {
+                      final int idx = session.lastAyahIndexShown.clamp(0, orderedKeys.length - 1);
+                      final String currentKey = orderedKeys[idx]; // format: sss:aaa
+                      final parts = currentKey.split(':');
+                      final int currentSurah = int.tryParse(parts[0]) ?? 0;
+                      final int currentAyahNum = int.tryParse(parts[1]) ?? 1;
 
-                    centerLabel = cumulativeEnd <= 1
-                        ? convertToEasternArabicNumerals(startAyah.toString())
-                        : '${convertToEasternArabicNumerals(startAyah.toString())}–${convertToEasternArabicNumerals(endAyah.toString())}';
+                      // Find the first ayah index on this page that belongs to currentSurah
+                      int firstIndexOfCurrentSurah = 0;
+                      for (int i = 0; i < orderedKeys.length; i++) {
+                        final p = orderedKeys[i].split(':');
+                        final s = int.tryParse(p[0]) ?? -1;
+                        if (s == currentSurah) {
+                          firstIndexOfCurrentSurah = i;
+                          break;
+                        }
+                      }
+                      // Compute starting ayah number m for the current surah on this page
+                      final String firstKeyOfCurrentSurah = orderedKeys[firstIndexOfCurrentSurah];
+                      final int startAyahNumForCurrentSurah =
+                          int.tryParse(firstKeyOfCurrentSurah.split(':')[1]) ?? 1;
+
+                      final String m = convertToEasternArabicNumerals(startAyahNumForCurrentSurah.toString());
+                      final String n = convertToEasternArabicNumerals(currentAyahNum.toString());
+                      centerLabel = currentAyahNum <= startAyahNumForCurrentSurah
+                          ? m
+                          : '$m–$n';
+                    }
                   }
                 });
                 return CountdownCircle(

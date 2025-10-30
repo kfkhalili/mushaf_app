@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart'; // WHY: Add this import to find your new providers
 import '../utils/helpers.dart';
-import 'line_widget.dart';
+import 'mushaf_line.dart';
 import '../constants.dart'; // Import constants
 import '../models.dart';
 import '../providers/memorization_provider.dart';
@@ -155,3 +155,5 @@ class MushafPageWidget extends ConsumerWidget {
     );
   }
 }
+
+
