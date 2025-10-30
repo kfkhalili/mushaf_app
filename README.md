@@ -1,3 +1,17 @@
+## Git Hooks (Local Safety Nets)
+
+Install local hooks to block bad commits/pushes:
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+What runs on each hook:
+- pre-commit: `dart format --set-exit-if-changed .`, `dart analyze --fatal-infos`, `flutter test -r expanded`
+- pre-push: same checks before pushing
+
+If any step fails, the commit/push is aborted.
+
 # mushaf_app
 
 A new Flutter project.

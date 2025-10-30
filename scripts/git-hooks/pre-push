@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-push] Formatting check..."
+dart format --set-exit-if-changed .
+
+echo "[pre-push] Static analysis (fatal infos)..."
+dart analyze --fatal-infos
+
+echo "[pre-push] Running tests..."
+flutter test -r expanded
+
+echo "[pre-push] OK"
+
+
