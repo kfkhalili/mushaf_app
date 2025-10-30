@@ -22,9 +22,9 @@ The Mushaf app uses a sophisticated font system with page-specific fonts for aut
 - `surah-name-v4.ttf` - Surah name glyphs
 - `quran-common.ttf` - Common Quran characters (Basmallah, etc.)
 
-### Static Fonts (`fonts/`)
+### Static Fonts
 
-- `QPCV2.ttf` - Fallback font for Quran text
+- For Surah names and common glyphs, fonts are predeclared in pubspec
 
 ## Font Configuration
 
@@ -54,32 +54,42 @@ See [services/font_service.dart](mdc:lib/services/font_service.dart) for impleme
 ### Font Loading Pattern
 
 ```dart
-Future<String> loadFontForPage(int pageNumber) async {
-  final fontName = 'QCF_P${pageNumber.toString().padLeft(3, '0')}';
+Future<String> loadFontForPage(
+  int pageNumber, {
+  MushafLayout layout = MushafLayout.uthmani15Lines,
+}) async {
+  // Cache key combines layout and page
+  final String cacheKey = '${layout.name}_$pageNumber';
+  final String? cached = _loadedFonts[cacheKey];
+  if (cached != null) return cached;
 
-  // Check cache first
-  if (_loadedFonts.contains(fontName)) {
-    return fontName;
+  String pageFontFamily;
+  String fontAssetPath;
+
+  switch (layout) {
+    case MushafLayout.uthmani15Lines:
+      pageFontFamily = 'Page$pageNumber';
+      fontAssetPath = 'assets/fonts/qpc-v2-page-by-page-fonts/p$pageNumber.ttf';
+      break;
+    case MushafLayout.indopak13Lines:
+      pageFontFamily = indopakFontFamily; // single font for all pages
+      fontAssetPath = 'assets/fonts/indopak-font.ttf';
+      break;
   }
 
-  // Load font from assets
-  final fontPath = 'assets/fonts/qpc-v2-page-by-page-fonts/$fontName.ttf';
-  final ByteData data = await rootBundle.load(fontPath);
-  final fontLoader = FontLoader(fontName);
-  fontLoader.addFont(Future.value(data));
+  final fontLoader = FontLoader(pageFontFamily);
+  fontLoader.addFont(rootBundle.load(fontAssetPath));
   await fontLoader.load();
 
-  _loadedFonts.add(fontName);
-  return fontName;
+  _loadedFonts[cacheKey] = pageFontFamily;
+  return pageFontFamily;
 }
 ```
 
-### Font Naming Convention
+### Font Naming and Assets
 
-Page-specific fonts follow the pattern: `QCF_P001`, `QCF_P002`, ..., `QCF_P604`
-
-- Always 3-digit zero-padded page numbers
-- 604 total pages in the Mushaf
+- Uthmani: runtime family names are `Page1`..`Page604`; asset files: `p1.ttf`..`p604.ttf`
+- Indopak: runtime family is `IndopakFont`; asset file: `assets/fonts/indopak-font.ttf`
 
 ## Font Usage in Widgets
 
@@ -92,7 +102,7 @@ const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
 ```
 
-**Note**: There is no fallback font for Quran text. Page-specific fonts must load successfully or the app will display an error.
+**Note**: There is no fallback font for Quran text. Uthmani requires page fonts; Indopak uses its own single font.
 
 ### Applying Page-Specific Fonts
 
@@ -146,13 +156,18 @@ Assets must be declared in [pubspec.yaml](mdc:pubspec.yaml):
 flutter:
   assets:
     - assets/db/uthmani-15-lines.db
+    - assets/db/indopak-13-lines-layout-qudratullah.db
     - assets/db/qpc-v2.db
+    - assets/db/indopak-nastaleeq.db
     - assets/db/quran-metadata-surah-name.sqlite
     - assets/db/quran-metadata-juz.sqlite
     - assets/db/quran-metadata-hizb.sqlite
+    - assets/db/imlaei-simple.db
+    - assets/db/imlaei-script-ayah-by-ayah.db
     - assets/fonts/qpc-v2-page-by-page-fonts/
     - assets/fonts/surah-name-v4.ttf
     - assets/fonts/quran-common.ttf
+    - assets/fonts/indopak-font.ttf
 ```
 
 **Note**: Directory paths end with `/` to include all files in the directory.

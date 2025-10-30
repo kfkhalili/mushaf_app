@@ -32,14 +32,25 @@ class CurrentPage extends _$CurrentPage {
 }
 ```
 
-### Simple Provider Pattern
+### Service Notifier Pattern (current)
 
-Use unified `Ref` type for all providers (not `ProviderRef`, not `WidgetRef`):
+Prefer a notifier for services that need initialization and switching (e.g., layout):
 
 ```dart
 @Riverpod(keepAlive: true)
-DatabaseService databaseService(Ref ref) {
-  return DatabaseService();
+class DatabaseServiceNotifier extends _$DatabaseServiceNotifier {
+  @override
+  DatabaseService build() {
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    final service = DatabaseService();
+    service.init(layout: layout);
+    return service;
+  }
+
+  Future<void> switchLayout(MushafLayout layout) async {
+    await state.switchLayout(layout);
+    ref.invalidateSelf();
+  }
 }
 ```
 
@@ -61,6 +72,8 @@ Future<PageData> pageData(Ref ref, int pageNumber) async {
 - **`@riverpod`** (lowercase): Auto-disposing providers (page-specific data)
 
 ## Code Generation
+
+All generated code is based on [providers.dart](mdc:lib/providers.dart). Domain facades under `lib/providers/` re-export providers for organization but do not contain codegen annotations.
 
 After modifying [providers.dart](mdc:lib/providers.dart), regenerate with:
 

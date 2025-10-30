@@ -8,32 +8,60 @@ All application constants are centralized in [constants.dart](mdc:lib/constants.
 
 ## Database Constants
 
-Use the `DbConstants` class for all database identifiers:
+Use the `DbConstants` class for all database identifiers (from `lib/constants.dart`):
 
 ```dart
 class DbConstants {
-  // Table Names
+  // --- Table Names ---
   static const String pagesTable = 'pages';
   static const String wordsTable = 'words';
   static const String chaptersTable = 'chapters';
+  static const String juzTable = 'juz';
+  static const String hizbsTable = 'hizbs';
 
-  // Column Names
-  static const String pageNumberCol = 'page_number';
+  // --- Common Columns ---
+  static const String idCol = 'id';
   static const String surahNumberCol = 'surah_number';
+  static const String ayahNumberCol = 'ayah';
+  static const String surahCol = 'surah';
+  static const String pageNumberCol = 'page_number';
+  static const String lineNumberCol = 'line_number';
+  static const String lineTypeCol = 'line_type';
+
+  // --- Pages Table ---
+  static const String firstWordIdCol = 'first_word_id';
+  static const String lastWordIdCol = 'last_word_id';
+  static const String isCenteredCol = 'is_centered';
+
+  // --- Words Table ---
   static const String textCol = 'text';
 
-  // Query Helpers
+  // --- Chapters Table ---
+  static const String nameArabicCol = 'name_arabic';
+  static const String revelationPlaceCol = 'revelation_place';
+
+  // --- Juz & Hizb Tables ---
+  static const String juzNumberCol = 'juz_number';
+  static const String hizbNumberCol = 'hizb_number';
+  static const String firstVerseKeyCol = 'first_verse_key';
+  static const String lastVerseKeyCol = 'last_verse_key';
+
+  // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
 }
 ```
 
 **NEVER hardcode database table or column names** in queries. Always use `DbConstants`.
 
-## File Constants
+## File/Layout Constants
 
 ```dart
 const String layoutDbFileName = 'uthmani-15-lines.db';
+const String indopakLayoutDbFileName = 'indopak-13-lines-layout-qudratullah.db';
 const String scriptDbFileName = 'qpc-v2.db';
+const String indopakScriptDbFileName = 'indopak-nastaleeq.db';
+
+enum MushafLayout { uthmani15Lines, indopak13Lines }
 ```
 
 ## Font Constants
@@ -41,7 +69,7 @@ const String scriptDbFileName = 'qpc-v2.db';
 ```dart
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
-const String fallbackFontFamily = 'QPCV2';
+const String indopakFontFamily = 'IndopakFont';
 ```
 
 Font families are declared in [pubspec.yaml](mdc:pubspec.yaml) under `flutter.fonts`.
@@ -81,11 +109,14 @@ const double minAyahFontSize = 16.0;
 const double maxAyahFontSize = 30.0;
 
 // Line height
-const double baseLineHeight = 2.2;
+const double baseLineHeight = 2.1;
 
 // Padding
 const double pageHorizontalPadding = 16.0;
 const double pageBottomPadding = 45.0;
+const double footerBottomPadding = 16.0;
+const double footerRightPadding = 16.0;
+const double footerLeftPadding = 24.0;
 ```
 
 ## Code Organization Rules
