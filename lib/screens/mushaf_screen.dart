@@ -56,6 +56,16 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     Future.microtask(
       () => ref.read(currentPageProvider.notifier).setPage(widget.initialPage),
     );
+
+    // Reset circle values when memorization session ends
+    ref.listen(memorizationSessionProvider, (prev, next) {
+      if (next == null) {
+        _surahCumulativeEnd = 0;
+        _memorizationStartPage = null;
+        _startAyahNumberOnStartPage = null;
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -224,7 +234,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                           session != null &&
                           session.pageNumber == page;
                       if (isBetaMemorizing) {
-                        memorizationIconFlashTick.value = memorizationIconFlashTick.value + 1;
+                        // Flash multiple times to reinforce the hint
+                        flashMemorizationIcon(times: 3);
                       }
                     },
                     onHorizontalDragUpdate: (details) {
