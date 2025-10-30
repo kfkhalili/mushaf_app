@@ -6,6 +6,7 @@ import '../widgets/page_list_view.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
+import 'search_screen.dart';
 
 class SelectionScreen extends ConsumerStatefulWidget {
   const SelectionScreen({super.key});
@@ -73,12 +74,9 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             AppHeader(
               title: _getScreenTitle(currentIndex),
               onSearchPressed: () {
-                // TODO: Implement search functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Search functionality coming soon'),
-                  ),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
               },
             ),
             Expanded(

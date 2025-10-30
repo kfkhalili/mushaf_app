@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -82,7 +83,11 @@ class SearchService {
       _isInitialized = true;
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing SearchService: $e');
+        developer.log(
+          'Error initializing SearchService',
+          name: 'SearchService',
+          error: e,
+        );
       }
       rethrow;
     }
@@ -172,7 +177,7 @@ class SearchService {
       return results;
     } catch (e) {
       if (kDebugMode) {
-        print('Error searching text: $e');
+        developer.log('Error searching text', name: 'SearchService', error: e);
       }
       return [];
     }
@@ -273,10 +278,11 @@ class SearchService {
 
       // Debug: Check if text contains diacritics
       if (kDebugMode && ayahNumber <= 3) {
-        print(
+        developer.log(
           'Verse $verseKey: Text contains diacritics = ${verseText != _stripDiacritics(verseText)}',
+          name: 'SearchService',
         );
-        print('  Text: $verseText');
+        developer.log('  Text: $verseText', name: 'SearchService');
       }
 
       // Get Surah name
@@ -325,7 +331,11 @@ class SearchService {
       return pageNumber;
     } catch (e) {
       if (kDebugMode) {
-        print('Error getting page for verse $verseKey: $e');
+        developer.log(
+          'Error getting page for verse $verseKey',
+          name: 'SearchService',
+          error: e,
+        );
       }
       // Fallback: return page 1
       _verseToPageCache[verseKey] = 1;
