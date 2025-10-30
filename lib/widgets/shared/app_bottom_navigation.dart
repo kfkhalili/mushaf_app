@@ -208,7 +208,9 @@ class AppBottomNavigation extends ConsumerWidget {
           tooltip: tooltip,
           color: color,
           icon: Icon(
-            active ? FlutterIslamicIcons.quran2 : FlutterIslamicIcons.quran,
+            active
+                ? FlutterIslamicIcons.solidQuran2
+                : FlutterIslamicIcons.quran2,
             size: kBottomNavIconSize,
           ),
           onPressed: () async {
