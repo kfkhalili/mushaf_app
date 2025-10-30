@@ -141,7 +141,7 @@ class AppHeader extends StatelessWidget {
       // Split the title into parts
       final parts = _splitTitleIntoParts(title);
 
-      // Calculate responsive font sizes like in mushaf_page_widget.dart
+      // Calculate responsive font sizes like in mushaf_page.dart
       final double screenWidth = MediaQuery.of(context).size.width;
       final double screenHeight = MediaQuery.of(context).size.height;
       final double widthScale = screenWidth / referenceScreenWidth;

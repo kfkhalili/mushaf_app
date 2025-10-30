@@ -9,10 +9,10 @@ import '../constants.dart'; // Import constants
 import '../models.dart';
 import '../providers/memorization_provider.dart';
 
-class MushafPageWidget extends ConsumerWidget {
+class MushafPage extends ConsumerWidget {
   final int pageNumber;
 
-  const MushafPageWidget({super.key, required this.pageNumber});
+  const MushafPage({super.key, required this.pageNumber});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,7 +111,7 @@ class MushafPageWidget extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: pageData.layout.lines.map((line) {
-                    return LineWidget(
+                    return MushafLine(
                       line: line,
                       pageFontFamily: pageData.pageFontFamily,
                       isMemorizationMode: isMemorizing,

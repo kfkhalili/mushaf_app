@@ -241,7 +241,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                         _savePageToPrefs(newPageNumber);
                       },
                       itemBuilder: (context, index) {
-                        return MushafPageWidget(pageNumber: index + 1);
+                        return MushafPage(pageNumber: index + 1);
                       },
                     ),
                   ),

@@ -6,7 +6,7 @@ import '../constants.dart';
 import '../providers.dart';
 import '../utils/helpers.dart';
 
-class LineWidget extends ConsumerWidget {
+class MushafLine extends ConsumerWidget {
   final LineInfo line;
   final String pageFontFamily;
   final bool isMemorizationMode;
@@ -15,7 +15,7 @@ class LineWidget extends ConsumerWidget {
   // Optional per-ayah opacity map (key: 003:255)
   final Map<String, double>? ayahOpacities;
 
-  const LineWidget({
+  const MushafLine({
     super.key,
     required this.line,
     required this.pageFontFamily,
