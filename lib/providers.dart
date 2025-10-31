@@ -263,11 +263,18 @@ BookmarksService bookmarksService(Ref ref) {
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
 
-// --- Is Page Bookmarked Provider ---
+// --- Is Page Bookmarked Provider --- (Helper for UI status checking)
 @riverpod
 Future<bool> isPageBookmarked(Ref ref, int pageNumber) async {
   final service = ref.watch(bookmarksServiceProvider);
-  return service.isBookmarked(pageNumber);
+  return service.isPageBookmarked(pageNumber);
+}
+
+// --- Is Ayah Bookmarked Provider ---
+@riverpod
+Future<bool> isAyahBookmarked(Ref ref, int surahNumber, int ayahNumber) async {
+  final service = ref.watch(bookmarksServiceProvider);
+  return service.isBookmarked(surahNumber, ayahNumber);
 }
 
 // --- Bookmarks Notifier ---
@@ -279,26 +286,44 @@ class BookmarksNotifier extends _$BookmarksNotifier {
     return service.getAllBookmarks();
   }
 
-  Future<void> toggleBookmark(int pageNumber) async {
+  // Toggle bookmark for specific ayah
+  Future<void> toggleAyahBookmark(int surahNumber, int ayahNumber) async {
     final service = ref.read(bookmarksServiceProvider);
-    final isBookmarked = await service.isBookmarked(pageNumber);
+    final isBookmarked = await service.isBookmarked(surahNumber, ayahNumber);
 
     if (isBookmarked) {
-      await service.removeBookmark(pageNumber);
+      await service.removeBookmark(surahNumber, ayahNumber);
     } else {
-      await service.addBookmark(pageNumber);
+      await service.addBookmark(surahNumber, ayahNumber);
     }
 
     // Invalidate to refresh list
     ref.invalidateSelf();
-    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+    ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
   }
 
-  Future<void> removeBookmark(int pageNumber) async {
+  // Remove bookmark by surah:ayah
+  Future<void> removeBookmark(int surahNumber, int ayahNumber) async {
     final service = ref.read(bookmarksServiceProvider);
-    await service.removeBookmark(pageNumber);
+    await service.removeBookmark(surahNumber, ayahNumber);
     ref.invalidateSelf();
-    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+    ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
+  }
+}
+
+// --- Bookmark Page Number Provider ---
+// Provider for getting page number for a bookmark's ayah in current layout
+@riverpod
+Future<int?> bookmarkPageNumber(
+  Ref ref,
+  int surahNumber,
+  int ayahNumber,
+) async {
+  try {
+    final dbService = ref.watch(databaseServiceProvider);
+    return await dbService.getPageForAyah(surahNumber, ayahNumber);
+  } catch (e) {
+    return null;
   }
 }
 

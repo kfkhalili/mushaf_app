@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
-import '../widgets/bookmark_icon_button.dart';
 import '../providers.dart';
 import '../utils/ui_signals.dart';
 import '../models.dart';
@@ -197,7 +196,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                       ),
                     );
                   },
-                  trailing: BookmarkIconButton(pageNumber: currentPageNumber),
                 ),
                 Expanded(
                   child: GestureDetector(

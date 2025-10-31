@@ -6,14 +6,10 @@ import '../constants.dart';
 class BookmarkIconButton extends ConsumerStatefulWidget {
   final int pageNumber;
 
-  const BookmarkIconButton({
-    super.key,
-    required this.pageNumber,
-  });
+  const BookmarkIconButton({super.key, required this.pageNumber});
 
   @override
-  ConsumerState<BookmarkIconButton> createState() =>
-      _BookmarkIconButtonState();
+  ConsumerState<BookmarkIconButton> createState() => _BookmarkIconButtonState();
 }
 
 class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
@@ -29,10 +25,7 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -47,12 +40,34 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
       _animationController.reverse();
     });
 
-    await ref.read(bookmarksProvider.notifier).toggleBookmark(widget.pageNumber);
+    try {
+      // Get first ayah on page for ayah-based bookmarking
+      final dbService = ref.read(databaseServiceProvider);
+      final firstAyah = await dbService.getFirstAyahOnPage(widget.pageNumber);
+      final surahNumber = firstAyah['surah']!;
+      final ayahNumber = firstAyah['ayah']!;
+
+      await ref
+          .read(bookmarksProvider.notifier)
+          .toggleAyahBookmark(surahNumber, ayahNumber);
+    } catch (e) {
+      // Handle error silently or show snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل حفظ العلامة المرجعية: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final asyncIsBookmarked = ref.watch(isPageBookmarkedProvider(widget.pageNumber));
+    final asyncIsBookmarked = ref.watch(
+      isPageBookmarkedProvider(widget.pageNumber),
+    );
     final theme = Theme.of(context);
     final Color iconColor = theme.brightness == Brightness.dark
         ? Colors.grey.shade400
@@ -73,9 +88,7 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
             return Transform.scale(
               scale: _scaleAnimation.value,
               child: IconButton(
-                tooltip: isBookmarked
-                    ? 'إزالة العلامة المرجعية'
-                    : 'حفظ الصفحة',
+                tooltip: isBookmarked ? 'إزالة العلامة المرجعية' : 'حفظ الصفحة',
                 icon: icon,
                 onPressed: _handleTap,
                 color: isBookmarked ? activeColor : iconColor,
@@ -103,4 +116,3 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
     );
   }
 }
-

@@ -157,7 +157,8 @@ class DbConstants {
 
   // --- Bookmarks Table ---
   static const String bookmarksTable = 'bookmarks';
-  // pageNumberCol is already defined in Common Columns
+  // surahNumberCol and ayahNumberCol are already defined in Common Columns
+  static const String cachedPageNumberCol = 'cached_page_number';
   static const String createdAtCol = 'created_at';
   static const String noteCol = 'note';
 

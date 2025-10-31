@@ -191,30 +191,41 @@ class JuzInfo {
 @immutable
 class Bookmark {
   final int id; // Primary key (auto-increment)
-  final int pageNumber; // The bookmarked page (1-604)
+  final int surahNumber; // Universal - Surah number (1-114)
+  final int ayahNumber; // Universal - Ayah number within surah
+  final int? cachedPageNumber; // Optional: current layout's page (for performance, invalidated on layout change)
   final DateTime createdAt; // When bookmark was created
   final String? note; // Optional user note (future enhancement)
 
   const Bookmark({
     required this.id,
-    required this.pageNumber,
+    required this.surahNumber,
+    required this.ayahNumber,
+    this.cachedPageNumber,
     required this.createdAt,
     this.note,
   });
 
   Bookmark copyWith({
     int? id,
-    int? pageNumber,
+    int? surahNumber,
+    int? ayahNumber,
+    int? cachedPageNumber,
     DateTime? createdAt,
     String? note,
   }) {
     return Bookmark(
       id: id ?? this.id,
-      pageNumber: pageNumber ?? this.pageNumber,
+      surahNumber: surahNumber ?? this.surahNumber,
+      ayahNumber: ayahNumber ?? this.ayahNumber,
+      cachedPageNumber: cachedPageNumber ?? this.cachedPageNumber,
       createdAt: createdAt ?? this.createdAt,
       note: note ?? this.note,
     );
   }
+
+  // Get formatted verse reference (e.g., "2:255")
+  String get verseReference => '$surahNumber:$ayahNumber';
 
   @override
   bool operator ==(Object other) =>
@@ -222,10 +233,11 @@ class Bookmark {
       other is Bookmark &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          pageNumber == other.pageNumber;
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber;
 
   @override
-  int get hashCode => Object.hash(id, pageNumber);
+  int get hashCode => Object.hash(id, surahNumber, ayahNumber);
 }
 
 // --- Reading Session Model ---

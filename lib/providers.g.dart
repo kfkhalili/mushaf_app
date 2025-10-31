@@ -961,7 +961,7 @@ final class IsPageBookmarkedProvider
   }
 }
 
-String _$isPageBookmarkedHash() => r'0d7c921f03339088efadfae111e289eb5a03b2be';
+String _$isPageBookmarkedHash() => r'94928e1b47d14bc4bbcd6a064d09683b1199a757';
 
 final class IsPageBookmarkedFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<bool>, int> {
@@ -979,6 +979,78 @@ final class IsPageBookmarkedFamily extends $Family
 
   @override
   String toString() => r'isPageBookmarkedProvider';
+}
+
+@ProviderFor(isAyahBookmarked)
+const isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
+
+final class IsAyahBookmarkedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  const IsAyahBookmarkedProvider._({
+    required IsAyahBookmarkedFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'isAyahBookmarkedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isAyahBookmarkedHash();
+
+  @override
+  String toString() {
+    return r'isAyahBookmarkedProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return isAyahBookmarked(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsAyahBookmarkedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isAyahBookmarkedHash() => r'01ed3f928ec9087de6e01fbcdbb780ad912539bc';
+
+final class IsAyahBookmarkedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, (int, int)> {
+  const IsAyahBookmarkedFamily._()
+    : super(
+        retry: null,
+        name: r'isAyahBookmarkedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  IsAyahBookmarkedProvider call(int surahNumber, int ayahNumber) =>
+      IsAyahBookmarkedProvider._(
+        argument: (surahNumber, ayahNumber),
+        from: this,
+      );
+
+  @override
+  String toString() => r'isAyahBookmarkedProvider';
 }
 
 @ProviderFor(BookmarksNotifier)
@@ -1005,7 +1077,7 @@ final class BookmarksNotifierProvider
   BookmarksNotifier create() => BookmarksNotifier();
 }
 
-String _$bookmarksNotifierHash() => r'1e6977ec67f16b249c71ff8ed2d240185be06785';
+String _$bookmarksNotifierHash() => r'8edc2e438198b13d23b31b04eb9d5b19665cde5b';
 
 abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
   FutureOr<List<Bookmark>> build();
@@ -1024,6 +1096,79 @@ abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
             >;
     element.handleValue(ref, created);
   }
+}
+
+@ProviderFor(bookmarkPageNumber)
+const bookmarkPageNumberProvider = BookmarkPageNumberFamily._();
+
+final class BookmarkPageNumberProvider
+    extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
+    with $FutureModifier<int?>, $FutureProvider<int?> {
+  const BookmarkPageNumberProvider._({
+    required BookmarkPageNumberFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'bookmarkPageNumberProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$bookmarkPageNumberHash();
+
+  @override
+  String toString() {
+    return r'bookmarkPageNumberProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int?> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return bookmarkPageNumber(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BookmarkPageNumberProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$bookmarkPageNumberHash() =>
+    r'55be274e051ebfe795ac30ea4528b45111a875af';
+
+final class BookmarkPageNumberFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<int?>, (int, int)> {
+  const BookmarkPageNumberFamily._()
+    : super(
+        retry: null,
+        name: r'bookmarkPageNumberProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  BookmarkPageNumberProvider call(int surahNumber, int ayahNumber) =>
+      BookmarkPageNumberProvider._(
+        argument: (surahNumber, ayahNumber),
+        from: this,
+      );
+
+  @override
+  String toString() => r'bookmarkPageNumberProvider';
 }
 
 @ProviderFor(readingProgressService)

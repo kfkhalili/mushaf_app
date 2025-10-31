@@ -209,6 +209,12 @@ class DatabaseService {
   }
 
   /// Determines the first Surah and Ayah number that appears on a given page.
+  /// Public method for use by bookmarks service migration.
+  Future<Map<String, int>> getFirstAyahOnPage(int pageNumber) async {
+    return await _getFirstAyahOnPage(pageNumber);
+  }
+
+  /// Determines the first Surah and Ayah number that appears on a given page.
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {

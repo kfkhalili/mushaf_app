@@ -1,11 +1,11 @@
 # Bookmarks Feature Specification
 
-**Version:** 3.0 (Ayah-Based Implementation)
+**Version:** 4.0 (Long-Press Ayah Bookmarking)
 **Date:** January 2025
 **Status:** 📋 Ready for Implementation
 **Priority:** High (Quarter 1)
 
-**Note:** This specification reflects the **ayah-based bookmarking** approach for universal, layout-independent bookmarks. This is an upgrade from the previous page-based implementation.
+**Note:** This specification reflects the **ayah-based bookmarking** approach with **long-press interaction** for precise, intentional bookmark creation. Bookmarks are stored at the ayah-level (surah:ayah) for universal, layout-independent bookmarks.
 
 ---
 
@@ -18,11 +18,13 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
 ### 1.2 Goals
 
 - **Universal Bookmarks:** Store bookmarks at ayah-level (surah:ayah) for perfect cross-layout compatibility
-- **Quick Access:** Enable users to bookmark the current page (first ayah) with a single tap
+- **Precise Interaction:** Enable users to bookmark specific ayat through long-press gesture on the text
+- **Intentional Bookmarking:** Require explicit user action (long-press) to ensure purposeful bookmark creation
+- **Visual Feedback:** Highlight selected ayah and provide clear confirmation when bookmarked
 - **Precise Navigation:** Navigate to exact verse content, regardless of layout or page number differences
 - **Visual Organization:** Provide beautiful, intuitive interface showing verse references (e.g., "٢:٢٥٥")
 - **Persistence:** Save bookmarks locally with reliable storage and migration from page-based bookmarks
-- **Seamless Integration:** Integrate naturally into existing app navigation
+- **Seamless Integration:** Integrate naturally into existing app navigation without interfering with reading flow
 - **Performance:** Fast access and minimal overhead
 
 ### 1.3 Success Metrics
@@ -38,17 +40,19 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
 
 ### Primary Stories
 
-1. **As a user**, I want to bookmark the current page while reading, so I can return to the same verse later (regardless of layout)
-2. **As a user**, I want to see all my bookmarked verses in one place, so I can quickly find what I'm looking for
-3. **As a user**, I want to remove bookmarks I no longer need, so my list stays organized
-4. **As a user**, I want to navigate directly to a bookmarked verse, so I can continue reading from the exact same content (works across all layouts)
-5. **As a user**, I want to see context about each bookmark (verse reference like "٢:٢٥٥", surah name, page number in current layout, date), so I can identify it easily
+1. **As a user**, I want to long-press on a specific ayah to bookmark it, so I can save the exact verse I'm interested in
+2. **As a user**, I want to see the ayah I'm bookmarking highlighted, so I can confirm I selected the correct verse
+3. **As a user**, I want to see all my bookmarked verses in one place, so I can quickly find what I'm looking for
+4. **As a user**, I want to remove bookmarks I no longer need, so my list stays organized
+5. **As a user**, I want to navigate directly to a bookmarked verse, so I can continue reading from the exact same content (works across all layouts)
+6. **As a user**, I want to see context about each bookmark (verse reference like "٢:٢٥٥", surah name, page number in current layout, date), so I can identify it easily
 
 ### Secondary Stories
 
-6. **As a user**, I want to see how many bookmarks I have, so I understand my collection size
-7. **As a user**, I want to access bookmarks from multiple entry points (header, settings), so I can use them whenever convenient
-8. **As a user**, I want bookmarks to persist across app sessions, so I don't lose my saved pages
+7. **As a user**, I want to see how many bookmarks I have, so I understand my collection size
+8. **As a user**, I want to access bookmarks from the Selection Screen header, so I can view my saved verses easily
+9. **As a user**, I want bookmarks to persist across app sessions, so I don't lose my saved verses
+10. **As a user**, I want clear visual feedback when I bookmark an ayah, so I know the action succeeded
 
 ---
 
@@ -56,24 +60,52 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
 
 ### 3.1 Core Functionality
 
-#### 3.1.1 Bookmark Creation
+#### 3.1.1 Bookmark Creation (Long-Press on Ayah)
 
-- **Trigger:** Tap bookmark icon in app header (when viewing Mushaf Screen)
-- **Action:**
-  - Determine first ayah on current page using `_getFirstAyahOnPage(pageNumber)`
-  - Extract surah number and ayah number
-  - Toggle bookmark state for that ayah (add if not bookmarked, remove if already bookmarked)
-  - Show visual feedback (icon change, brief animation)
-  - Save ayah reference (surah:ayah) to persistent storage immediately
+- **Trigger:** User long-presses on any ayah text in Mushaf Screen
+- **Long-Press Duration:** 400-500ms (standard Flutter gesture)
+- **Action Flow:**
+
+  1. Detect long-press gesture on ayah text
+  2. Identify which ayah was pressed (ayah boundary detection)
+  3. Highlight the selected ayah (visual feedback)
+  4. Show context menu with "Bookmark" option
+  5. User taps "Bookmark" in menu
+  6. Save ayah reference (surah:ayah) to persistent storage
+  7. Show confirmation feedback (snackbar or brief animation)
+  8. Remove highlight after confirmation
+
+- **Ayah Detection:**
+
+  - Detect which ayah contains the tap coordinates
+  - Use page layout data to determine ayah boundaries
+  - Handle edge cases (tap between ayat, partial ayah visibility)
+  - If ambiguous, use the ayah whose center is closest to tap point
+
+- **Visual Feedback:**
+
+  - **Highlight:** Selected ayah highlighted with subtle background color (primary color at 15-20% opacity)
+  - **Context Menu:** Appears near tap location (or centered if space constrained)
+  - **Menu Options:**
+    - "Bookmark" (primary action) - Bookmark icon + text
+    - Future: "Share", "Copy", "Notes" (out of scope for v1)
+  - **Confirmation:** Brief snackbar: "تم حفظ الآية" / "Ayah bookmarked" (1.5-2 seconds)
+
 - **Behavior:**
+
   - Bookmark is stored as surah:ayah pair (e.g., 2:255), not page number
-  - If same ayah already bookmarked: Remove bookmark (unbookmark)
+  - If same ayah already bookmarked: Toggle off (unbookmark) - show "Remove bookmark" option
   - If ayah not bookmarked: Add bookmark
-  - Provide immediate visual feedback
-- **Storage:** Save ayah reference (surah_number, ayah_number) to SQLite database
+  - Highlight and menu dismissed automatically after bookmarking or tapping elsewhere
+
+- **Storage:** Save ayah reference (surah_number, ayah_number) to SQLite database immediately
+
 - **Edge Cases:**
-  - Page starts with surah name → Assume ayah 1 of that surah
-  - Multiple ayat on page → Bookmark first ayah (most conservative)
+  - **Tap between ayat:** Select the ayah whose center is closest to tap point
+  - **Partial ayah visibility:** Select the visible portion's ayah
+  - **Long-press during swipe:** Ignore if swipe is in progress (prevent accidental bookmarks)
+  - **Multiple ayat selected:** Only bookmark the ayah containing the tap point
+  - **No ayah detected:** Show error: "لم يتم العثور على آية" / "Ayah not found"
 
 #### 3.1.2 Bookmark Display
 
@@ -106,22 +138,19 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
 
 #### 3.1.4 Bookmark Removal
 
-- **Method 1:** Tap bookmark icon again while on the bookmarked page (toggle off)
-- **Method 2:** Swipe-to-delete in bookmark list
-- **Method 3:** Long-press menu with delete option
-- **Confirmation:** Optional (can be disabled in settings) - subtle snackbar "Bookmark removed"
+- **Method 1:** Long-press on already-bookmarked ayah → Context menu shows "Remove bookmark" → Tap to unbookmark
+- **Method 2:** Swipe-to-delete in bookmark list (RTL swipe right to reveal delete)
+- **Method 3:** Long-press menu on bookmark item in list → Delete option
+- **Confirmation:** Subtle snackbar "تم حذف العلامة المرجعية" / "Bookmark removed" (1.5-2 seconds)
 
 #### 3.1.5 Bookmark Status Indication
 
-- **In Header:** Bookmark icon shows filled/outlined state based on whether the first ayah of the current page is bookmarked
-- **Status Logic:**
-  1. Get first ayah on current page: `_getFirstAyahOnPage(pageNumber)`
-  2. Check if that ayah is bookmarked: `isBookmarked(surah, ayah)`
-  3. Display appropriate icon state
-- **Visual Feedback:**
-  - Outlined icon: Ayah not bookmarked
-  - Filled icon: Ayah is bookmarked
-  - Animation: Brief scale/fill animation when toggling
+- **Visual Indicator on Ayah:** When viewing a page, ayat that are already bookmarked should show a subtle visual indicator
+  - **Option 1 (Recommended):** Small bookmark icon in corner of bookmarked ayah
+  - **Option 2:** Subtle colored border or background tint on bookmarked ayat
+  - **Option 3:** Only show indicator on hover/long-press (minimal visual clutter)
+- **Context Menu State:** When long-pressing a bookmarked ayah, menu shows "Remove bookmark" instead of "Bookmark"
+- **List View:** Bookmarks list shows all bookmarked ayat with clear visual distinction
 
 ### 3.2 UI/UX Requirements
 
@@ -185,7 +214,7 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
 - **Selection Screen:** Tap icon to navigate to Bookmarks screen/list
 - Icon state updates immediately with animation (Mushaf only)
 
-#### 3.2.2 Bookmarks Screen
+#### 3.2.3 Bookmarks Screen
 
 **Access Point:**
 
@@ -335,35 +364,42 @@ The Bookmarks feature allows users to save and quickly access their favorite ver
   - Smooth animation: 300ms
   - Use `Dismissible` widget with `direction: DismissDirection.endToStart` for RTL
 
-#### 3.2.3 Navigation Flow
+#### 3.2.4 Navigation Flow
 
-**Creating Bookmark (RTL Flow):**
+**Creating Bookmark (Long-Press Flow):**
 
 ```
-Mushaf Screen (الصفحة ١٥)
-  → Tap bookmark icon in header (left side in RTL)
-  → Icon fills and animates
-  → Snackbar: "تم حفظ الصفحة" / "Page bookmarked" (optional, can disable)
-  → Bookmark saved to database
+Mushaf Screen - User reading Quran
+  → User long-presses on specific ayah (400-500ms)
+  → Ayah highlights (visual feedback)
+  → Context menu appears near tap location
+  → User taps "Bookmark" / "حفظ" option
+  → Ayah bookmarked (surah:ayah saved to database)
+  → Snackbar: "تم حفظ الآية" / "Ayah bookmarked"
+  → Highlight and menu dismissed
 ```
 
 **Accessing Bookmarks (RTL Flow):**
 
 ```
 Selection Screen
-  → Tap filled grey bookmark icon in header (RIGHT side, separated from Settings/Search)
+  → Tap filled grey bookmark icon in header (right side, separated from Settings/Search)
   → Navigate to Bookmarks Screen (full screen)
   → Tap bookmark item (right-aligned content)
-  → Navigate to Mushaf Screen at bookmarked page
+  → Navigate to Mushaf Screen at bookmarked ayah's page
 ```
 
 **Removing Bookmark (RTL Flow):**
 
 ```
-Option A: From Mushaf Screen
-  → Tap filled bookmark icon
-  → Icon unfills and animates
+Option A: From Mushaf Screen (Long-Press on Bookmarked Ayah)
+  → User long-presses on already-bookmarked ayah
+  → Ayah highlights, context menu appears
+  → Menu shows "Remove bookmark" / "إزالة العلامة المرجعية"
+  → User taps "Remove bookmark"
   → Bookmark removed from database
+  → Snackbar: "تم حذف العلامة المرجعية" / "Bookmark removed"
+  → Highlight and menu dismissed
 
 Option B: From Bookmarks List (RTL Swipe)
   → Swipe bookmark item right (RTL direction)
@@ -437,6 +473,7 @@ class Bookmark {
 ```
 
 **Key Changes:**
+
 - ❌ Removed: `pageNumber` (layout-dependent)
 - ✅ Added: `surahNumber` + `ayahNumber` (universal)
 - ✅ Added: Optional `cachedPageNumber` (performance optimization)
@@ -446,14 +483,14 @@ class Bookmark {
 
 **Table: `bookmarks` (Updated for Ayah-Based)**
 
-| Column             | Type    | Constraints                      | Description                        |
-| ------------------ | ------- | -------------------------------- | ---------------------------------- |
-| `id`               | INTEGER | PRIMARY KEY AUTOINCREMENT        | Unique identifier                  |
-| `surah_number`     | INTEGER | NOT NULL                         | Surah number (1-114)              |
-| `ayah_number`      | INTEGER | NOT NULL                         | Ayah number within surah          |
-| `cached_page_number` | INTEGER | NULL                          | Optional: current layout's page    |
-| `created_at`       | TEXT    | NOT NULL                         | ISO 8601 timestamp                 |
-| `note`             | TEXT    | NULL                             | Optional user note                |
+| Column               | Type    | Constraints               | Description                     |
+| -------------------- | ------- | ------------------------- | ------------------------------- |
+| `id`                 | INTEGER | PRIMARY KEY AUTOINCREMENT | Unique identifier               |
+| `surah_number`       | INTEGER | NOT NULL                  | Surah number (1-114)            |
+| `ayah_number`        | INTEGER | NOT NULL                  | Ayah number within surah        |
+| `cached_page_number` | INTEGER | NULL                      | Optional: current layout's page |
+| `created_at`         | TEXT    | NOT NULL                  | ISO 8601 timestamp              |
+| `note`               | TEXT    | NULL                      | Optional user note              |
 
 **Constraints:**
 
@@ -537,6 +574,7 @@ abstract class BookmarksService {
 **Implementation Details:**
 
 - **`addBookmark(surah, ayah)`:**
+
   - Validates surah (1-114) and ayah numbers
   - Stores surah:ayah pair (unique constraint prevents duplicates)
   - Optionally calculates and stores `cached_page_number` for current layout
@@ -644,6 +682,7 @@ class BookmarksNotifier extends _$BookmarksNotifier {
 ```
 
 **Usage:**
+
 - Access list: `ref.watch(bookmarksProvider)` (auto-generated from `BookmarksNotifier`)
 - Toggle bookmark for current page: `ref.read(bookmarksProvider.notifier).togglePageBookmark(pageNumber)`
 - Toggle bookmark for specific ayah: `ref.read(bookmarksProvider.notifier).toggleAyahBookmark(surah, ayah)`
@@ -653,22 +692,46 @@ class BookmarksNotifier extends _$BookmarksNotifier {
 
 ## 6. UI Components
 
-### 6.1 Header Bookmark Icon
+### 6.1 Long-Press Gesture on Ayah
+
+**Location:** `lib/widgets/mushaf_page_widget.dart` and `lib/widgets/line_widget.dart`
+
+**Implementation:**
+
+Each ayah widget must support long-press gesture detection:
+
+```dart
+GestureDetector(
+  onLongPress: () {
+    // Detect which ayah was pressed
+    final selectedAyah = detectAyahFromTap(tapPosition);
+    // Show highlight and context menu
+    showAyahContextMenu(selectedAyah);
+  },
+  child: AyahWidget(ayah: ayah),
+)
+```
+
+**Key Requirements:**
+
+- Each ayah text widget wrapped in `GestureDetector` or `InkWell`
+- Detect tap coordinates to identify specific ayah
+- Use page layout data to determine ayah boundaries
+- Handle edge cases (tap between ayat, partial visibility)
+
+**Ayah Detection Logic:**
+
+- Get tap position from gesture recognizer
+- Query page layout to find ayah containing tap coordinates
+- Use `getAyahAtPosition(x, y)` helper method
+- If ambiguous (between ayat), select ayah whose center is closest
+
+**Selection Screen Header Icon:**
 
 **Location:** `lib/widgets/shared/app_header.dart`
 
-**Actual Implementation:**
+**Implementation:**
 
-The `AppHeader` widget supports bookmarks in two ways:
-1. **Via `trailing` parameter:** For Mushaf Screen (dynamic bookmark state using `BookmarkIconButton`)
-2. **Via `onBookmarkPressed` callback:** For Selection Screen (navigation to BookmarksScreen)
-
-**AppHeader Parameters:**
-- `onBookmarkPressed?: VoidCallback` - Callback for Selection Screen navigation
-- `trailing?: Widget` - Custom widget for Mushaf Screen (BookmarkIconButton)
-- Conditional rendering: Icon shown when `onBookmarkPressed != null && trailing == null`
-
-**Selection Screen Implementation:**
 ```dart
 AppHeader(
   title: _getScreenTitle(currentIndex),
@@ -681,21 +744,15 @@ AppHeader(
 )
 ```
 
-**Mushaf Screen Implementation:**
-```dart
-AppHeader(
-  title: asyncPageData.when(...),
-  trailing: BookmarkIconButton(pageNumber: currentPageNumber),
-)
-```
-
 **Selection Screen Icon Details:**
+
 - Position: **Right side** of header Row (after title Expanded, before back button if present)
 - Icon: Always filled `Icons.bookmark`
 - Size: `kAppHeaderIconSize` (24.0)
 - Color: Grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light) - matches Settings/Search
 - Tooltip: "العلامات المرجعية"
 - Behavior: Navigates to `BookmarksScreen` on tap
+- **Note:** NO bookmark icon on Mushaf Screen header - bookmarking done via long-press only
 
 ### 6.2 Bookmarks Screen
 
@@ -704,6 +761,7 @@ AppHeader(
 **Actual Implementation:**
 
 **Structure:**
+
 ```dart
 Scaffold(
   body: SafeArea(
@@ -726,6 +784,7 @@ Scaffold(
 ```
 
 **Features:**
+
 - Full screen dedicated to bookmarks list
 - Uses `AppHeader` with `showBackButton: true`
 - Empty title string
@@ -739,6 +798,7 @@ Scaffold(
 **Actual Implementation:**
 
 **Features:**
+
 - List of bookmark cards using `ListView.builder`
 - Swipe-to-delete gesture (implemented in `BookmarkItemCard`)
 - Empty state widget (`_EmptyBookmarksState`)
@@ -747,6 +807,7 @@ Scaffold(
 - RTL text direction set at parent level (`BookmarksScreen`)
 
 **Implementation:**
+
 ```dart
 ConsumerWidget(
   build: (context, ref) {
@@ -770,12 +831,14 @@ ConsumerWidget(
 ```
 
 **Empty State:**
+
 - Icon: `Icons.bookmark_border` (64px, muted color)
 - Title: "لا توجد علامات مرجعية بعد" (20px, bold)
 - Description: "ابدأ القراءة واحفظ صفحاتك المفضلة للوصول إليها بسرعة لاحقاً" (16px)
 - Action Button: "ابدأ القراءة" (navigates to MushafScreen page 1)
 
 **Error State:**
+
 - Icon: `Icons.error_outline` (48px, error color)
 - Message: "حدث خطأ أثناء تحميل العلامات المرجعية" (Arabic)
 
@@ -786,6 +849,7 @@ ConsumerWidget(
 **Actual Implementation:**
 
 **Features:**
+
 - RTL layout using `textDirection: TextDirection.rtl`
 - Swipe-to-delete with `Dismissible` widget
 - Dismiss direction: `DismissDirection.endToStart` (swipe right to delete in RTL)
@@ -841,6 +905,7 @@ Card(
 ```
 
 **RTL Layout Notes (Actual Implementation):**
+
 - Card wrapped in `Directionality(textDirection: TextDirection.rtl)` at parent level (`BookmarksListView`)
 - Content Column uses `crossAxisAlignment: CrossAxisAlignment.start` (which is RTL natural start = right side visually)
 - Text widgets use `textAlign: TextAlign.left` (which aligns to RTL start = right side visually)
@@ -849,16 +914,19 @@ Card(
 - Swipe gesture: Swipe **right** to reveal delete button on **left** side
 
 **Content Display (Updated for Ayah-Based):**
+
 - **Line 1:** Bookmark icon (20px) + **Verse reference** (22px, e.g., "٢:٢٥٥") + **Page number in parentheses** (optional, e.g., "(الصفحة ٣٠٢)")
 - **Line 2:** Surah name glyph (28px, surah font) or loading indicator
 - **Line 3:** Relative date (15px, right-aligned, muted color)
 
 **Display Format:**
+
 - Primary: Verse reference (e.g., "٢:٢٥٥" - Surah 2, Ayah 255)
 - Secondary: Page number in parentheses (dynamically calculated for current layout)
 - Example: "٢:٢٥٥ (الصفحة ٣٠٢)" or just "٢:٢٥٥" if page number not shown
 
 **Data Source:**
+
 - Verse reference: From bookmark model (`bookmark.verseReference` or `bookmark.surahNumber:bookmark.ayahNumber`)
 - Page number: Calculate using `getPageForAyah(bookmark.surahNumber, bookmark.ayahNumber)` for current layout
 - Uses `pageDataProvider(pageNumber)` to fetch page data for surah glyph display
@@ -866,73 +934,66 @@ Card(
 - Date formatted using `formatRelativeDate()` helper function (`lib/utils/helpers.dart`)
 
 **Swipe-to-Delete:**
+
 - Uses `Dismissible` widget with `DismissDirection.endToStart` (swipe right in RTL)
 - Background: Red container with `Icons.delete_outline` on left side
 - On dismiss: Calls `removeBookmark(surahNumber, ayahNumber)` and shows Arabic snackbar "تم حذف العلامة المرجعية"
 - No confirmation dialog (direct deletion)
 
-### 6.5 Bookmark Icon Button
+### 6.5 Ayah Context Menu Widget
 
-**File:** `lib/widgets/bookmark_icon_button.dart`
+**File:** `lib/widgets/ayah_context_menu.dart` (new file)
 
-**Actual Implementation:**
+**Widget:** `AyahContextMenu` extends `StatelessWidget`
 
-**Widget:** `BookmarkIconButton` extends `ConsumerStatefulWidget`
+**Features:**
 
-**Features (Updated for Ayah-Based):**
-- Dynamic icon state based on whether first ayah of current page is bookmarked
-- Scale animation on toggle (1.0 → 1.2 → 1.0)
-- Watches `isPageBookmarkedProvider(pageNumber)` for reactive state (internally checks ayah)
-- Handles toggle via `BookmarksNotifier.togglePageBookmark(pageNumber)` (determines ayah first)
-- Loading state: Shows outlined icon, disabled
-- Error state: Shows outlined icon, still clickable
+- Context menu displayed after long-press on ayah
+- RTL-aware positioning near tap location
+- Shows bookmark/unbookmark option based on current state
+- Dismissible on tap outside or back button
 
 **Implementation Details:**
-```dart
-class BookmarkIconButton extends ConsumerStatefulWidget {
-  final int pageNumber;
 
-  // Uses SingleTickerProviderStateMixin for animation
-  AnimationController _animationController;
-  Animation<double> _scaleAnimation; // 1.0 to 1.2
+```dart
+class AyahContextMenu extends StatelessWidget {
+  final int surahNumber;
+  final int ayahNumber;
+  final bool isBookmarked;
+  final Offset tapPosition;
+  final VoidCallback onDismiss;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncIsBookmarked = ref.watch(isPageBookmarkedProvider(pageNumber));
-
-    return asyncIsBookmarked.when(
-      data: (isBookmarked) {
-        return AnimatedBuilder(
-          animation: _scaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: IconButton(
-                icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border),
-                color: isBookmarked ? primaryColor : greyColor,
-                onPressed: _handleTap,
-              ),
-            );
-          },
-        );
-      },
-      loading: () => IconButton(icon: outlined icon, onPressed: null),
-      error: (_, __) => IconButton(icon: outlined icon, onPressed: _handleTap),
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+      position: PopupMenuPosition.over, // Position near tap
+      child: Container(), // Transparent overlay
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          child: Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Icon(isBookmarked ? Icons.bookmark_remove : Icons.bookmark),
+              const SizedBox(width: 8),
+              Text(isBookmarked ? 'إزالة العلامة المرجعية' : 'حفظ'),
+            ],
+          ),
+          onTap: () => _handleBookmark(),
+        ),
+      ],
     );
   }
 }
 ```
 
-**Animation:**
-- Duration: 200ms
-- Curve: `Curves.easeInOut`
-- Trigger: On tap (forward then reverse)
+**Alternative:** Use `Overlay` widget for more control over positioning and styling
 
-**Icon States:**
-- Not bookmarked: `Icons.bookmark_border` (grey)
-- Bookmarked: `Icons.bookmark` (primary color)
-- Tooltip: "حفظ الصفحة" / "إزالة العلامة المرجعية"
-- Size: `kAppHeaderIconSize` (24.0)
+**Styling:**
+
+- Rounded corners (16px radius)
+- Shadow/elevation for depth
+- RTL text direction
+- Theme-aware colors
 
 ---
 
@@ -956,57 +1017,63 @@ class BookmarkIconButton extends ConsumerStatefulWidget {
 
 **File:** `lib/screens/mushaf_screen.dart`
 
-**Actual Implementation:**
+**Integration (Long-Press Approach):**
 
-**Integration (Updated for Ayah-Based):**
-1. Uses `BookmarkIconButton` widget via `AppHeader.trailing` parameter
-2. Passes `currentPageNumber` from `ref.watch(currentPageProvider)`
-3. No manual provider watching needed (handled by `BookmarkIconButton` internally)
-4. No manual invalidation needed (handled by `BookmarksNotifier`)
+**Key Changes:**
 
-**Code:**
+1. **REMOVE** `BookmarkIconButton` widget from `AppHeader.trailing` parameter
+2. **REMOVE** bookmark icon from Mushaf Screen header
+3. **ADD** long-press gesture detection to ayah widgets in `MushafPageWidget`
+
+**Mushaf Screen Header:**
+
 ```dart
 AppHeader(
   title: asyncPageData.when(...),
-  trailing: BookmarkIconButton(pageNumber: currentPageNumber),
+  // NO trailing parameter - no bookmark icon
 )
 ```
 
-**BookmarkIconButton** handles (Updated):
-- Watching `isPageBookmarkedProvider(pageNumber)` (internally checks first ayah on page)
-- Displaying correct icon state based on ayah bookmark status
-- Handling tap to toggle bookmark (calls `togglePageBookmark()`, which determines ayah first)
-- Animating icon on toggle
-- Provider invalidation after toggle
+**Long-Press Integration:**
 
-### 7.3 App Header (Both Screens)
+- Long-press gesture handled in `MushafPageWidget` or `LineWidget`
+- Each ayah widget wrapped with `GestureDetector` or `InkWell`
+- On long-press: Detect ayah, show highlight, display context menu
+- On "Bookmark" tap: Call `bookmarksProvider.notifier.toggleAyahBookmark(surah, ayah)`
+- Provider invalidation handled by `BookmarksNotifier` after bookmark toggle
+
+**Ayah Detection:**
+
+- Use page layout data to identify which ayah contains tap coordinates
+- Extract surah and ayah numbers from selected ayah
+- Handle edge cases (tap between ayat, partial visibility)
+
+### 7.3 App Header (Selection Screen Only)
 
 **File:** `lib/widgets/shared/app_header.dart`
 
-**Actual Implementation:**
-
 **Header Structure:**
+
 ```
 Row([
   // Left: Settings/Search icons
   Row([Settings, Search]),
   // Center: Title (Expanded)
   Expanded(title),
-  // Right: Bookmark icon (Selection) OR trailing widget (Mushaf)
+  // Right: Bookmark icon (Selection only) OR back button
   if (onBookmarkPressed != null && trailing == null) BookmarkIcon,
-  if (trailing != null) trailing,
-  // Back button (if enabled)
   if (showBackButton) BackButton,
 ])
 ```
 
 **Mushaf Screen:**
-- Uses `trailing` parameter with `BookmarkIconButton` widget
-- Icon appears on right side (after title)
-- Dynamic state (outlined/filled) handled by widget
-- Color changes: Grey (outlined) → Primary (filled)
+
+- **NO bookmark icon** - bookmarking done via long-press on ayah only
+- Header remains clean with Settings and Search icons
+- No `trailing` parameter needed for bookmarks
 
 **Selection Screen:**
+
 - Uses `onBookmarkPressed` callback parameter
 - Icon appears on right side (after title, before back button)
 - Always filled `Icons.bookmark`
@@ -1028,12 +1095,14 @@ Row([
 **Migration Strategy:**
 
 **Phase 1: Add Ayah Support (Backward Compatible)**
+
 1. Add `surah_number` and `ayah_number` columns to database (nullable initially)
 2. Keep `page_number` column (deprecated but not removed)
 3. New bookmarks: Store both ayah + cached page
 4. Old bookmarks: Migrate on first access
 
 **Phase 2: Migrate Existing Bookmarks**
+
 1. On app launch: Check for bookmarks with null `surah_number`
 2. For each old bookmark:
    - Query: `_getFirstAyahOnPage(oldBookmark.pageNumber)`
@@ -1042,11 +1111,13 @@ Row([
 3. Validation: Verify all bookmarks have ayah data
 
 **Phase 3: Remove Page-Based Logic (Future)**
+
 1. After all bookmarks migrated
 2. Remove `page_number` column (future app version)
 3. Remove deprecated functions
 
 **Database Migration Code:**
+
 ```dart
 // In _ensureInitialized() or separate migration method
 Future<void> _migrateToAyahBased() async {
@@ -1103,6 +1174,7 @@ Future<void> _migrateToAyahBased() async {
 ```
 
 **Database File:**
+
 - Path: `{documentsDirectory}/bookmarks.db`
 - Created using `path_provider` package
 - Accessible via `getApplicationDocumentsDirectory()`
@@ -1186,32 +1258,38 @@ Future<void> _migrateToAyahBased() async {
 
 ### Functional Criteria
 
-✅ User can bookmark current page (first ayah) by tapping header icon in Mushaf Screen
+✅ User can long-press on any ayah in Mushaf Screen to bookmark it
+✅ Long-press gesture detected reliably (400-500ms duration)
+✅ Selected ayah highlights visually when long-pressed
+✅ Context menu appears near tap location with "Bookmark" option
 ✅ Bookmark stored as surah:ayah pair (universal across layouts)
-✅ Bookmark icon shows correct state (filled/outlined) based on ayah bookmark status
 ✅ Bookmark icon always visible (filled grey) in Selection Screen header
 ✅ User can access bookmarks by tapping header icon in Selection Screen
 ✅ User can view all bookmarks in dedicated full-screen list
 ✅ Each bookmark displays verse reference (e.g., "٢:٢٥٥") as primary identifier
 ✅ Page number shown dynamically for current layout (secondary information)
 ✅ User can navigate to bookmarked ayah from list (works across all layouts)
-✅ User can remove bookmark via toggle (Mushaf) or swipe-to-delete (list)
+✅ User can remove bookmark via long-press on bookmarked ayah (context menu shows "Remove bookmark") or swipe-to-delete in list
 ✅ Bookmarks persist across app restarts
 ✅ Bookmark state updates immediately when toggled
 ✅ No duplicate bookmarks (same ayah)
 ✅ Empty state displays when no bookmarks exist
 ✅ Bookmarks list uses proper RTL layout with right-aligned content
 ✅ Old page-based bookmarks migrated to ayah-based on app launch
+✅ Ayah boundary detection works accurately (identifies correct ayah from tap coordinates)
 
 ### UI/UX Criteria
 
-✅ Bookmark icon animates smoothly on toggle
+✅ Long-press gesture doesn't conflict with page swiping
+✅ Ayah highlight appears smoothly with fade-in animation
+✅ Context menu positioned appropriately (doesn't block text)
 ✅ List items have appropriate spacing and typography
 ✅ Swipe-to-delete works smoothly
 ✅ Colors and styles match app theme
 ✅ RTL layout works correctly
 ✅ Loading states are handled gracefully
 ✅ Error states show user-friendly messages
+✅ Confirmation snackbar appears after bookmarking/unbookmarking
 
 ### Performance Criteria
 
@@ -1315,63 +1393,76 @@ All required packages are already available in the project.
 
 ## 15. Implementation Checklist
 
-**Status:** 📋 Ready for Implementation (Migration from page-based to ayah-based)
+**Status:** 📋 Ready for Implementation (Long-Press Ayah Bookmarking)
 
-### Phase 1: Database & Service Layer (Migration Required)
+### Phase 1: Database & Service Layer
 
-- [ ] Update `Bookmark` model class (`lib/models.dart`) - Add surahNumber, ayahNumber, remove pageNumber
-- [ ] Update database schema (in `SqliteBookmarksService`) - Add columns, migration logic
-- [ ] Update `BookmarksService` interface - Change methods to use surah:ayah
-- [ ] Update `SqliteBookmarksService` implementation - Implement ayah-based CRUD
-- [ ] Add database migration code - Migrate existing page-based bookmarks
-- [ ] Add `isPageBookmarked()` helper method - Check ayah on page
+- [ ] Update `Bookmark` model class (`lib/models.dart`) - Add surahNumber, ayahNumber, remove pageNumber (if not already done)
+- [ ] Update database schema (in `SqliteBookmarksService`) - Add columns, migration logic (if not already done)
+- [ ] Update `BookmarksService` interface - Change methods to use surah:ayah (if not already done)
+- [ ] Update `SqliteBookmarksService` implementation - Implement ayah-based CRUD (if not already done)
+- [ ] Add database migration code - Migrate existing page-based bookmarks (if not already done)
+- [ ] Remove `isPageBookmarked()` helper method (no longer needed for header icon)
 - [ ] Write unit tests for service layer (recommended for future)
 
-### Phase 2: State Management (Update Required)
+### Phase 2: State Management
 
 - [ ] Update Riverpod providers for bookmarks (`lib/providers.dart`)
-- [ ] Update `BookmarksNotifier` class - Add `togglePageBookmark()` and `toggleAyahBookmark()`
-- [ ] Update `isPageBookmarked` provider - Internally check ayah on page
-- [ ] Add `isAyahBookmarked` provider - Direct ayah checking
+- [ ] Update `BookmarksNotifier` class - Keep `toggleAyahBookmark()`, remove `togglePageBookmark()`
+- [ ] Remove `isPageBookmarked` provider (no longer needed)
+- [ ] Keep `isAyahBookmarked` provider - Direct ayah checking
 - [ ] Update provider invalidation logic
 - [ ] Write tests for providers (recommended for future)
 
-### Phase 3: UI Components (Update Required)
+### Phase 3: UI Components (Long-Press Implementation)
 
-- [ ] Update `BookmarkIconButton` widget - Use `togglePageBookmark()` instead of `toggleBookmark()`
+- [ ] **REMOVE** `BookmarkIconButton` widget from Mushaf Screen (no longer used)
+- [ ] **ADD** long-press gesture detection to ayah widgets in `MushafPageWidget` or `LineWidget`
+- [ ] Implement ayah boundary detection - Identify which ayah contains tap coordinates
+- [ ] Create ayah highlight widget - Visual feedback when ayah is selected
+- [ ] Create `AyahContextMenu` widget - Context menu with "Bookmark" / "Remove bookmark" option
 - [ ] Update `BookmarksListView` widget - No changes needed (uses bookmark model)
-- [ ] Update `BookmarkItemCard` widget - Display verse reference instead of page number
-- [ ] Add page number calculation - Use `getPageForAyah()` to show current layout's page
-- [ ] Update navigation logic - Use `getPageForAyah()` instead of direct page number
-- [ ] Update swipe-to-delete - Use `removeBookmark(surah, ayah)` instead of `removeBookmark(page)`
+- [ ] Update `BookmarkItemCard` widget - Display verse reference instead of page number (if not already done)
+- [ ] Add page number calculation - Use `getPageForAyah()` to show current layout's page (if not already done)
+- [ ] Update navigation logic - Use `getPageForAyah()` instead of direct page number (if not already done)
+- [ ] Update swipe-to-delete - Use `removeBookmark(surah, ayah)` instead of `removeBookmark(page)` (if not already done)
 - [ ] Create empty state widget (`_EmptyBookmarksState`) - Already implemented
 - [ ] Implement swipe-to-delete gesture (via `Dismissible`) - Already implemented
 - [ ] Write widget tests (recommended for future)
 
-### Phase 4: Integration (Update Navigation Logic)
+### Phase 4: Integration (Long-Press on Mushaf Screen)
 
-- [x] Integrate bookmark icon into `AppHeader` (`lib/widgets/shared/app_header.dart`)
+- [x] Integrate bookmark icon into `AppHeader` (`lib/widgets/shared/app_header.dart`) - Selection Screen only
   - [x] Add `onBookmarkPressed` parameter for Selection Screen
-  - [x] **Mushaf Screen:** Uses `trailing` parameter with `BookmarkIconButton`
+  - [ ] **REMOVE** `trailing` parameter usage for `BookmarkIconButton` on Mushaf Screen
   - [x] **Selection Screen:** Uses `onBookmarkPressed` callback on right side
-  - [x] Icon separated from Settings/Search (on opposite side of header)
   - [x] Icon shows filled grey on Selection Screen
-  - [x] Icon shows dynamic state (outlined/filled) on Mushaf Screen
+  - [ ] **Mushaf Screen:** NO bookmark icon - removed from header
 - [x] Create `BookmarksScreen` (`lib/screens/bookmarks_screen.dart`)
 - [x] Connect Selection Screen header to navigate to Bookmarks Screen
-- [x] Connect Mushaf Screen to bookmark state via `BookmarkIconButton`
+- [ ] **ADD** long-press gesture to ayah widgets in Mushaf Screen
+  - [ ] Wrap ayah widgets with `GestureDetector` or `InkWell`
+  - [ ] Implement ayah detection from tap coordinates
+  - [ ] Show highlight on long-press
+  - [ ] Display context menu with bookmark option
+  - [ ] Handle bookmark toggle via `BookmarksNotifier.toggleAyahBookmark()`
 - [ ] Update navigation logic in `navigateToMushafPage()` helper - Use `getPageForAyah()` instead of direct page number
 - [ ] Update `BookmarkItemCard` tap handler - Navigate using ayah lookup
 - [x] **DO NOT modify** bottom navigation order (maintained)
 
-### Phase 5: Migration & Polish
+### Phase 5: Long-Press Polish & Testing
 
-- [ ] Run database migration on app launch
-- [ ] Test migration of existing bookmarks
+- [ ] Test long-press gesture detection (doesn't conflict with page swiping)
+- [ ] Test ayah boundary detection accuracy (tap coordinates to ayah mapping)
+- [ ] Test context menu positioning (doesn't block text, RTL-aware)
+- [ ] Test highlight animation smoothness
+- [ ] Test bookmark toggle via context menu
+- [ ] Test unbookmark via long-press on bookmarked ayah
 - [ ] Verify bookmarks work across layout switches
-- [x] Add animations and transitions (scale animation on toggle)
-- [x] Theme integration (theme-aware colors and styling)
-- [x] RTL layout (proper text direction and alignment)
+- [ ] Add animations and transitions (highlight fade-in, menu appearance)
+- [ ] Theme integration (theme-aware colors and styling for highlight/menu)
+- [ ] RTL layout (proper text direction and alignment for context menu)
+- [ ] Onboarding tooltip (optional: show "Long-press any ayah to bookmark" on first Mushaf Screen visit)
 - [ ] Performance optimization (indexed database, cached page numbers)
 - [ ] Integration testing (recommended for future)
 - [ ] User acceptance testing (recommended for future)
