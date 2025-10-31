@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
 import '../utils/helpers.dart';
-import '../constants.dart';
 
 // Base card style
 class _BaseStatCard extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry? padding;
 
-  const _BaseStatCard({
-    required this.child,
-    this.padding,
-  });
+  const _BaseStatCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +22,7 @@ class _BaseStatCard extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(16),
-        child: child,
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
     );
   }
 }
@@ -39,10 +31,7 @@ class _BaseStatCard extends StatelessWidget {
 class OverallProgressCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const OverallProgressCard({
-    super.key,
-    required this.stats,
-  });
+  const OverallProgressCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +93,7 @@ class OverallProgressCard extends StatelessWidget {
 class TodayCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const TodayCard({
-    super.key,
-    required this.stats,
-  });
+  const TodayCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -144,10 +130,7 @@ class TodayCard extends StatelessWidget {
 class ThisWeekCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const ThisWeekCard({
-    super.key,
-    required this.stats,
-  });
+  const ThisWeekCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -205,10 +188,7 @@ class ThisWeekCard extends StatelessWidget {
 class ThisMonthCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const ThisMonthCard({
-    super.key,
-    required this.stats,
-  });
+  const ThisMonthCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -266,10 +246,7 @@ class ThisMonthCard extends StatelessWidget {
 class StreakCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const StreakCard({
-    super.key,
-    required this.stats,
-  });
+  const StreakCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -333,10 +310,7 @@ class StreakCard extends StatelessWidget {
 class AllTimeCard extends StatelessWidget {
   final ReadingStatistics stats;
 
-  const AllTimeCard({
-    super.key,
-    required this.stats,
-  });
+  const AllTimeCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -413,4 +387,3 @@ class _StatRow extends StatelessWidget {
     );
   }
 }
-

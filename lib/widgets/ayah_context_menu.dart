@@ -45,7 +45,10 @@ class AyahContextMenu extends ConsumerWidget {
     }
   }
 
-  Future<void> _handleRemoveBookmark(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleRemoveBookmark(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     try {
       await ref
           .read(bookmarksProvider.notifier)
@@ -172,7 +175,7 @@ class AyahContextMenu extends ConsumerWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
-                  error: (_, __) => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -182,4 +185,3 @@ class AyahContextMenu extends ConsumerWidget {
     );
   }
 }
-

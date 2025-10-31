@@ -72,7 +72,6 @@ class BookmarkItemCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final verseRefParts = bookmark.verseReference.split(':');
-    final surahNumEastern = convertToEasternArabicNumerals(verseRefParts[0]);
     final ayahNumEastern = convertToEasternArabicNumerals(verseRefParts[1]);
     final verseReference = 'الآية $ayahNumEastern';
 

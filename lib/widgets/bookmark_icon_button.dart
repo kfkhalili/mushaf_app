@@ -105,7 +105,7 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
         ),
         onPressed: null,
       ),
-      error: (_, __) => IconButton(
+      error: (_, _) => IconButton(
         icon: Icon(
           Icons.bookmark_border,
           size: kAppHeaderIconSize,

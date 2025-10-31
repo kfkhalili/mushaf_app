@@ -73,14 +73,11 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final sessionDate = DateTime(now.year, now.month, now.day);
 
     try {
-      await _db!.insert(
-        DbConstants.readingSessionsTable,
-        {
-          DbConstants.sessionDateCol: sessionDate.toIso8601String().split('T')[0],
-          DbConstants.pageNumberCol: pageNumber,
-          DbConstants.timestampCol: now.toIso8601String(),
-        },
-      );
+      await _db!.insert(DbConstants.readingSessionsTable, {
+        DbConstants.sessionDateCol: sessionDate.toIso8601String().split('T')[0],
+        DbConstants.pageNumberCol: pageNumber,
+        DbConstants.timestampCol: now.toIso8601String(),
+      });
 
       // Invalidate statistics cache
       _cachedStatistics = null;
@@ -149,25 +146,14 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
     final todayDateStr = DateTime.now().toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery('''
+    final result = await _db!.rawQuery(
+      '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
       WHERE ${DbConstants.sessionDateCol} = ?
-    ''', [todayDateStr]);
-
-    return result.first['count'] as int? ?? 0;
-  }
-
-  Future<int> _getSessionsToday() async {
-    if (_db == null) throw StateError('Database not initialized');
-
-    final todayDateStr = DateTime.now().toIso8601String().split('T')[0];
-
-    final result = await _db!.rawQuery('''
-      SELECT COUNT(*) as count
-      FROM ${DbConstants.readingSessionsTable}
-      WHERE ${DbConstants.sessionDateCol} = ?
-    ''', [todayDateStr]);
+    ''',
+      [todayDateStr],
+    );
 
     return result.first['count'] as int? ?? 0;
   }
@@ -178,11 +164,14 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery('''
+    final result = await _db!.rawQuery(
+      '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
       WHERE ${DbConstants.sessionDateCol} >= ?
-    ''', [weekAgoDateStr]);
+    ''',
+      [weekAgoDateStr],
+    );
 
     return result.first['count'] as int? ?? 0;
   }
@@ -194,11 +183,14 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery('''
+    final result = await _db!.rawQuery(
+      '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
       WHERE ${DbConstants.sessionDateCol} >= ?
-    ''', [monthStartDateStr]);
+    ''',
+      [monthStartDateStr],
+    );
 
     return result.first['count'] as int? ?? 0;
   }
@@ -209,11 +201,14 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery('''
+    final result = await _db!.rawQuery(
+      '''
       SELECT COUNT(DISTINCT ${DbConstants.sessionDateCol}) as count
       FROM ${DbConstants.readingSessionsTable}
       WHERE ${DbConstants.sessionDateCol} >= ?
-    ''', [weekAgoDateStr]);
+    ''',
+      [weekAgoDateStr],
+    );
 
     return result.first['count'] as int? ?? 0;
   }
@@ -225,11 +220,14 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery('''
+    final result = await _db!.rawQuery(
+      '''
       SELECT COUNT(DISTINCT ${DbConstants.sessionDateCol}) as count
       FROM ${DbConstants.readingSessionsTable}
       WHERE ${DbConstants.sessionDateCol} >= ?
-    ''', [monthStartDateStr]);
+    ''',
+      [monthStartDateStr],
+    );
 
     return result.first['count'] as int? ?? 0;
   }
@@ -368,7 +366,8 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final results = await _db!.rawQuery('''
+    final results = await _db!.rawQuery(
+      '''
       SELECT
         ${DbConstants.sessionDateCol},
         COUNT(DISTINCT ${DbConstants.pageNumberCol}) as pages
@@ -376,7 +375,9 @@ class SqliteReadingProgressService implements ReadingProgressService {
       WHERE ${DbConstants.sessionDateCol} >= ?
       GROUP BY ${DbConstants.sessionDateCol}
       ORDER BY ${DbConstants.sessionDateCol} ASC
-    ''', [weekAgoDateStr]);
+    ''',
+      [weekAgoDateStr],
+    );
 
     final Map<DateTime, int> progress = {};
     for (final row in results) {
@@ -397,7 +398,8 @@ class SqliteReadingProgressService implements ReadingProgressService {
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final results = await _db!.rawQuery('''
+    final results = await _db!.rawQuery(
+      '''
       SELECT
         ${DbConstants.sessionDateCol},
         COUNT(DISTINCT ${DbConstants.pageNumberCol}) as pages
@@ -405,7 +407,9 @@ class SqliteReadingProgressService implements ReadingProgressService {
       WHERE ${DbConstants.sessionDateCol} >= ?
       GROUP BY ${DbConstants.sessionDateCol}
       ORDER BY ${DbConstants.sessionDateCol} ASC
-    ''', [monthStartDateStr]);
+    ''',
+      [monthStartDateStr],
+    );
 
     final Map<DateTime, int> progress = {};
     for (final row in results) {
@@ -430,4 +434,3 @@ class SqliteReadingProgressService implements ReadingProgressService {
     }
   }
 }
-

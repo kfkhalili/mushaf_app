@@ -146,15 +146,18 @@ class SettingsScreen extends ConsumerWidget {
                               title: const Text('إحصائيات القراءة'),
                               subtitle: Consumer(
                                 builder: (context, ref, _) {
-                                  final statsAsync = ref.watch(readingStatisticsProvider);
+                                  final statsAsync = ref.watch(
+                                    readingStatisticsProvider,
+                                  );
                                   return statsAsync.when(
                                     data: (stats) => Text(
                                       formatPagesToday(stats.pagesToday),
                                       textDirection: TextDirection.rtl,
                                       textAlign: TextAlign.right,
                                     ),
-                                    loading: () => const Text('جارٍ التحميل...'),
-                                    error: (_, __) => const Text('--'),
+                                    loading: () =>
+                                        const Text('جارٍ التحميل...'),
+                                    error: (_, _) => const Text('--'),
                                   );
                                 },
                               ),
@@ -163,7 +166,8 @@ class SettingsScreen extends ConsumerWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const StatisticsScreen(),
+                                    builder: (context) =>
+                                        const StatisticsScreen(),
                                   ),
                                 );
                               },

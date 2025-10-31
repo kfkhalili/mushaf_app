@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
-import '../models.dart';
-import '../utils/helpers.dart';
 import 'statistics_cards.dart';
 
 class StatisticsListView extends ConsumerWidget {
@@ -30,9 +28,7 @@ class StatisticsListView extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -45,9 +41,7 @@ class StatisticsListView extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               'حدث خطأ أثناء تحميل الإحصائيات',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.center,
             ),
@@ -90,7 +84,9 @@ class _EmptyStatisticsState extends StatelessWidget {
               'ابدأ القراءة لتتبع تقدمك!',
               style: TextStyle(
                 fontSize: 16,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
               ),
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.center,
@@ -101,4 +97,3 @@ class _EmptyStatisticsState extends StatelessWidget {
     );
   }
 }
-
