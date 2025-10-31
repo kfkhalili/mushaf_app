@@ -104,7 +104,22 @@ Future<List<JuzInfo>> juzList(Ref ref) async {
   return dbService.getAllJuzInfo();
 }
 
-// (Removed) pagePreview and pageFontFamily: no external references; use pageData.pageFontFamily instead
+// --- Page Preview Provider ---
+// WHY: Lightweight provider for list view previews (DB-only, no font loading or full layout).
+@riverpod
+Future<String> pagePreview(Ref ref, int pageNumber) async {
+  final dbService = ref.watch(databaseServiceProvider);
+  return dbService.getFirstWordsOfPage(pageNumber, count: 3);
+}
+
+// --- Page Font Family Provider ---
+// WHY: Returns font family name for a page without loading full layout. For list previews.
+@riverpod
+Future<String> pageFontFamily(Ref ref, int pageNumber) async {
+  final fontService = ref.watch(fontServiceProvider);
+  final layout = ref.watch(mushafLayoutSettingProvider);
+  return fontService.loadFontForPage(pageNumber, layout: layout);
+}
 
 // --- Navigation Provider ---
 // WHY: This is a keepAlive provider for managing selection screen tab state.

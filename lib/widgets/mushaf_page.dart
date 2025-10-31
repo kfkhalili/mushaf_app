@@ -1,12 +1,11 @@
-import 'dart:collection'; // For SplayTreeMap
-import 'dart:math'; // For min()
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart'; // WHY: Add this import to find your new providers
 import '../utils/helpers.dart';
+import '../utils/responsive.dart';
+import '../utils/selectors.dart';
 import 'mushaf_line.dart';
 import '../constants.dart'; // Import constants
-import '../models.dart';
 import '../providers/memorization_provider.dart';
 
 class MushafPage extends ConsumerWidget {
@@ -27,72 +26,18 @@ class MushafPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
 
-    // --- Responsive Scaling ---
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double widthScale = screenWidth / referenceScreenWidth;
-    final double heightScale = screenHeight / referenceScreenHeight;
-    final double scaleFactor = min(widthScale, heightScale);
-
+    final metrics = ResponsiveMetrics.of(context);
     final footerTextStyle = TextStyle(
-      fontSize: 16 * scaleFactor,
+      fontSize: metrics.footerFontSize(16),
       color: textColor,
     );
-    final double dynamicPageBottomPadding = pageBottomPadding * scaleFactor;
-    final double dynamicFooterBottomPadding = footerBottomPadding * scaleFactor;
-    final double dynamicFooterRightPadding = footerRightPadding * scaleFactor;
-    final double dynamicFooterLeftPadding = footerLeftPadding * scaleFactor;
-    // --- End Responsive Scaling ---
 
     return asyncPageData.when(
       data: (pageData) {
-        final Set<Word> wordsToShow = {};
-        final Map<String, double> ayahOpacity = {};
-
-        // Only prepare words to show if memorizing (beta chaining window)
-        if (isMemorizing) {
-          // Use pure functions for functional data processing
-          final allQuranWordsOnPage = extractQuranWordsFromPage(
-            pageData.layout,
-          );
-          final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-            groupWordsByAyahKey(allQuranWordsOnPage),
-          );
-          final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
-
-          // Map absolute ayah indices -> ayah keys
-          // Our session stores indices from 0..N-1
-          final window = session.window;
-          for (final idx in window.ayahIndices) {
-            if (idx >= 0 && idx < orderedAyahKeys.length) {
-              final String ayahKey = orderedAyahKeys[idx];
-              wordsToShow.addAll(ayahsOnPageMap[ayahKey] ?? []);
-            }
-          }
-          // Fill opacities aligned with window order
-          for (
-            int i = 0;
-            i < window.ayahIndices.length && i < window.opacities.length;
-            i++
-          ) {
-            final int idx = window.ayahIndices[i];
-            if (idx >= 0 && idx < orderedAyahKeys.length) {
-              final String key = orderedAyahKeys[idx];
-              ayahOpacity[key] = window.opacities[i].clamp(0.0, 1.0);
-            }
-          }
-        } else if (!isMemorizing) {
-          // If not in memorization mode, show all words
-          for (final line in pageData.layout.lines) {
-            if (line.lineType == 'ayah') {
-              for (final word in line.words) {
-                if (word.ayahNumber > 0) {
-                  wordsToShow.add(word);
-                }
-              }
-            }
-          }
-        }
+        final visibility = computeMemorizationVisibility(
+          pageData.layout,
+          isMemorizing ? session : null,
+        );
 
         final pageNum = convertToEasternArabicNumerals(pageNumber.toString());
 
@@ -101,12 +46,7 @@ class MushafPage extends ConsumerWidget {
             fit: StackFit.expand,
             children: [
               Padding(
-                padding: EdgeInsets.only(
-                  top: 0,
-                  bottom: dynamicPageBottomPadding,
-                  left: pageHorizontalPadding,
-                  right: pageHorizontalPadding,
-                ),
+                padding: metrics.pagePadding(top: 0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -115,8 +55,8 @@ class MushafPage extends ConsumerWidget {
                       line: line,
                       pageFontFamily: pageData.pageFontFamily,
                       isMemorizationMode: isMemorizing,
-                      wordsToShow: wordsToShow,
-                      ayahOpacities: ayahOpacity,
+                      wordsToShow: visibility.visibleWords,
+                      ayahOpacities: visibility.ayahOpacity,
                     );
                   }).toList(),
                 ),
@@ -126,11 +66,7 @@ class MushafPage extends ConsumerWidget {
                     ? Alignment.bottomRight
                     : Alignment.bottomLeft,
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: dynamicFooterBottomPadding,
-                    right: dynamicFooterRightPadding,
-                    left: dynamicFooterLeftPadding,
-                  ),
+                  padding: metrics.footerPadding(),
                   child: Text(pageNum, style: footerTextStyle),
                 ),
               ),

@@ -79,11 +79,11 @@ const double basmallahScaleFactor = 0.95;
 const double minAyahFontSize = 16.0;
 const double maxAyahFontSize = 30.0;
 const double minSurahNameFontSize = 22.0;
-const maxSurahNameFontSize = 40.0;
+const double maxSurahNameFontSize = 40.0;
 const double minSurahHeaderFontSize = 24.0;
-const maxSurahHeaderFontSize = 44.0;
+const double maxSurahHeaderFontSize = 44.0;
 const double minBasmallahFontSize = 15.0;
-const maxBasmallahFontSize = 28.0;
+const double maxBasmallahFontSize = 28.0;
 
 // Line Height
 const double baseLineHeight = 2.1; // For Ayah text

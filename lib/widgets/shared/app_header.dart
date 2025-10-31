@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:math'; // For min()
 import '../../constants.dart';
+import '../../utils/responsive.dart';
+import '../../utils/navigation.dart';
 import '../../screens/settings_screen.dart';
 import '../../screens/search_screen.dart';
 
@@ -48,28 +49,7 @@ class AppHeader extends StatelessWidget {
               if (!showBackButton)
                 IconButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const SettingsScreen(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                              const begin = Offset(-1.0, 0.0);
-                              const end = Offset(0.0, 0.0);
-                              const curve = Curves.easeInOut;
-
-                              var tween = Tween(
-                                begin: begin,
-                                end: end,
-                              ).chain(CurveTween(curve: curve));
-
-                              return SlideTransition(
-                                position: animation.drive(tween),
-                                child: child,
-                              );
-                            },
-                      ),
-                    );
+                    pushSlideFromLeft(context, const SettingsScreen());
                   },
                   icon: Icon(
                     Icons.settings,
@@ -80,28 +60,7 @@ class AppHeader extends StatelessWidget {
               if (onSearchPressed != null)
                 IconButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const SearchScreen(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                              const begin = Offset(-1.0, 0.0);
-                              const end = Offset(0.0, 0.0);
-                              const curve = Curves.easeInOut;
-
-                              var tween = Tween(
-                                begin: begin,
-                                end: end,
-                              ).chain(CurveTween(curve: curve));
-
-                              return SlideTransition(
-                                position: animation.drive(tween),
-                                child: child,
-                              );
-                            },
-                      ),
-                    );
+                    pushSlideFromLeft(context, const SearchScreen());
                   },
                   icon: Icon(
                     Icons.search,
@@ -141,12 +100,8 @@ class AppHeader extends StatelessWidget {
       // Split the title into parts
       final parts = _splitTitleIntoParts(title);
 
-      // Calculate responsive font sizes like in mushaf_page.dart
-      final double screenWidth = MediaQuery.of(context).size.width;
-      final double screenHeight = MediaQuery.of(context).size.height;
-      final double widthScale = screenWidth / referenceScreenWidth;
-      final double heightScale = screenHeight / referenceScreenHeight;
-      final double scaleFactor = min(widthScale, heightScale);
+      final metrics = ResponsiveMetrics.of(context);
+      final double scaleFactor = metrics.scaleFactor;
 
       final double juzFontSize = 24 * scaleFactor; // Same as juzHizbStyle
       final double surahFontSize =

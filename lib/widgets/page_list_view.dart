@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers.dart'; // WHY: Add this import to find your new providers
+import '../providers.dart';
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
 import '../constants.dart';
-import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
+import 'shared/leading_number_text.dart';
 
 class PageListView extends ConsumerStatefulWidget {
   const PageListView({super.key});
@@ -36,10 +36,9 @@ class PageListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // Use pageData to get both layout (for preview text) and font family.
-    final pageDataAsync = ref.watch(pageDataProvider(pageNumber));
+    final pagePreviewAsync = ref.watch(pagePreviewProvider(pageNumber));
+    final pageFontFamilyAsync = ref.watch(pageFontFamilyProvider(pageNumber));
 
-    // WHY: Define common loading and error widgets.
     final loadingWidget = const SizedBox(
       width: 60,
       height: 20,
@@ -53,41 +52,25 @@ class PageListItem extends ConsumerWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      // WHY: Use the new reusable LeadingNumberText widget.
       leading: LeadingNumberText(number: pageNumber),
-      // Build trailing preview using pageData (font + layout-derived preview text).
-      trailing: pageDataAsync.when(
-        data: (pageData) {
-          // Derive preview text from first ayah words on the page.
-          String previewText = '';
-          int remaining = 3;
-          for (final line in pageData.layout.lines) {
-            if (line.lineType == 'ayah' && remaining > 0) {
-              for (final word in line.words) {
-                if (word.ayahNumber > 0) {
-                  if (previewText.isNotEmpty) previewText += ' ';
-                  previewText += word.text;
-                  remaining -= 1;
-                  if (remaining == 0) break;
-                }
-              }
-            }
-            if (remaining == 0) break;
-          }
-          if (previewText.isEmpty) {
-            previewText = '…';
-          }
-
-          return Text(
-            previewText,
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              fontFamily: pageData.pageFontFamily,
-              fontSize: 22,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
+      trailing: pagePreviewAsync.when(
+        data: (previewText) {
+          return pageFontFamilyAsync.when(
+            data: (fontFamilyName) {
+              return Text(
+                previewText.isEmpty ? '…' : previewText,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: fontFamilyName,
+                  fontSize: 22,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              );
+            },
+            loading: () => loadingWidget,
+            error: (err, stack) => errorWidget,
           );
         },
         loading: () => loadingWidget,

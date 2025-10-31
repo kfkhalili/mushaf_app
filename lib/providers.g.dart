@@ -345,6 +345,144 @@ final class JuzListProvider
 
 String _$juzListHash() => r'7a13b0b3bab83527732a93f6f0e8fe45f0698fca';
 
+@ProviderFor(pagePreview)
+const pagePreviewProvider = PagePreviewFamily._();
+
+final class PagePreviewProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  const PagePreviewProvider._({
+    required PagePreviewFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'pagePreviewProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pagePreviewHash();
+
+  @override
+  String toString() {
+    return r'pagePreviewProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    final argument = this.argument as int;
+    return pagePreview(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PagePreviewProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pagePreviewHash() => r'c565a25b480e011bf067281ca5785eb84383a9f3';
+
+final class PagePreviewFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String>, int> {
+  const PagePreviewFamily._()
+    : super(
+        retry: null,
+        name: r'pagePreviewProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PagePreviewProvider call(int pageNumber) =>
+      PagePreviewProvider._(argument: pageNumber, from: this);
+
+  @override
+  String toString() => r'pagePreviewProvider';
+}
+
+@ProviderFor(pageFontFamily)
+const pageFontFamilyProvider = PageFontFamilyFamily._();
+
+final class PageFontFamilyProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  const PageFontFamilyProvider._({
+    required PageFontFamilyFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'pageFontFamilyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pageFontFamilyHash();
+
+  @override
+  String toString() {
+    return r'pageFontFamilyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    final argument = this.argument as int;
+    return pageFontFamily(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PageFontFamilyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pageFontFamilyHash() => r'f562dda973a4542f6996503eabca7e96d3e76f16';
+
+final class PageFontFamilyFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String>, int> {
+  const PageFontFamilyFamily._()
+    : super(
+        retry: null,
+        name: r'pageFontFamilyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PageFontFamilyProvider call(int pageNumber) =>
+      PageFontFamilyProvider._(argument: pageNumber, from: this);
+
+  @override
+  String toString() => r'pageFontFamilyProvider';
+}
+
 @ProviderFor(SelectionTabIndex)
 const selectionTabIndexProvider = SelectionTabIndexProvider._();
 
