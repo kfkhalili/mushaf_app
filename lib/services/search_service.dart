@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../utils/helpers.dart';
 
 /// Service for searching Quranic text
 class SearchService {
@@ -519,7 +520,7 @@ class SearchService {
 
     final String surahName = results.isNotEmpty
         ? results.first[DbConstants.nameArabicCol] as String
-        : 'سورة $surahNumber';
+        : 'سورة ${convertToEasternArabicNumerals(surahNumber.toString())}';
 
     _surahNameCache[surahNumber] = surahName;
     return surahName;

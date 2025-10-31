@@ -81,7 +81,7 @@ class MushafPage extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(pageHorizontalPadding),
             child: Text(
-              'Failed to load page $pageNumber.\n\nError: $err',
+              'فشل تحميل الصفحة ${convertToEasternArabicNumerals(pageNumber.toString())}.\n\nخطأ: $err',
               textAlign: TextAlign.center,
               style: TextStyle(color: theme.colorScheme.error),
             ),

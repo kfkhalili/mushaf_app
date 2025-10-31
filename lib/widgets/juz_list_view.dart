@@ -78,7 +78,7 @@ class JuzListItem extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Could not find starting page for Juz ${juzInfo.juzNumber}',
+                'لم يتم العثور على صفحة البداية للجزء ${convertToEasternArabicNumerals(juzInfo.juzNumber.toString())}',
               ),
             ),
           );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // WHY: This import is required to use SystemUiOverlayStyle.
 
-// Helper function to create TextTheme with Zain font family
-TextTheme _textThemeWithZain(Color? defaultColor) {
-  const String fontFamily = 'Zain';
+// Helper function to create TextTheme with IBMPlexSansArabic font family
+TextTheme _textThemeWithIBMPlexSansArabic(Color? defaultColor) {
+  const String fontFamily = 'IBMPlexSansArabic';
   return TextTheme(
     displayLarge: TextStyle(fontFamily: fontFamily, color: defaultColor),
     displayMedium: TextStyle(fontFamily: fontFamily, color: defaultColor),
@@ -28,8 +28,8 @@ final lightTheme = ThemeData(
   primarySwatch: Colors.teal,
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.white,
-  fontFamily: 'Zain',
-  textTheme: _textThemeWithZain(null), // null uses default color
+  fontFamily: 'IBMPlexSansArabic',
+  textTheme: _textThemeWithIBMPlexSansArabic(null), // null uses default color
   appBarTheme: const AppBarTheme(
     foregroundColor: Colors.black87,
     systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -42,8 +42,8 @@ final darkTheme = ThemeData(
   brightness: Brightness.dark,
   // Use a dark, off-black for a softer look than pure black.
   scaffoldBackgroundColor: const Color(0xFF121212),
-  fontFamily: 'Zain',
-  textTheme: _textThemeWithZain(Colors.white70),
+  fontFamily: 'IBMPlexSansArabic',
+  textTheme: _textThemeWithIBMPlexSansArabic(Colors.white70),
   appBarTheme: const AppBarTheme(
     foregroundColor: Colors.white,
     systemOverlayStyle: SystemUiOverlayStyle.light,
@@ -57,8 +57,8 @@ final sepiaTheme = ThemeData(
   brightness: Brightness.light,
   // A warm, parchment-like background color.
   scaffoldBackgroundColor: const Color(0xFFF1E8D9),
-  fontFamily: 'Zain',
-  textTheme: _textThemeWithZain(const Color(0xFF5B4636)),
+  fontFamily: 'IBMPlexSansArabic',
+  textTheme: _textThemeWithIBMPlexSansArabic(const Color(0xFF5B4636)),
   appBarTheme: const AppBarTheme(
     foregroundColor: Color(0xFF5B4636), // A dark brown for text
     systemOverlayStyle: SystemUiOverlayStyle.dark,

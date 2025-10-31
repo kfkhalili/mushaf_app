@@ -16,6 +16,7 @@ String convertToEasternArabicNumerals(String input) {
       final index = western.indexOf(digit);
       return eastern[index];
     },
+    onNonMatch: (nonMatch) => nonMatch,
   );
 }
 

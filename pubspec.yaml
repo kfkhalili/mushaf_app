@@ -83,7 +83,7 @@ flutter:
     - assets/fonts/surah-name-v4.ttf
     - assets/fonts/quran-common.ttf
     - assets/fonts/indopak-font.ttf
-    - assets/fonts/Zain-Regular.ttf
+    - assets/fonts/IBMPlexSansArabic-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -93,9 +93,9 @@ flutter:
 
   fonts:
     # Default Arabic font for the app
-    - family: Zain
+    - family: IBMPlexSansArabic
       fonts:
-        - asset: assets/fonts/Zain-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
     # Surah Name font
     - family: SurahNames
       fonts:
