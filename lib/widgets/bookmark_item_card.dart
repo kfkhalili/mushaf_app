@@ -155,6 +155,21 @@ class BookmarkItemCard extends ConsumerWidget {
                             color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
+                        if (bookmark.ayahText != null &&
+                            bookmark.ayahText!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            bookmark.ayahText!,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'IBMPlexSansArabic',
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),

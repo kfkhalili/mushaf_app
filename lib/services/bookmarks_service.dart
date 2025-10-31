@@ -292,6 +292,11 @@ class SqliteBookmarksService implements BookmarksService {
     if (_db == null) throw StateError('Database not initialized');
 
     try {
+      if (_databaseService == null) {
+        _databaseService = DatabaseService();
+        await _databaseService!.init();
+      }
+
       final results = await _db!.query(
         DbConstants.bookmarksTable,
         orderBy: newestFirst
@@ -299,16 +304,29 @@ class SqliteBookmarksService implements BookmarksService {
             : '${DbConstants.createdAtCol} ASC',
       );
 
-      return results.map((row) {
-        return Bookmark(
-          id: row[DbConstants.idCol] as int,
-          surahNumber: row[DbConstants.surahNumberCol] as int,
-          ayahNumber: row[DbConstants.ayahNumberCol] as int,
-          cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
-          createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
-          note: row[DbConstants.noteCol] as String?,
+      final bookmarks = <Bookmark>[];
+      for (final row in results) {
+        final surahNumber = row[DbConstants.surahNumberCol] as int;
+        final ayahNumber = row[DbConstants.ayahNumberCol] as int;
+
+        final ayahText = await _databaseService!.getAyahText(
+          surahNumber,
+          ayahNumber,
         );
-      }).toList();
+
+        bookmarks.add(
+          Bookmark(
+            id: row[DbConstants.idCol] as int,
+            surahNumber: surahNumber,
+            ayahNumber: ayahNumber,
+            cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
+            createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
+            note: row[DbConstants.noteCol] as String?,
+            ayahText: ayahText,
+          ),
+        );
+      }
+      return bookmarks;
     } catch (e) {
       throw Exception('Failed to get bookmarks: $e');
     }
@@ -331,6 +349,17 @@ class SqliteBookmarksService implements BookmarksService {
       if (results.isEmpty) return null;
 
       final row = results.first;
+
+      if (_databaseService == null) {
+        _databaseService = DatabaseService();
+        await _databaseService!.init();
+      }
+
+      final ayahText = await _databaseService!.getAyahText(
+        surahNumber,
+        ayahNumber,
+      );
+
       return Bookmark(
         id: row[DbConstants.idCol] as int,
         surahNumber: row[DbConstants.surahNumberCol] as int,
@@ -338,6 +367,7 @@ class SqliteBookmarksService implements BookmarksService {
         cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
         createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
         note: row[DbConstants.noteCol] as String?,
+        ayahText: ayahText,
       );
     } catch (e) {
       throw Exception('Failed to get bookmark by ayah: $e');

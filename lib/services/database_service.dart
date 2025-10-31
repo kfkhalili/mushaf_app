@@ -14,6 +14,7 @@ class DatabaseService {
   Database? _metadataDb;
   Database? _juzDb;
   Database? _hizbDb;
+  Database? _ayahTextDb;
 
   List<Map<String, dynamic>> _juzCache = const [];
   List<Map<String, dynamic>> _hizbCache = const [];
@@ -58,6 +59,7 @@ class DatabaseService {
       _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
       _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
       _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
+      _initDb(documentsDirectory, dbAssetPath, imlaeiAyahDbFileName),
     ]);
 
     _layoutDb = databases[0];
@@ -65,6 +67,7 @@ class DatabaseService {
     _metadataDb = databases[2];
     _juzDb = databases[3];
     _hizbDb = databases[4];
+    _ayahTextDb = databases[5];
 
     // WHY: Load Juz and Hizb data into cache upon initialization for faster lookups later.
     if (_juzCache.isEmpty && _juzDb != null) {
@@ -91,6 +94,7 @@ class DatabaseService {
         _metadataDb?.close(),
         _juzDb?.close(),
         _hizbDb?.close(),
+        _ayahTextDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
   }
@@ -130,6 +134,36 @@ class DatabaseService {
       throw Exception(
         "DatabaseService: Error copying database '$assetFileName' from assets: $e",
       );
+    }
+  }
+
+  /// Fetches the text for a specific ayah.
+  Future<String> getAyahText(int surahNumber, int ayahNumber) async {
+    await init();
+    if (_ayahTextDb == null) {
+      throw Exception("Ayah text database is not initialized.");
+    }
+
+    final verseKey = '$surahNumber:$ayahNumber';
+
+    try {
+      final List<Map<String, dynamic>> result = await _ayahTextDb!.query(
+        DbConstants.versesTable,
+        columns: [DbConstants.textCol],
+        where: '${DbConstants.verseKeyCol} = ?',
+        whereArgs: [verseKey],
+        limit: 1,
+      );
+
+      if (result.isNotEmpty && result.first[DbConstants.textCol] != null) {
+        return result.first[DbConstants.textCol] as String;
+      }
+      return ''; // Return empty string if not found
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching ayah text for $verseKey: $e");
+      }
+      return ''; // Return empty string on error
     }
   }
 

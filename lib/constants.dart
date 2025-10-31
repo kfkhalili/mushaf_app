@@ -6,6 +6,7 @@ const String indopakScriptDbFileName = 'indopak-nastaleeq.db';
 const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
+const String imlaeiAyahDbFileName = 'imlaei-script-ayah-by-ayah.db';
 
 // --- MUSHAF LAYOUT OPTIONS ---
 enum MushafLayout { uthmani15Lines, indopak13Lines }
@@ -127,6 +128,7 @@ class DbConstants {
   static const String chaptersTable = 'chapters';
   static const String juzTable = 'juz';
   static const String hizbsTable = 'hizbs';
+  static const String versesTable = 'verses';
 
   // --- Common Columns ---
   static const String idCol = 'id';
@@ -154,6 +156,7 @@ class DbConstants {
   static const String hizbNumberCol = 'hizb_number';
   static const String firstVerseKeyCol = 'first_verse_key';
   static const String lastVerseKeyCol = 'last_verse_key';
+  static const String verseKeyCol = 'verse_key';
 
   // --- Bookmarks Table ---
   static const String bookmarksTable = 'bookmarks';

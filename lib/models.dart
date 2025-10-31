@@ -196,6 +196,7 @@ class Bookmark {
   final int? cachedPageNumber; // Optional: current layout's page (for performance, invalidated on layout change)
   final DateTime createdAt; // When bookmark was created
   final String? note; // Optional user note (future enhancement)
+  final String? ayahText; // Optional: text of the ayah
 
   const Bookmark({
     required this.id,
@@ -204,6 +205,7 @@ class Bookmark {
     this.cachedPageNumber,
     required this.createdAt,
     this.note,
+    this.ayahText,
   });
 
   Bookmark copyWith({
@@ -213,6 +215,7 @@ class Bookmark {
     int? cachedPageNumber,
     DateTime? createdAt,
     String? note,
+    String? ayahText,
   }) {
     return Bookmark(
       id: id ?? this.id,
@@ -221,6 +224,7 @@ class Bookmark {
       cachedPageNumber: cachedPageNumber ?? this.cachedPageNumber,
       createdAt: createdAt ?? this.createdAt,
       note: note ?? this.note,
+      ayahText: ayahText ?? this.ayahText,
     );
   }
 
