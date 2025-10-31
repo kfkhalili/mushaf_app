@@ -74,13 +74,39 @@ class BookmarkItemCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
-                      // 1st line: Surah name glyph, followed by page number
+                      // 1st line: Bookmark icon → page number
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        textDirection: TextDirection.rtl,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.bookmark,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w400,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.left,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // 2nd line: Surah name glyph (large) → Juz name glyph
                       pageDataAsync.when(
                         data: (pageData) {
                           final surahNumPadded =
                               pageData.pageSurahNumber.toString().padLeft(3, '0');
                           final surahNameGlyph =
                               'surah$surahNumPadded surah-icon';
+                          final juzGlyph =
+                              'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
 
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.start,
@@ -92,6 +118,20 @@ class BookmarkItemCard extends ConsumerWidget {
                                   surahNameGlyph,
                                   style: TextStyle(
                                     fontFamily: surahNameFontFamily,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w400,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                  textDirection: TextDirection.rtl,
+                                  textAlign: TextAlign.left,
+                                ),
+                              if (pageData.pageSurahNumber > 0 && pageData.juzNumber > 0)
+                                const SizedBox(width: 8),
+                              if (pageData.juzNumber > 0)
+                                Text(
+                                  juzGlyph,
+                                  style: TextStyle(
+                                    fontFamily: quranCommonFontFamily,
                                     fontSize: 22,
                                     fontWeight: FontWeight.w400,
                                     color: theme.textTheme.bodyLarge?.color,
@@ -99,57 +139,12 @@ class BookmarkItemCard extends ConsumerWidget {
                                   textDirection: TextDirection.rtl,
                                   textAlign: TextAlign.left,
                                 ),
-                              if (pageData.pageSurahNumber > 0)
-                                const SizedBox(width: 8),
-                              const Icon(
-                                Icons.bookmark,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w400,
-                                  color: theme.textTheme.bodyLarge?.color,
-                                ),
-                                textDirection: TextDirection.rtl,
-                                textAlign: TextAlign.left,
-                              ),
                             ],
                           );
                         },
                         loading: () => const SizedBox(
                           width: 60,
-                          height: 22,
-                          child: LinearProgressIndicator(minHeight: 2),
-                        ),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
-                      const SizedBox(height: 6),
-                      // 2nd line: Juz name glyph
-                      pageDataAsync.when(
-                        data: (pageData) {
-                          if (pageData.juzNumber > 0) {
-                            final juzGlyph =
-                                'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-                            return Text(
-                              juzGlyph,
-                              style: TextStyle(
-                                fontFamily: quranCommonFontFamily,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w400,
-                                color: theme.textTheme.bodyLarge?.color,
-                              ),
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.left,
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                        loading: () => const SizedBox(
-                          width: 60,
-                          height: 22,
+                          height: 28,
                           child: LinearProgressIndicator(minHeight: 2),
                         ),
                         error: (_, __) => const SizedBox.shrink(),
