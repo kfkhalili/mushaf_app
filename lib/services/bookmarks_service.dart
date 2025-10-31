@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -201,7 +203,9 @@ class SqliteBookmarksService implements BookmarksService {
           ON ${DbConstants.bookmarksTable}(${DbConstants.cachedPageNumberCol})
         ''');
       } catch (recreateError) {
-        print('Error recreating bookmarks table: $recreateError');
+        if (kDebugMode) {
+          print('Error recreating bookmarks table: $recreateError');
+        }
       }
     }
   }
@@ -233,7 +237,9 @@ class SqliteBookmarksService implements BookmarksService {
       );
     } catch (e) {
       // If page lookup fails, continue without cached page number
-      print('Could not cache page number for bookmark: $e');
+      if (kDebugMode) {
+        print('Could not cache page number for bookmark: $e');
+      }
     }
 
     try {

@@ -1,0 +1,30 @@
+# Avoid `print()` in Production Code
+
+Directly using `print()` for debugging or logging is discouraged in this project as it can lead to leaking sensitive information and cluttering logs in production builds.
+
+## Preferred Alternative: `kDebugMode`
+
+For temporary debugging, always wrap `print()` calls in a `kDebugMode` check. This ensures that the output is only visible during development and is stripped from release builds.
+
+```dart
+import 'package:flutter/foundation.dart';
+
+// Good: This will only print in debug builds
+if (kDebugMode) {
+  print('This is a debug message: $variable');
+}
+```
+
+## For Persistent Logging
+
+For more permanent or structured logging, consider using a dedicated logging framework like `package:logger`. This provides more control over log levels, output formatting, and destinations.
+
+## Linter Enforcement
+
+The project's `analysis_options.yaml` is configured to flag `print()` calls, reminding developers to follow these best practices. Any new code should not introduce `print()` statements outside of a `kDebugMode` block.
+
+## Why this is important
+
+- **Security**: Avoids accidentally leaking sensitive data in production logs.
+- **Performance**: `print()` can have a minor performance impact, especially if used frequently.
+- **Cleanliness**: Keeps production logs clean and focused on important information.
