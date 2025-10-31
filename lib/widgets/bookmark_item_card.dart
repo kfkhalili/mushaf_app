@@ -68,24 +68,23 @@ class BookmarkItemCard extends ConsumerWidget {
               textDirection: TextDirection.rtl,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Left: Chevron icon (subtle navigation indicator)
-                Icon(
-                  Icons.chevron_left,
-                  size: 24,
-                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                ),
-                // Center: Right-aligned content (primary)
+                // Left: Left-aligned content (primary)
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
                       // Page number with bookmark icon inline
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         textDirection: TextDirection.rtl,
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          const Icon(
+                            Icons.bookmark,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
                           Text(
                             'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
                             style: TextStyle(
@@ -94,12 +93,7 @@ class BookmarkItemCard extends ConsumerWidget {
                               color: theme.textTheme.bodyLarge?.color,
                             ),
                             textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.bookmark,
-                            size: 20,
+                            textAlign: TextAlign.left,
                           ),
                         ],
                       ),
@@ -121,7 +115,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
                               textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.right,
+                              textAlign: TextAlign.left,
                             );
                           }
                           return const SizedBox.shrink();
@@ -136,7 +130,7 @@ class BookmarkItemCard extends ConsumerWidget {
                       const SizedBox(height: 4),
                       // Meta info: Date • Juz
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         textDirection: TextDirection.rtl,
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -149,7 +143,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                   ?.withValues(alpha: 0.6),
                             ),
                             textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.right,
+                            textAlign: TextAlign.left,
                           ),
                           pageDataAsync.when(
                             data: (pageData) {
@@ -166,7 +160,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                       color: theme.textTheme.bodySmall?.color
                                           ?.withValues(alpha: 0.6),
                                     ),
-                                    textAlign: TextAlign.right,
+                                    textAlign: TextAlign.left,
                                   ),
                                   Text(
                                     juzGlyph,
@@ -178,7 +172,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                           ?.withValues(alpha: 0.6),
                                     ),
                                     textDirection: TextDirection.rtl,
-                                    textAlign: TextAlign.right,
+                                    textAlign: TextAlign.left,
                                   ),
                                 ],
                               );
@@ -190,6 +184,12 @@ class BookmarkItemCard extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+                // Right: Chevron icon (subtle navigation indicator)
+                Icon(
+                  Icons.chevron_right,
+                  size: 24,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                 ),
               ],
             ),
