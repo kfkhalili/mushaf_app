@@ -74,66 +74,19 @@ class BookmarkItemCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
-                      // Page number with bookmark icon inline
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        textDirection: TextDirection.rtl,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.bookmark,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w400,
-                              color: theme.textTheme.bodyLarge?.color,
-                            ),
-                            textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.left,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      // Juz glyph • Surah name glyph (same line)
+                      // 1st line: Surah name glyph, followed by page number
                       pageDataAsync.when(
                         data: (pageData) {
-                          final juzGlyph =
-                              'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
                           final surahNumPadded =
                               pageData.pageSurahNumber.toString().padLeft(3, '0');
                           final surahNameGlyph =
                               'surah$surahNumPadded surah-icon';
-                          
+
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             textDirection: TextDirection.rtl,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (pageData.juzNumber > 0)
-                                Text(
-                                  juzGlyph,
-                                  style: TextStyle(
-                                    fontFamily: quranCommonFontFamily,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w400,
-                                    color: theme.textTheme.bodyLarge?.color,
-                                  ),
-                                  textDirection: TextDirection.rtl,
-                                  textAlign: TextAlign.left,
-                                ),
-                              if (pageData.pageSurahNumber > 0 && pageData.juzNumber > 0)
-                                Text(
-                                  ' • ',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    color: theme.textTheme.bodyLarge?.color,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
                               if (pageData.pageSurahNumber > 0)
                                 Text(
                                   surahNameGlyph,
@@ -146,6 +99,23 @@ class BookmarkItemCard extends ConsumerWidget {
                                   textDirection: TextDirection.rtl,
                                   textAlign: TextAlign.left,
                                 ),
+                              if (pageData.pageSurahNumber > 0)
+                                const SizedBox(width: 8),
+                              const Icon(
+                                Icons.bookmark,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w400,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.left,
+                              ),
                             ],
                           );
                         },
@@ -156,8 +126,36 @@ class BookmarkItemCard extends ConsumerWidget {
                         ),
                         error: (_, __) => const SizedBox.shrink(),
                       ),
+                      const SizedBox(height: 6),
+                      // 2nd line: Juz name glyph
+                      pageDataAsync.when(
+                        data: (pageData) {
+                          if (pageData.juzNumber > 0) {
+                            final juzGlyph =
+                                'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                            return Text(
+                              juzGlyph,
+                              style: TextStyle(
+                                fontFamily: quranCommonFontFamily,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w400,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
+                              textDirection: TextDirection.rtl,
+                              textAlign: TextAlign.left,
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        loading: () => const SizedBox(
+                          width: 60,
+                          height: 22,
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
                       const SizedBox(height: 4),
-                      // Date (alone on third line)
+                      // 3rd line: Date
                       Text(
                         formatRelativeDate(bookmark.createdAt),
                         style: TextStyle(
