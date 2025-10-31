@@ -58,25 +58,26 @@ class AppBottomNavigation extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             textDirection: TextDirection.rtl,
             children: <Widget>[
+              // WHY: RTL order from right to left: Surah (0), Juz (1), Pages (2)
               _buildSelectionNavItem(
                 context,
                 index: 0,
                 label: 'السور',
-                isSelected: selectedIndex == 0,
+                isSelected: selectedIndex == 0, // Surah is at index 0 in PageView
                 onTap: () => onIndexChanged?.call(0),
               ),
               _buildSelectionNavItem(
                 context,
                 index: 1,
                 label: 'الأجزاء',
-                isSelected: selectedIndex == 1,
+                isSelected: selectedIndex == 1, // Juz is at index 1 in PageView
                 onTap: () => onIndexChanged?.call(1),
               ),
               _buildSelectionNavItem(
                 context,
                 index: 2,
                 label: 'الصفحات',
-                isSelected: selectedIndex == 2,
+                isSelected: selectedIndex == 2, // Pages is at index 2 in PageView
                 onTap: () => onIndexChanged?.call(2),
               ),
             ],

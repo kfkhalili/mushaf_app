@@ -128,48 +128,20 @@ class BookmarkItemCard extends ConsumerWidget {
                         error: (_, __) => const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 4),
-                      // 3rd line: Juz name glyph (22px, right aligned)
-                      pageDataAsync.when(
-                        data: (pageData) {
-                          if (pageData.juzNumber > 0) {
-                            final juzGlyph =
-                                'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-                            return Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                juzGlyph,
-                                style: TextStyle(
-                                  fontFamily: quranCommonFontFamily,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w400,
-                                  color: theme.textTheme.bodyLarge?.color,
-                                ),
-                                textDirection: TextDirection.rtl,
-                                textAlign: TextAlign.right,
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                        loading: () => const SizedBox(
-                          width: 60,
-                          height: 22,
-                          child: LinearProgressIndicator(minHeight: 2),
+                      // 3rd line: Date (15px, right)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          formatRelativeDate(bookmark.createdAt),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.6),
+                          ),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right,
                         ),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
-                      const SizedBox(height: 4),
-                      // 4th line: Date (left aligned)
-                      Text(
-                        formatRelativeDate(bookmark.createdAt),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.6),
-                        ),
-                        textDirection: TextDirection.rtl,
-                        textAlign: TextAlign.left,
                       ),
                     ],
                   ),

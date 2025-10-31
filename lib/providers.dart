@@ -134,7 +134,7 @@ class SelectionTabIndex extends _$SelectionTabIndex {
   void setTabIndex(int index) {
     // Clamp index to valid range (0-2)
     if (index >= 0 && index <= 2) {
-      state = index;
+    state = index;
     }
   }
 }

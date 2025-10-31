@@ -23,14 +23,15 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   @override
   void initState() {
     super.initState();
+    // WHY: Order matches RTL tab order: Surah (rightmost), Juz, Pages (leftmost)
     _preloadedViews = [
-      const SurahListView(),      // 0: Surahs
-      const JuzListView(),        // 1: Juz
-      const PageListView(),       // 2: Pages
+      const SurahListView(), // 0: Surahs (rightmost in RTL)
+      const JuzListView(), // 1: Juz (middle)
+      const PageListView(), // 2: Pages (leftmost in RTL)
     ];
 
     // Initialize PageController (3 tabs: Surah=0, Juz=1, Pages=2)
-    // Default to Surah tab (index 0)
+    // Default to Surah tab (index 0) - rightmost in RTL
     _pageController = PageController(initialPage: 0);
   }
 
@@ -82,15 +83,14 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
               },
               onBookmarkPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const BookmarksScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const BookmarksScreen()),
                 );
               },
             ),
             Expanded(
               child: PageView(
                 controller: _pageController,
+                reverse: true,
                 onPageChanged: (index) {
                   ref
                       .read(selectionTabIndexProvider.notifier)
