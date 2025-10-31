@@ -98,89 +98,76 @@ class BookmarkItemCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      // Surah name
+                      // Juz glyph • Surah name glyph (same line)
                       pageDataAsync.when(
                         data: (pageData) {
-                          if (pageData.pageSurahNumber > 0) {
-                            final surahNumPadded =
-                                pageData.pageSurahNumber.toString().padLeft(3, '0');
-                            final surahNameGlyph =
-                                'surah$surahNumPadded surah-icon';
-                            return Text(
-                              surahNameGlyph,
-                              style: TextStyle(
-                                fontFamily: surahNameFontFamily,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: theme.textTheme.bodyLarge?.color,
-                              ),
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.left,
-                            );
-                          }
-                          return const SizedBox.shrink();
+                          final juzGlyph =
+                              'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                          final surahNumPadded =
+                              pageData.pageSurahNumber.toString().padLeft(3, '0');
+                          final surahNameGlyph =
+                              'surah$surahNumPadded surah-icon';
+                          
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            textDirection: TextDirection.rtl,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (pageData.juzNumber > 0)
+                                Text(
+                                  juzGlyph,
+                                  style: TextStyle(
+                                    fontFamily: quranCommonFontFamily,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w400,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                  textDirection: TextDirection.rtl,
+                                  textAlign: TextAlign.left,
+                                ),
+                              if (pageData.pageSurahNumber > 0 && pageData.juzNumber > 0)
+                                Text(
+                                  ' • ',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              if (pageData.pageSurahNumber > 0)
+                                Text(
+                                  surahNameGlyph,
+                                  style: TextStyle(
+                                    fontFamily: surahNameFontFamily,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w400,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                  textDirection: TextDirection.rtl,
+                                  textAlign: TextAlign.left,
+                                ),
+                            ],
+                          );
                         },
                         loading: () => const SizedBox(
                           width: 60,
-                          height: 16,
+                          height: 22,
                           child: LinearProgressIndicator(minHeight: 2),
                         ),
                         error: (_, __) => const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 4),
-                      // Meta info: Date • Juz
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                      // Date (alone on third line)
+                      Text(
+                        formatRelativeDate(bookmark.createdAt),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.6),
+                        ),
                         textDirection: TextDirection.rtl,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            formatRelativeDate(bookmark.createdAt),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              color: theme.textTheme.bodySmall?.color
-                                  ?.withValues(alpha: 0.6),
-                            ),
-                            textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.left,
-                          ),
-                          pageDataAsync.when(
-                            data: (pageData) {
-                              final juzGlyph =
-                                  'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                textDirection: TextDirection.rtl,
-                                children: [
-                                  Text(
-                                    ' • ',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: theme.textTheme.bodySmall?.color
-                                          ?.withValues(alpha: 0.6),
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    juzGlyph,
-                                    style: TextStyle(
-                                      fontFamily: quranCommonFontFamily,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w400,
-                                      color: theme.textTheme.bodySmall?.color
-                                          ?.withValues(alpha: 0.6),
-                                    ),
-                                    textDirection: TextDirection.rtl,
-                                    textAlign: TextAlign.left,
-                                  ),
-                                ],
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, __) => const SizedBox.shrink(),
-                          ),
-                        ],
+                        textAlign: TextAlign.left,
                       ),
                     ],
                   ),
