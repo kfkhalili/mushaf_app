@@ -56,6 +56,7 @@ class AppBottomNavigation extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
+            textDirection: TextDirection.rtl,
             children: <Widget>[
               _buildSelectionNavItem(
                 context,
