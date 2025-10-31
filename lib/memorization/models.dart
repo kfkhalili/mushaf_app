@@ -2,34 +2,29 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class MemorizationConfig {
-  final int visibleWindowSize; // usually 3
-  final double fadeStepPerTap; // e.g., 0.15
-  final int tapsPerReveal; // fixed taps required before revealing next ayah
-  final double revealThresholdNext; // when current <= 0.40
-  final double revealThresholdSecondNext; // when current <= 0.70 and next <= 0.40
+  final int visibleWindowSize; // usually 3 (previous, current, next)
+  final bool startWithTextHidden; // default: true
+  final bool autoAdvanceAfterGrade; // default: true
+  final int masteryLevels; // 3 levels (Easy=3, Medium=2, Hard=1)
 
   const MemorizationConfig({
     this.visibleWindowSize = 3,
-    this.fadeStepPerTap = 0.15,
-    this.tapsPerReveal = 4,
-    this.revealThresholdNext = 0.40,
-    this.revealThresholdSecondNext = 0.70,
+    this.startWithTextHidden = true,
+    this.autoAdvanceAfterGrade = true,
+    this.masteryLevels = 3,
   });
 
   MemorizationConfig copyWith({
     int? visibleWindowSize,
-    double? fadeStepPerTap,
-    int? tapsPerReveal,
-    double? revealThresholdNext,
-    double? revealThresholdSecondNext,
+    bool? startWithTextHidden,
+    bool? autoAdvanceAfterGrade,
+    int? masteryLevels,
   }) {
     return MemorizationConfig(
       visibleWindowSize: visibleWindowSize ?? this.visibleWindowSize,
-      fadeStepPerTap: fadeStepPerTap ?? this.fadeStepPerTap,
-      tapsPerReveal: tapsPerReveal ?? this.tapsPerReveal,
-      revealThresholdNext: revealThresholdNext ?? this.revealThresholdNext,
-      revealThresholdSecondNext:
-          revealThresholdSecondNext ?? this.revealThresholdSecondNext,
+      startWithTextHidden: startWithTextHidden ?? this.startWithTextHidden,
+      autoAdvanceAfterGrade: autoAdvanceAfterGrade ?? this.autoAdvanceAfterGrade,
+      masteryLevels: masteryLevels ?? this.masteryLevels,
     );
   }
 
@@ -39,42 +34,44 @@ class MemorizationConfig {
       other is MemorizationConfig &&
           runtimeType == other.runtimeType &&
           visibleWindowSize == other.visibleWindowSize &&
-          fadeStepPerTap == other.fadeStepPerTap &&
-          tapsPerReveal == other.tapsPerReveal &&
-          revealThresholdNext == other.revealThresholdNext &&
-          revealThresholdSecondNext == other.revealThresholdSecondNext;
+          startWithTextHidden == other.startWithTextHidden &&
+          autoAdvanceAfterGrade == other.autoAdvanceAfterGrade &&
+          masteryLevels == other.masteryLevels;
 
   @override
   int get hashCode => Object.hash(
         visibleWindowSize,
-        fadeStepPerTap,
-        tapsPerReveal,
-        revealThresholdNext,
-        revealThresholdSecondNext,
+        startWithTextHidden,
+        autoAdvanceAfterGrade,
+        masteryLevels,
       );
 }
 
 @immutable
 class AyahWindowState {
   final List<int> ayahIndices; // absolute indices within the page
-  final List<double> opacities; // aligned 0.0–1.0 per ayah
-  final List<int> tapsSinceReveal; // aligned counters
+  final List<bool> isHidden; // aligned boolean - true if hidden, false if visible
+  final List<int> masteryLevel; // aligned mastery levels: 0 (not reviewed), 1 (hard), 2 (medium), 3 (easy)
+  final List<int> reviewCount; // aligned count of how many times reviewed
 
   const AyahWindowState({
     required this.ayahIndices,
-    required this.opacities,
-    required this.tapsSinceReveal,
+    required this.isHidden,
+    required this.masteryLevel,
+    required this.reviewCount,
   });
 
   AyahWindowState copyWith({
     List<int>? ayahIndices,
-    List<double>? opacities,
-    List<int>? tapsSinceReveal,
+    List<bool>? isHidden,
+    List<int>? masteryLevel,
+    List<int>? reviewCount,
   }) {
     return AyahWindowState(
       ayahIndices: ayahIndices ?? this.ayahIndices,
-      opacities: opacities ?? this.opacities,
-      tapsSinceReveal: tapsSinceReveal ?? this.tapsSinceReveal,
+      isHidden: isHidden ?? this.isHidden,
+      masteryLevel: masteryLevel ?? this.masteryLevel,
+      reviewCount: reviewCount ?? this.reviewCount,
     );
   }
 
@@ -84,14 +81,16 @@ class AyahWindowState {
       other is AyahWindowState &&
           runtimeType == other.runtimeType &&
           listEquals(ayahIndices, other.ayahIndices) &&
-          listEquals(opacities, other.opacities) &&
-          listEquals(tapsSinceReveal, other.tapsSinceReveal);
+          listEquals(isHidden, other.isHidden) &&
+          listEquals(masteryLevel, other.masteryLevel) &&
+          listEquals(reviewCount, other.reviewCount);
 
   @override
   int get hashCode => Object.hash(
     Object.hashAll(ayahIndices),
-    Object.hashAll(opacities),
-    Object.hashAll(tapsSinceReveal),
+    Object.hashAll(isHidden),
+    Object.hashAll(masteryLevel),
+    Object.hashAll(reviewCount),
   );
 }
 
@@ -99,31 +98,31 @@ class AyahWindowState {
 class MemorizationSessionState {
   final int pageNumber;
   final AyahWindowState window;
-  final int lastAyahIndexShown; // absolute within page
+  final int currentAyahIndex; // Currently focused ayah (for hide/reveal)
   final DateTime lastUpdatedAt;
-  final int passCount;
+  final int totalPasses; // Total times page has been reviewed (not "completed")
 
   const MemorizationSessionState({
     required this.pageNumber,
     required this.window,
-    required this.lastAyahIndexShown,
+    required this.currentAyahIndex,
     required this.lastUpdatedAt,
-    required this.passCount,
+    required this.totalPasses,
   });
 
   MemorizationSessionState copyWith({
     int? pageNumber,
     AyahWindowState? window,
-    int? lastAyahIndexShown,
+    int? currentAyahIndex,
     DateTime? lastUpdatedAt,
-    int? passCount,
+    int? totalPasses,
   }) {
     return MemorizationSessionState(
       pageNumber: pageNumber ?? this.pageNumber,
       window: window ?? this.window,
-      lastAyahIndexShown: lastAyahIndexShown ?? this.lastAyahIndexShown,
+      currentAyahIndex: currentAyahIndex ?? this.currentAyahIndex,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
-      passCount: passCount ?? this.passCount,
+      totalPasses: totalPasses ?? this.totalPasses,
     );
   }
 
@@ -134,16 +133,16 @@ class MemorizationSessionState {
           runtimeType == other.runtimeType &&
           pageNumber == other.pageNumber &&
           window == other.window &&
-          lastAyahIndexShown == other.lastAyahIndexShown &&
+          currentAyahIndex == other.currentAyahIndex &&
           lastUpdatedAt == other.lastUpdatedAt &&
-          passCount == other.passCount;
+          totalPasses == other.totalPasses;
 
   @override
   int get hashCode => Object.hash(
     pageNumber,
     window,
-    lastAyahIndexShown,
+    currentAyahIndex,
     lastUpdatedAt,
-    passCount,
+    totalPasses,
   );
 }

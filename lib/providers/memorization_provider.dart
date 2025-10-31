@@ -27,16 +27,10 @@ class MemorizationSessionNotifier extends StateNotifier<MemorizationSessionState
     required int pageNumber,
     required int firstAyahIndex,
   }) async {
-    state = MemorizationSessionState(
+    state = _service.startSession(
       pageNumber: pageNumber,
-      window: AyahWindowState(
-        ayahIndices: [firstAyahIndex],
-        opacities: const [1.0],
-        tapsSinceReveal: const [0],
-      ),
-      lastAyahIndexShown: firstAyahIndex,
-      lastUpdatedAt: DateTime.now(),
-      passCount: 0,
+      firstAyahIndex: firstAyahIndex,
+      config: _config,
     );
     await _maybePersist();
   }
@@ -51,15 +45,69 @@ class MemorizationSessionNotifier extends StateNotifier<MemorizationSessionState
     }
   }
 
-  Future<void> onTap({required int totalAyatOnPage}) async {
+  /// Reveals the current ayah
+  Future<void> revealAyah(int ayahIndex) async {
     if (state == null) return;
 
-    final next = _service.applyTap(
+    final next = _service.revealAyah(
       state: state!,
-      config: _config,
-      totalAyatOnPage: totalAyatOnPage,
+      ayahIndex: ayahIndex,
     );
 
+    state = next;
+    await _maybePersist();
+  }
+
+  /// Hides the current ayah
+  Future<void> hideAyah(int ayahIndex) async {
+    if (state == null) return;
+
+    final next = _service.hideAyah(
+      state: state!,
+      ayahIndex: ayahIndex,
+    );
+
+    state = next;
+    await _maybePersist();
+  }
+
+  /// Grades an ayah and moves to next
+  Future<void> gradeAyah({
+    required int ayahIndex,
+    required int masteryLevel, // 1=Hard, 2=Medium, 3=Easy
+    required int totalAyatOnPage,
+  }) async {
+    if (state == null) return;
+
+    final next = _service.gradeAyah(
+      state: state!,
+      ayahIndex: ayahIndex,
+      masteryLevel: masteryLevel,
+      totalAyatOnPage: totalAyatOnPage,
+      config: _config,
+    );
+
+    state = next;
+    await _maybePersist();
+  }
+
+  /// Navigates to the previous ayah
+  Future<void> navigateToPreviousAyah() async {
+    if (state == null) return;
+
+    final next = _service.navigateToPreviousAyah(state: state!);
+    state = next;
+    await _maybePersist();
+  }
+
+  /// Navigates to the next ayah
+  Future<void> navigateToNextAyah({required int totalAyatOnPage}) async {
+    if (state == null) return;
+
+    final next = _service.navigateToNextAyah(
+      state: state!,
+      totalAyatOnPage: totalAyatOnPage,
+    );
     state = next;
     await _maybePersist();
   }

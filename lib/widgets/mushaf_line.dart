@@ -12,8 +12,10 @@ class MushafLine extends ConsumerWidget {
   final bool isMemorizationMode;
   // WHY: Accept the set of words that should be visible.
   final Set<Word> wordsToShow;
-  // Optional per-ayah opacity map (key: 003:255)
-  final Map<String, double>? ayahOpacities;
+  // Optional per-ayah hidden state map (key: 003:255)
+  final Map<String, bool>? ayahIsHidden;
+  // Current ayah index for showing placeholder
+  final int? currentAyahIndex;
 
   const MushafLine({
     super.key,
@@ -21,7 +23,8 @@ class MushafLine extends ConsumerWidget {
     required this.pageFontFamily,
     required this.isMemorizationMode,
     required this.wordsToShow, // Use this set to determine visibility
-    this.ayahOpacities,
+    this.ayahIsHidden,
+    this.currentAyahIndex,
   });
 
   // WHY: Simplified style helper - only needs visibility flag.
@@ -161,84 +164,104 @@ class MushafLine extends ConsumerWidget {
             break;
           }
 
-          // Determine per-word opacity using ayahOpacities when in memorization mode
-          if (!line.isCentered) {
-            final List<Widget> wordWidgets = line.words.map((word) {
-              double opacity = 1.0;
-              if (isMemorizationMode) {
-                if (!wordsToShow.contains(word)) {
-                  opacity = 0.0;
-                } else {
-                  if (ayahOpacities != null) {
-                    final key = generateAyahKey(
-                      word.surahNumber,
-                      word.ayahNumber,
-                    );
-                    opacity = ayahOpacities![key] ?? 1.0;
-                  }
-                }
-              }
-
-              // WHY: Use AnimatedSwitcher for fade effect.
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  word.text,
-                  key: ValueKey(
-                    "${word.text}-${opacity.toStringAsFixed(2)}",
-                  ), // Key includes opacity
-                  style: _getWordStyle(
-                    fontSize: defaultDynamicFontSize,
-                    lineHeight: dynamicLineHeight, // Ayah line height
-                    baseColor: baseTextColor,
-                    opacity: opacity, // Pass calculated opacity
-                  ),
-                  textScaler: const TextScaler.linear(1.0),
-                ),
+          // Check if current ayah is hidden for placeholder
+          bool showPlaceholder = false;
+          if (isMemorizationMode && ayahIsHidden != null && line.words.isNotEmpty) {
+            final firstWord = line.words.first;
+            if (firstWord.ayahNumber > 0) {
+              final key = generateAyahKey(
+                firstWord.surahNumber,
+                firstWord.ayahNumber,
               );
-            }).toList();
+              showPlaceholder = ayahIsHidden![key] ?? false;
+            }
+          }
 
+          // Show placeholder if ayah is hidden
+          if (showPlaceholder && isMemorizationMode) {
             lineWidget = Padding(
               padding: EdgeInsets.symmetric(horizontal: dynamicLinePadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                textDirection: TextDirection.rtl,
-                children: wordWidgets,
+              child: Container(
+                height: defaultDynamicFontSize * dynamicLineHeight,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: baseTextColor.withValues(alpha: 0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(
+                  child: Text(
+                    '━━━━━━━━━━━━━━━━━━━━',
+                    style: TextStyle(
+                      color: baseTextColor.withValues(alpha: 0.5),
+                      fontSize: defaultDynamicFontSize * 0.8,
+                    ),
+                    textDirection: TextDirection.rtl,
+                    textScaler: const TextScaler.linear(1.0),
+                  ),
+                ),
               ),
             );
           } else {
-            // WHY: Centered lines use RichText (no animation per word).
-            final List<TextSpan> spans = line.words.map((word) {
-              double opacity = 1.0;
-              if (isMemorizationMode) {
-                if (!wordsToShow.contains(word)) {
-                  opacity = 0.0;
-                } else {
-                  if (ayahOpacities != null) {
-                    final key = generateAyahKey(
-                      word.surahNumber,
-                      word.ayahNumber,
-                    );
-                    opacity = ayahOpacities![key] ?? 1.0;
-                  }
+            // Determine per-word visibility using wordsToShow when in memorization mode
+            if (!line.isCentered) {
+              final List<Widget> wordWidgets = line.words.map((word) {
+                bool isVisible = true;
+                if (isMemorizationMode) {
+                  isVisible = wordsToShow.contains(word);
                 }
-              }
-              return TextSpan(
-                text: "${word.text} ", // Add space
-                style: _getWordStyle(
-                  fontSize: defaultDynamicFontSize,
-                  lineHeight: dynamicLineHeight, // Ayah line height
-                  baseColor: baseTextColor,
-                  opacity: opacity,
+
+                if (!isVisible) {
+                  return const SizedBox.shrink();
+                }
+
+                // WHY: Use AnimatedSwitcher for smooth transitions.
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    word.text,
+                    key: ValueKey("${word.text}-${isVisible}"),
+                    style: _getWordStyle(
+                      fontSize: defaultDynamicFontSize,
+                      lineHeight: dynamicLineHeight,
+                      baseColor: baseTextColor,
+                      opacity: 1.0,
+                    ),
+                    textScaler: const TextScaler.linear(1.0),
+                  ),
+                );
+              }).where((w) => w is! SizedBox).toList();
+
+              lineWidget = Padding(
+                padding: EdgeInsets.symmetric(horizontal: dynamicLinePadding),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  textDirection: TextDirection.rtl,
+                  children: wordWidgets,
                 ),
               );
-            }).toList();
+            } else {
+              // WHY: Centered lines use RichText.
+              final List<TextSpan> spans = line.words
+                  .where((word) => !isMemorizationMode || wordsToShow.contains(word))
+                  .map((word) {
+                return TextSpan(
+                  text: "${word.text} ", // Add space
+                  style: _getWordStyle(
+                    fontSize: defaultDynamicFontSize,
+                    lineHeight: dynamicLineHeight,
+                    baseColor: baseTextColor,
+                    opacity: 1.0,
+                  ),
+                );
+              }).toList();
 
-            lineWidget = Text.rich(
-              TextSpan(children: spans),
-              textAlign: TextAlign.center,
-              textScaler: const TextScaler.linear(1.0),
-            );
+              lineWidget = Text.rich(
+                TextSpan(children: spans),
+                textAlign: TextAlign.center,
+                textScaler: const TextScaler.linear(1.0),
+              );
+            }
           }
           break;
         }

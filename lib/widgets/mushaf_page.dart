@@ -56,7 +56,8 @@ class MushafPage extends ConsumerWidget {
                       pageFontFamily: pageData.pageFontFamily,
                       isMemorizationMode: isMemorizing,
                       wordsToShow: visibility.visibleWords,
-                      ayahOpacities: visibility.ayahOpacity,
+                      ayahIsHidden: visibility.ayahIsHidden,
+                      currentAyahIndex: isMemorizing ? session?.currentAyahIndex : null,
                     );
                   }).toList(),
                 ),

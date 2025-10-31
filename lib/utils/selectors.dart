@@ -22,12 +22,13 @@ String derivePreviewText(PageData pageData, {int wordCount = 3}) {
   return buffer.isEmpty ? '…' : buffer.toString();
 }
 
-({Set<Word> visibleWords, Map<String, double> ayahOpacity}) computeMemorizationVisibility(
+({Set<Word> visibleWords, Map<String, bool> ayahIsHidden}) computeMemorizationVisibility(
   PageLayout layout,
   MemorizationSessionState? session,
 ) {
   final Set<Word> visible = <Word>{};
-  final Map<String, double> opacity = <String, double>{};
+  final Map<String, bool> isHidden = <String, bool>{};
+
   if (session == null) {
     // Not memorizing: show all ayah words
     for (final line in layout.lines) {
@@ -37,7 +38,7 @@ String derivePreviewText(PageData pageData, {int wordCount = 3}) {
         }
       }
     }
-    return (visibleWords: visible, ayahOpacity: opacity);
+    return (visibleWords: visible, ayahIsHidden: isHidden);
   }
 
   final allQuranWordsOnPage = extractQuranWordsFromPage(layout);
@@ -46,20 +47,28 @@ String derivePreviewText(PageData pageData, {int wordCount = 3}) {
   );
   final List<String> orderedAyahKeys = ayahsOnPageMap.keys.toList();
 
-  for (final idx in session.window.ayahIndices) {
-    if (idx >= 0 && idx < orderedAyahKeys.length) {
-      final String ayahKey = orderedAyahKeys[idx];
-      visible.addAll(ayahsOnPageMap[ayahKey] ?? const <Word>[]);
-    }
-  }
-  for (int i = 0; i < session.window.ayahIndices.length && i < session.window.opacities.length; i++) {
+  // Show words from all ayat in the window
+  // Previous and next ayat are always visible (for chaining context)
+  // Current ayah visibility depends on isHidden state
+  for (int i = 0; i < session.window.ayahIndices.length; i++) {
     final int idx = session.window.ayahIndices[i];
     if (idx >= 0 && idx < orderedAyahKeys.length) {
-      final String key = orderedAyahKeys[idx];
-      final double value = session.window.opacities[i];
-      opacity[key] = value < 0.0 ? 0.0 : (value > 1.0 ? 1.0 : value);
+      final String ayahKey = orderedAyahKeys[idx];
+      final bool hidden = i < session.window.isHidden.length
+          ? session.window.isHidden[i]
+          : true;
+
+      // Track hidden state for this ayah
+      isHidden[ayahKey] = hidden;
+
+      // Only add to visible words if not hidden
+      // OR if it's not the current ayah (show previous/next for context)
+      final isCurrentAyah = idx == session.currentAyahIndex;
+      if (!hidden || !isCurrentAyah) {
+        visible.addAll(ayahsOnPageMap[ayahKey] ?? const <Word>[]);
+      }
     }
   }
 
-  return (visibleWords: visible, ayahOpacity: opacity);
+  return (visibleWords: visible, ayahIsHidden: isHidden);
 }

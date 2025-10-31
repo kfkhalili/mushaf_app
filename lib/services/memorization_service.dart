@@ -1,100 +1,161 @@
 import '../memorization/models.dart';
 
-/// Pure helpers for chaining transitions. All functions are deterministic and side-effect free.
+/// Pure helpers for memorization transitions. All functions are deterministic and side-effect free.
 class MemorizationService {
   const MemorizationService();
 
-  /// Applies a single valid tap: fades opacities and computes potential reveals/slides.
-  MemorizationSessionState applyTap({
-    required MemorizationSessionState state,
+  /// Starts a new memorization session
+  MemorizationSessionState startSession({
+    required int pageNumber,
+    required int firstAyahIndex,
     required MemorizationConfig config,
-    required int totalAyatOnPage,
   }) {
-    final fade = config.fadeStepPerTap;
-
-    // Fade visible ayat
-    final fadedOpacities = state.window.opacities
-        .map((o) => (o - fade).clamp(0.0, 1.0))
-        .toList(growable: false);
-
-    // Increment per-ayah tap counters to enforce minimum one tap between reveals
-    final incrementedTaps = state.window.tapsSinceReveal
-        .map((t) => t + 1)
-        .toList(growable: false);
-
-    var window = state.window.copyWith(
-      opacities: fadedOpacities,
-      tapsSinceReveal: incrementedTaps,
+    return MemorizationSessionState(
+      pageNumber: pageNumber,
+      window: AyahWindowState(
+        ayahIndices: [firstAyahIndex],
+        isHidden: [config.startWithTextHidden], // Start hidden
+        masteryLevel: [0], // Not reviewed
+        reviewCount: [0], // No reviews
+      ),
+      currentAyahIndex: firstAyahIndex,
+      lastUpdatedAt: DateTime.now(),
+      totalPasses: 0,
     );
-    var lastShown = state.lastAyahIndexShown;
+  }
 
-    // Reveal logic (at most one reveal per tap)
-    window = _maybeRevealNext(
-      window: window,
-      lastAyahIndexShown: lastShown,
-      totalAyatOnPage: totalAyatOnPage,
-      config: config,
-      onRevealed: (int revealedIndex) {
-        lastShown = revealedIndex;
-      },
-    );
+  /// Reveals the current ayah text
+  MemorizationSessionState revealAyah({
+    required MemorizationSessionState state,
+    required int ayahIndex,
+  }) {
+    final ayahPos = state.window.ayahIndices.indexOf(ayahIndex);
+    if (ayahPos == -1) return state;
 
-    // Slide window if oldest fully faded
-    if (window.ayahIndices.isNotEmpty && window.opacities.first <= 0.0) {
-      final newIndices = window.ayahIndices.sublist(1);
-      final newOpacities = window.opacities.sublist(1);
-      final newTaps = window.tapsSinceReveal.sublist(1);
-      window = window.copyWith(
-        ayahIndices: newIndices,
-        opacities: newOpacities,
-        tapsSinceReveal: newTaps,
-      );
-    }
+    final newIsHidden = List<bool>.from(state.window.isHidden);
+    newIsHidden[ayahPos] = false; // Reveal
 
     return state.copyWith(
-      window: window,
-      lastAyahIndexShown: lastShown,
+      window: state.window.copyWith(isHidden: newIsHidden),
       lastUpdatedAt: DateTime.now(),
     );
   }
 
-  AyahWindowState _maybeRevealNext({
-    required AyahWindowState window,
-    required int lastAyahIndexShown,
+  /// Hides the current ayah text
+  MemorizationSessionState hideAyah({
+    required MemorizationSessionState state,
+    required int ayahIndex,
+  }) {
+    final ayahPos = state.window.ayahIndices.indexOf(ayahIndex);
+    if (ayahPos == -1) return state;
+
+    final newIsHidden = List<bool>.from(state.window.isHidden);
+    newIsHidden[ayahPos] = true; // Hide
+
+    return state.copyWith(
+      window: state.window.copyWith(isHidden: newIsHidden),
+      lastUpdatedAt: DateTime.now(),
+    );
+  }
+
+  /// Grades an ayah and moves to next ayah
+  MemorizationSessionState gradeAyah({
+    required MemorizationSessionState state,
+    required int ayahIndex,
+    required int masteryLevel, // 1=Hard, 2=Medium, 3=Easy
     required int totalAyatOnPage,
     required MemorizationConfig config,
-    required void Function(int revealedIndex) onRevealed,
   }) {
-    if (window.ayahIndices.isEmpty) return window;
+    final ayahPos = state.window.ayahIndices.indexOf(ayahIndex);
+    if (ayahPos == -1) return state;
 
-    final newest = window.ayahIndices.last;
-    final tapsSinceNewestReveal = window.tapsSinceReveal.isNotEmpty
-        ? window.tapsSinceReveal.last
-        : 0;
+    // Update mastery level and review count
+    final newMasteryLevel = List<int>.from(state.window.masteryLevel);
+    final newReviewCount = List<int>.from(state.window.reviewCount);
 
-    // Enforce fixed taps per reveal for consistency
-    final bool enoughTapsForReveal =
-        tapsSinceNewestReveal >= config.tapsPerReveal;
+    newMasteryLevel[ayahPos] = masteryLevel;
+    newReviewCount[ayahPos] = (newReviewCount[ayahPos]) + 1;
 
-    // Try reveal next (n+1) - allow at most one reveal per tap
-    if (newest + 1 < totalAyatOnPage) {
-      final canRevealNext = enoughTapsForReveal;
-      if (canRevealNext &&
-          window.ayahIndices.length < config.visibleWindowSize) {
-        final nextIndex = newest + 1;
-        window = AyahWindowState(
-          ayahIndices: [...window.ayahIndices, nextIndex],
-          opacities: [...window.opacities, 1.0],
-          // Reset tap counter for the newly revealed ayah
-          tapsSinceReveal: [...window.tapsSinceReveal, 0],
-        );
-        onRevealed(nextIndex);
+    // Hide the ayah again (for future review)
+    final newIsHidden = List<bool>.from(state.window.isHidden);
+    newIsHidden[ayahPos] = true;
 
-        // Do NOT reveal another ayah in the same tap
-        return window;
+    // Move to next ayah
+    int nextIndex = state.currentAyahIndex + 1;
+
+    // Check if next ayah needs to be added to window
+    final window = state.window;
+    if (!window.ayahIndices.contains(nextIndex) && nextIndex < totalAyatOnPage) {
+      // Add next ayah to window (hidden by default)
+      final newIndices = [...window.ayahIndices, nextIndex];
+      final newIsHiddenForNew = [...newIsHidden, config.startWithTextHidden];
+      final newMasteryForNew = [...newMasteryLevel, 0]; // Not reviewed yet
+      final newReviewForNew = [...newReviewCount, 0]; // No reviews yet
+
+      // Maintain window size (remove oldest if needed)
+      if (newIndices.length > config.visibleWindowSize) {
+        newIndices.removeAt(0);
+        newIsHiddenForNew.removeAt(0);
+        newMasteryForNew.removeAt(0);
+        newReviewForNew.removeAt(0);
       }
+
+      return state.copyWith(
+        window: AyahWindowState(
+          ayahIndices: newIndices,
+          isHidden: newIsHiddenForNew,
+          masteryLevel: newMasteryForNew,
+          reviewCount: newReviewForNew,
+        ),
+        currentAyahIndex: nextIndex,
+        lastUpdatedAt: DateTime.now(),
+      );
     }
 
-    return window;
+    // If next ayah already in window, just update current index and window state
+    final finalNextIndex = nextIndex < totalAyatOnPage ? nextIndex : state.currentAyahIndex;
+
+    return state.copyWith(
+      window: window.copyWith(
+        isHidden: newIsHidden,
+        masteryLevel: newMasteryLevel,
+        reviewCount: newReviewCount,
+      ),
+      currentAyahIndex: finalNextIndex,
+      lastUpdatedAt: DateTime.now(),
+    );
+  }
+
+  /// Navigates to the previous ayah in the window
+  MemorizationSessionState navigateToPreviousAyah({
+    required MemorizationSessionState state,
+  }) {
+    final currentPos = state.window.ayahIndices.indexOf(state.currentAyahIndex);
+    if (currentPos <= 0) return state;
+
+    final prevIndex = state.window.ayahIndices[currentPos - 1];
+    return state.copyWith(
+      currentAyahIndex: prevIndex,
+      lastUpdatedAt: DateTime.now(),
+    );
+  }
+
+  /// Navigates to the next ayah in the window
+  MemorizationSessionState navigateToNextAyah({
+    required MemorizationSessionState state,
+    required int totalAyatOnPage,
+  }) {
+    final currentPos = state.window.ayahIndices.indexOf(state.currentAyahIndex);
+    if (currentPos == -1 || currentPos >= state.window.ayahIndices.length - 1) {
+      return state;
+    }
+
+    final nextIndex = state.window.ayahIndices[currentPos + 1];
+    if (nextIndex >= totalAyatOnPage) return state;
+
+    return state.copyWith(
+      currentAyahIndex: nextIndex,
+      lastUpdatedAt: DateTime.now(),
+    );
   }
 }
