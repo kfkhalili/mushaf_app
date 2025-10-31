@@ -103,71 +103,109 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 **Location:** App header (existing header component)
 
+**Two Contexts for Bookmark Icon:**
+
+1. **Mushaf Screen (Current Page Bookmark):**
+
+   - Position: **Left side** of header in RTL layout (with Settings/Search icons)
+   - Icon state: Outlined (not bookmarked) / Filled (bookmarked)
+   - Color: Outlined = default grey, Filled = primary color
+   - Behavior: Toggles bookmark for current page
+   - Only visible on Mushaf Screen
+
+2. **Selection Screen (Bookmarks Access):**
+   - Position: **Left side** of header in RTL layout (with Settings/Search icons)
+   - Icon: Always **filled** (`Icons.bookmark`)
+   - Color: **Grey** to match Settings and Search icons (`Colors.grey.shade400` dark / `Colors.grey.shade600` light)
+   - Size: Match existing header icon size (`kAppHeaderIconSize = 24.0`)
+   - Behavior: Tap icon to navigate to Bookmarks screen/list
+   - Always visible on Selection Screen
+
 **Icon Placement (RTL-aware):**
 
-- Position: **Left side** of header in RTL layout (visual right side in LTR)
-- Opposite from settings icon (which is on right side in RTL)
-- Icon: `Icons.bookmark_border` (outlined) / `Icons.bookmark` (filled)
+- Position: **Left side** of header in RTL layout (same row as Settings and Search)
+- Order: Settings | Search | **Bookmarks** (from left to right in RTL visual layout)
 - Size: Match existing header icon size (`kAppHeaderIconSize = 24.0`)
-- Color: Match existing header icon theme colors
-- Tooltip: "حفظ الصفحة" / "Bookmark page" (RTL text direction)
+- Color:
+  - Mushaf Screen: Dynamic (outlined grey / filled primary)
+  - Selection Screen: Always filled grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light)
+- Tooltip: "العلامات المرجعية" / "Bookmarks" (RTL text direction)
 
 **States:**
 
-- **Not Bookmarked:** Outlined bookmark icon (default theme color)
-- **Bookmarked:** Filled bookmark icon (primary theme color or accent)
+- **Mushaf Screen:**
+  - Not Bookmarked: Outlined bookmark icon (default grey color)
+  - Bookmarked: Filled bookmark icon (primary theme color)
+- **Selection Screen:**
+  - Always: Filled bookmark icon (grey color, matches Settings/Search)
 - **Animations:**
-  - On toggle: Scale animation (1.0 → 1.2 → 1.0) with color transition
+  - On toggle (Mushaf): Scale animation (1.0 → 1.2 → 1.0) with color transition
   - Duration: 200ms
   - Easing: `Curves.easeInOut`
 
 **Behavior:**
 
-- Tap icon: Toggle bookmark status
-- Show brief tooltip on first use (optional onboarding)
-- Icon state updates immediately with animation
+- **Mushaf Screen:** Tap icon to toggle bookmark status for current page
+- **Selection Screen:** Tap icon to navigate to Bookmarks screen/list
+- Icon state updates immediately with animation (Mushaf only)
 
 #### 3.2.2 Bookmarks Screen
 
-**Access Points:**
+**Access Point:**
 
-1. New "Bookmarks" tab/item in Selection Screen bottom navigation (recommended)
-2. OR: Dedicated screen accessible from Settings (alternative)
-3. OR: Slide-up drawer/modal from header icon long-press (alternative)
+- **Primary:** Tap bookmark icon in Selection Screen header (always visible, filled grey icon)
+- Opens dedicated Bookmarks screen (full screen, replaces Selection Screen content)
 
-**Recommended: Selection Screen Integration**
+**Navigation Pattern:**
 
-Add as fourth tab in Selection Screen (RTL layout):
+- Selection Screen → Tap header bookmark icon → Bookmarks Screen
+- Bookmarks Screen has back button to return to Selection Screen
+- Bookmarks Screen shows empty title in header (or "العلامات المرجعية")
 
-- **Tab order (RTL - right to left visually):** **العلامات المرجعية** | السور | الأجزاء | الصفحات
-- Tab label: "العلامات المرجعية" (Bookmarks) - primary, or "المحفوظات" (Saved) - alternative
-- Icon: `Icons.bookmark` or `FlutterIslamicIcons.bookmark`
-- **Note:** In RTL layout, tabs appear right-to-left, so Bookmarks (العلامات المرجعية) appears as the rightmost tab visually, first in logical order
-
-**Screen Layout (RTL):**
+**Screen Layout (RTL - Improved Design):**
 
 ```
 ┌─────────────────────────────────────────┐
-│ [Header: Title + Bookmarks Icon]       │ ← Existing AppHeader component (RTL)
+│ [Header: Empty Title + Back + Icons]    │ ← Existing AppHeader component (RTL)
 ├─────────────────────────────────────────┤
 │                                         │
-│                        [Bookmark List]  │
-│  ┌───────────────────────────────────┐ │
-│  │                         الصفحة ١٥ 📖│ │
-│  │                          البقرة    │ │
-│  │   منذ يومين  juz01  محفوظة         │ │
-│  ├───────────────────────────────────┤ │
-│  │                       الصفحة ٣٤٧ 📖│ │
-│  │                          آل عمران   │ │
-│  │    أمس  juz04  محفوظة              │ │
-│  ├───────────────────────────────────┤ │
-│  │                       الصفحة ٤٠٣ 📖│ │
-│  │                           النساء    │ │
-│  │    اليوم  juz05  محفوظة             │ │
-│  └───────────────────────────────────┘ │
+│         [Bookmark List - RTL Layout]   │
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 📖 الصفحة ١٥                    ←   ││
+│  │    البقرة                            ││
+│  │    منذ يومين • juz01                 ││
+│  ├─────────────────────────────────────┤│
+│  │ 📖 الصفحة ٣٤٧                  ←   ││
+│  │    آل عمران                          ││
+│  │    أمس • juz04                      ││
+│  ├─────────────────────────────────────┤│
+│  │ 📖 الصفحة ٤٠٣                  ←   ││
+│  │    النساء                            ││
+│  │    اليوم • juz05                    ││
+│  └─────────────────────────────────────┘│
 │                                         │
 └─────────────────────────────────────────┘
 ```
+
+**Improved RTL Card Layout:**
+
+- **Right-aligned content (RTL):**
+
+  - Bookmark icon (📖) at right edge
+  - Page number (الصفحة ١٥) immediately left of icon
+  - Surah name (البقرة) below page number, left-aligned within card
+  - Metadata (date • juz) below surah, smaller text
+
+- **Left side:**
+
+  - Chevron icon (←) pointing left for RTL navigation indication
+  - Subtle, light grey color
+
+- **Card spacing:**
+  - More generous padding: 16px all around
+  - Better visual hierarchy with clear grouping
+  - Consistent spacing between elements
 
 **Empty State Design (RTL):**
 
@@ -186,35 +224,69 @@ Add as fourth tab in Selection Screen (RTL layout):
 └─────────────────────────────────────────┘
 ```
 
-**List Item Design (RTL):**
+**List Item Design (RTL - Refined):**
 
 - **Card Layout:**
 
-  - Rounded corners (12px radius)
-  - Padding: 16px horizontal, 12px vertical
-  - Subtle shadow/elevation for depth
+  - Rounded corners (16px radius for softer look)
+  - Padding: 16px all around (generous spacing)
+  - Subtle shadow/elevation (2px elevation)
   - Tap ripple effect
   - Swipe-to-delete gesture (swipe **right** in RTL to reveal delete on left)
-  - Text direction: `TextDirection.rtl` for Arabic content
+  - Text direction: `TextDirection.rtl` for all Arabic content
+  - Card margin: 8px vertical between cards, 16px horizontal padding
 
-- **Content (RTL Layout):**
+- **Content Layout (RTL - Visual Hierarchy):**
 
-  - **Right Side (Primary):** Page number with Eastern Arabic numerals (large, bold) with page icon
-  - **Right Side (Secondary):** Surah name in Arabic (medium weight)
-  - **Left Side (Tertiary):** Juz glyph + Date in Arabic (small, muted color)
-  - **Left Side:** Chevron icon pointing left (←) for navigation indication (RTL-aware)
+```
+┌─────────────────────────────────────────┐
+│                              ←    📖 ١٥  │ ← Right-aligned: Icon + Page
+│                                البقرة     │ ← Right-aligned: Surah
+│                    منذ يومين • juz01      │ ← Right-aligned: Meta
+└─────────────────────────────────────────┘
+```
+
+- **Right Side (Primary Content):**
+
+  - Bookmark icon (📖) + Page number (الصفحة ١٥) on same line
+  - Icon: 20px size, positioned at right edge with 4px spacing from page number
+  - Page number: Large, bold, Eastern Arabic numerals
+  - Surah name: Below page number, medium weight
+  - Metadata: Below surah, small muted text (date • juz)
+  - All right-aligned within card (RTL natural flow)
+
+- **Left Side (Navigation):**
+
+  - Chevron icon (←) pointing left
+  - Light grey color, subtle
+  - 24px size, centered vertically
+  - Indicates tap to navigate (RTL direction)
 
 - **Typography:**
 
-  - Page number: `fontSize: 20, fontWeight: w600`
+  - Page number: `fontSize: 22, fontWeight: w700` (larger, bolder)
+  - Bookmark icon: `fontSize: 20` (slightly smaller than page number)
   - Surah name: `fontSize: 16, fontWeight: w500`
-  - Meta info: `fontSize: 14, color: muted`
+  - Meta info: `fontSize: 13, fontWeight: w400, color: muted`
+  - Line height: `1.4` for better readability
 
 - **Colors (Theme-Aware):**
 
   - Card background: `Theme.cardColor`
-  - Text: `Theme.textTheme.bodyLarge?.color`
-  - Muted text: `Theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)`
+  - Card border: Subtle border (`Theme.dividerColor.withValues(alpha: 0.3)`)
+  - Primary text: `Theme.textTheme.bodyLarge?.color`
+  - Secondary text: `Theme.textTheme.bodyMedium?.color`
+  - Muted text: `Theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6)`
+  - Chevron icon: `Theme.iconTheme.color?.withValues(alpha: 0.5)`
+  - Bookmark icon: Match page number color
+
+- **Visual Improvements:**
+
+  - Clear visual hierarchy: Page number stands out most
+  - Better spacing: More breathing room between elements
+  - Consistent alignment: All Arabic text right-aligned
+  - Subtle dividers: Thin border between cards (optional)
+  - Icon positioning: Bookmark icon inline with page number for compact design
 
 - **Swipe Action (RTL-aware):**
   - Swipe **right** reveals red delete button (RTL direction)
@@ -240,8 +312,8 @@ Mushaf Screen (الصفحة ١٥)
 
 ```
 Selection Screen
-  → Tap "العلامات المرجعية" / "Bookmarks" tab
-  → Bookmarks screen displays (RTL layout)
+  → Tap filled grey bookmark icon in header (left side, with Settings/Search)
+  → Navigate to Bookmarks Screen (full screen)
   → Tap bookmark item (right-aligned content)
   → Navigate to Mushaf Screen at bookmarked page
 ```
@@ -454,9 +526,10 @@ class Bookmarks extends _$Bookmarks {
 - Update icon based on `isBookmarked` state
 - Add animation controller for toggle animation
 
-**Usage in MushafScreen:**
+**Usage Patterns:**
 
 ```dart
+// Mushaf Screen: Bookmark for current page (dynamic state)
 AppHeader(
   title: title,
   trailing: BookmarkIconButton(
@@ -466,36 +539,96 @@ AppHeader(
     },
   ),
 )
+
+// Selection Screen: Navigate to bookmarks (always visible)
+AppHeader(
+  title: '',
+  onBookmarkPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+    );
+  },
+)
 ```
 
-### 6.2 Bookmarks List Widget
+### 6.2 Bookmarks Screen
+
+**File:** `lib/screens/bookmarks_screen.dart` (new file)
+
+**Features:**
+
+- Full screen dedicated to bookmarks list
+- Uses `AppHeader` with back button enabled
+- Shows empty title (or "العلامات المرجعية")
+- Contains `BookmarksListView` widget
+
+**Implementation:**
+
+- Standard screen structure with SafeArea
+- AppHeader with `showBackButton: true`
+- Expanded widget containing list view
+
+### 6.3 Bookmarks List Widget
 
 **File:** `lib/widgets/bookmarks_list_view.dart`
 
 **Features:**
 
-- List of bookmark cards
-- Swipe-to-delete gesture
+- List of bookmark cards with improved RTL layout
+- Swipe-to-delete gesture (right swipe in RTL)
 - Empty state widget
 - Loading state
 - Error state handling
+- Proper RTL text alignment
 
 **Implementation:**
 
 - Use `ListView.builder` for performance
-- Implement `Dismissible` for swipe-to-delete
+- Implement `Dismissible` with `direction: DismissDirection.endToStart` for RTL
 - Use Riverpod's `AsyncValue.when()` for state handling
+- Wrap in `Directionality(textDirection: TextDirection.rtl)`
+- Proper padding: `EdgeInsets.symmetric(horizontal: 16, vertical: 8)`
 
-### 6.3 Bookmark Item Card
+### 6.4 Bookmark Item Card
 
 **File:** `lib/widgets/bookmark_item_card.dart`
 
 **Features:**
 
-- Displays bookmark information
+- Improved RTL layout with right-aligned content
+- Bookmark icon inline with page number
+- Clear visual hierarchy
 - Tap to navigate
 - Swipe gesture support
 - Theme-aware styling
+- Chevron icon on left for RTL navigation indication
+
+**Layout Structure:**
+
+```dart
+Card(
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      // Left: Chevron
+      Icon(Icons.chevron_left, color: mutedColor),
+
+      // Center: Spacer (Expanded)
+
+      // Right: Content (Column, right-aligned)
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Row([Icon, PageNumber]),
+          SurahName,
+          MetaInfo,
+        ],
+      ),
+    ],
+  ),
+)
+```
 
 ---
 
@@ -507,10 +640,11 @@ AppHeader(
 
 **Changes Required:**
 
-1. Add fourth tab: "Bookmarks"
-2. Add `BookmarksListView` as fourth preloaded view
-3. Update `selectionTabIndexProvider` range (0-3 instead of 0-2)
-4. Update `_getScreenTitle()` to handle index 3
+1. Add bookmark icon to `AppHeader` in Selection Screen
+   - Pass `onBookmarkPressed` callback to header
+   - Navigate to Bookmarks Screen when tapped
+2. Remove Bookmarks tab from bottom navigation (if previously added)
+3. Bookmarks Screen accessed via header icon only
 
 ### 7.2 Mushaf Screen
 
@@ -523,15 +657,18 @@ AppHeader(
 3. Handle bookmark toggle in header callback
 4. Invalidate bookmark providers after toggle
 
-### 7.3 App Bottom Navigation
+### 7.3 App Header (Selection Screen)
 
-**File:** `lib/widgets/shared/app_bottom_navigation.dart`
+**File:** `lib/widgets/shared/app_header.dart`
 
 **Changes Required:**
 
-- Add fourth navigation item for "Bookmarks"
-- Update `AppBottomNavigationType.selection` to support 4 items
-- Update selection logic to handle index 3
+- Add bookmark icon button to left side Row (with Settings and Search)
+- Icon: Always filled `Icons.bookmark`
+- Color: Grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light)
+- Add optional `onBookmarkPressed` callback parameter
+- Show icon only when callback is provided (for Selection Screen)
+- Icon appears after Search icon in the Row
 
 ---
 
@@ -608,15 +745,18 @@ AppHeader(
 
 ### Functional Criteria
 
-✅ User can bookmark any page (1-604) by tapping header icon
-✅ Bookmark icon shows correct state (filled/outlined)
-✅ User can view all bookmarks in dedicated list
+✅ User can bookmark any page (1-604) by tapping header icon in Mushaf Screen
+✅ Bookmark icon shows correct state (filled/outlined) in Mushaf Screen
+✅ Bookmark icon always visible (filled grey) in Selection Screen header
+✅ User can access bookmarks by tapping header icon in Selection Screen
+✅ User can view all bookmarks in dedicated full-screen list
 ✅ User can navigate to bookmarked page from list
-✅ User can remove bookmark via toggle or swipe-to-delete
+✅ User can remove bookmark via toggle (Mushaf) or swipe-to-delete (list)
 ✅ Bookmarks persist across app restarts
 ✅ Bookmark state updates immediately when toggled
 ✅ No duplicate bookmarks (same page)
 ✅ Empty state displays when no bookmarks exist
+✅ Bookmarks list uses proper RTL layout with right-aligned content
 
 ### UI/UX Criteria
 
@@ -752,7 +892,12 @@ All required packages are already available in the project.
 ### Phase 4: Integration
 
 - [ ] Integrate bookmark icon into `AppHeader`
-- [ ] Add Bookmarks tab to Selection Screen
+  - [ ] Add `onBookmarkPressed` parameter for Selection Screen
+  - [ ] Add bookmark icon to left side Row (with Settings/Search)
+  - [ ] Icon shows filled grey on Selection Screen
+  - [ ] Icon shows dynamic state (outlined/filled) on Mushaf Screen
+- [ ] Create `BookmarksScreen` (full screen)
+- [ ] Connect Selection Screen header to navigate to Bookmarks Screen
 - [ ] Connect Mushaf Screen to bookmark state
 - [ ] Update navigation flows
 - [ ] Add onboarding/tooltip (optional)

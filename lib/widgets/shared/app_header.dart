@@ -8,6 +8,7 @@ import '../../screens/search_screen.dart';
 class AppHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onSearchPressed;
+  final VoidCallback? onBookmarkPressed;
   final bool showBackButton;
   final Widget? trailing;
 
@@ -15,6 +16,7 @@ class AppHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.onSearchPressed,
+    this.onBookmarkPressed,
     this.showBackButton = false,
     this.trailing,
   });
@@ -64,6 +66,16 @@ class AppHeader extends StatelessWidget {
                   },
                   icon: Icon(
                     Icons.search,
+                    size: kAppHeaderIconSize,
+                    color: iconColor,
+                  ),
+                ),
+              if (onBookmarkPressed != null)
+                IconButton(
+                  tooltip: 'العلامات المرجعية',
+                  onPressed: onBookmarkPressed,
+                  icon: Icon(
+                    Icons.bookmark,
                     size: kAppHeaderIconSize,
                     color: iconColor,
                   ),

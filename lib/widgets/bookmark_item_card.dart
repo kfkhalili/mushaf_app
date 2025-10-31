@@ -20,9 +20,13 @@ class BookmarkItemCard extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 1,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.dividerColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Dismissible(
         key: Key('bookmark-${bookmark.id}'),
@@ -31,7 +35,7 @@ class BookmarkItemCard extends ConsumerWidget {
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
             color: theme.colorScheme.error,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.only(left: 20),
           child: const Icon(
@@ -57,36 +61,49 @@ class BookmarkItemCard extends ConsumerWidget {
           onTap: () {
             navigateToMushafPage(context, bookmark.pageNumber);
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.all(16),
             child: Row(
               textDirection: TextDirection.rtl,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Right side: Page number and Surah name (primary content)
+                // Left: Chevron icon (subtle navigation indicator)
+                Icon(
+                  Icons.chevron_left,
+                  size: 24,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                ),
+                // Center: Right-aligned content (primary)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     textDirection: TextDirection.rtl,
                     children: [
+                      // Page number with bookmark icon inline
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         textDirection: TextDirection.rtl,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
                             style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
                               color: theme.textTheme.bodyLarge?.color,
                             ),
                             textDirection: TextDirection.rtl,
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.book, size: 20),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.bookmark,
+                            size: 20,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
+                      // Surah name
                       pageDataAsync.when(
                         data: (pageData) {
                           if (pageData.pageSurahNumber > 0) {
@@ -114,49 +131,60 @@ class BookmarkItemCard extends ConsumerWidget {
                         ),
                         error: (_, __) => const SizedBox.shrink(),
                       ),
+                      const SizedBox(height: 4),
+                      // Meta info: Date • Juz
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        textDirection: TextDirection.rtl,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            formatRelativeDate(bookmark.createdAt),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.6),
+                            ),
+                            textDirection: TextDirection.rtl,
+                          ),
+                          pageDataAsync.when(
+                            data: (pageData) {
+                              final juzGlyph =
+                                  'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                textDirection: TextDirection.rtl,
+                                children: [
+                                  Text(
+                                    ' • ',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  Text(
+                                    juzGlyph,
+                                    style: TextStyle(
+                                      fontFamily: quranCommonFontFamily,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.6),
+                                    ),
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                ],
+                              );
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ),
-                // Left side: Juz glyph and date (meta info)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    pageDataAsync.when(
-                      data: (pageData) {
-                        final juzGlyph =
-                            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-                        return Text(
-                          juzGlyph,
-                          style: TextStyle(
-                            fontFamily: quranCommonFontFamily,
-                            fontSize: 14,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.6),
-                          ),
-                          textDirection: TextDirection.rtl,
-                        );
-                      },
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formatRelativeDate(bookmark.createdAt),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: theme.textTheme.bodyMedium?.color
-                            ?.withValues(alpha: 0.6),
-                      ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ],
-                ),
-                // Chevron icon
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                 ),
               ],
             ),

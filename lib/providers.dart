@@ -128,12 +128,12 @@ Future<String> pageFontFamily(Ref ref, int pageNumber) async {
 class SelectionTabIndex extends _$SelectionTabIndex {
   @override
   int build() {
-    return 1; // Default to Surah tab (index 1: Bookmarks=0, Surah=1, Juz=2, Pages=3)
+    return 0; // Default to Surah tab (index 0: Surah=0, Juz=1, Pages=2)
   }
 
   void setTabIndex(int index) {
-    // Clamp index to valid range (0-3)
-    if (index >= 0 && index <= 3) {
+    // Clamp index to valid range (0-2)
+    if (index >= 0 && index <= 2) {
       state = index;
     }
   }

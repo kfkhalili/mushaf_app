@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
 import '../widgets/page_list_view.dart';
-import '../widgets/bookmarks_list_view.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
+import '../screens/bookmarks_screen.dart';
 import 'search_screen.dart';
 
 class SelectionScreen extends ConsumerStatefulWidget {
@@ -24,15 +24,14 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   void initState() {
     super.initState();
     _preloadedViews = [
-      const BookmarksListView(), // 0: Bookmarks (rightmost in RTL)
-      const SurahListView(),      // 1: Surahs
-      const JuzListView(),        // 2: Juz
-      const PageListView(),       // 3: Pages (leftmost in RTL)
+      const SurahListView(),      // 0: Surahs
+      const JuzListView(),        // 1: Juz
+      const PageListView(),       // 2: Pages
     ];
 
-    // Initialize PageController with reverse order (RTL: Bookmarks=0, Surah=1, Juz=2, Pages=3)
-    // Default to Surah tab (index 1)
-    _pageController = PageController(initialPage: 1);
+    // Initialize PageController (3 tabs: Surah=0, Juz=1, Pages=2)
+    // Default to Surah tab (index 0)
+    _pageController = PageController(initialPage: 0);
   }
 
   @override
@@ -44,12 +43,10 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   String _getScreenTitle(int currentIndex) {
     switch (currentIndex) {
       case 0:
-        return ''; // Bookmarks
-      case 1:
         return ''; // Surahs
-      case 2:
+      case 1:
         return ''; // Juz
-      case 3:
+      case 2:
         return ''; // Pages
       default:
         return '';
@@ -82,6 +79,13 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                 Navigator.of(
                   context,
                 ).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
+              },
+              onBookmarkPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BookmarksScreen(),
+                  ),
+                );
               },
             ),
             Expanded(
