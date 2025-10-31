@@ -89,7 +89,7 @@ class BookmarkItemCard extends ConsumerWidget {
                             'الصفحة ${convertToEasternArabicNumerals(bookmark.pageNumber.toString())}',
                             style: TextStyle(
                               fontSize: 22,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w400,
                               color: theme.textTheme.bodyLarge?.color,
                             ),
                             textDirection: TextDirection.rtl,
@@ -110,7 +110,7 @@ class BookmarkItemCard extends ConsumerWidget {
                               surahNameGlyph,
                               style: TextStyle(
                                 fontFamily: surahNameFontFamily,
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w500,
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
@@ -137,7 +137,7 @@ class BookmarkItemCard extends ConsumerWidget {
                           Text(
                             formatRelativeDate(bookmark.createdAt),
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 15,
                               fontWeight: FontWeight.w400,
                               color: theme.textTheme.bodySmall?.color
                                   ?.withValues(alpha: 0.6),
@@ -156,7 +156,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                   Text(
                                     ' • ',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 15,
                                       color: theme.textTheme.bodySmall?.color
                                           ?.withValues(alpha: 0.6),
                                     ),
@@ -166,7 +166,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                     juzGlyph,
                                     style: TextStyle(
                                       fontFamily: quranCommonFontFamily,
-                                      fontSize: 13,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w400,
                                       color: theme.textTheme.bodySmall?.color
                                           ?.withValues(alpha: 0.6),
