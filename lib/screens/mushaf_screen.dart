@@ -241,6 +241,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                             .read(currentPageProvider.notifier)
                             .setPage(newPageNumber);
                         _savePageToPrefs(newPageNumber);
+
+                        // Record reading progress (fire-and-forget, no await needed)
+                        ref.read(readingProgressServiceProvider).recordPageView(newPageNumber);
                       },
                       itemBuilder: (context, index) {
                         return MushafPage(pageNumber: index + 1);

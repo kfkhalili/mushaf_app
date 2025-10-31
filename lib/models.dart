@@ -227,3 +227,80 @@ class Bookmark {
   @override
   int get hashCode => Object.hash(id, pageNumber);
 }
+
+// --- Reading Session Model ---
+@immutable
+class ReadingSession {
+  final int id; // Primary key (auto-increment)
+  final DateTime sessionDate; // Date of reading session
+  final int pageNumber; // Page that was read
+  final DateTime timestamp; // Exact time page was viewed
+  final int? durationSeconds; // Optional: How long page was viewed (future)
+
+  const ReadingSession({
+    required this.id,
+    required this.sessionDate,
+    required this.pageNumber,
+    required this.timestamp,
+    this.durationSeconds,
+  });
+
+  ReadingSession copyWith({
+    int? id,
+    DateTime? sessionDate,
+    int? pageNumber,
+    DateTime? timestamp,
+    int? durationSeconds,
+  }) {
+    return ReadingSession(
+      id: id ?? this.id,
+      sessionDate: sessionDate ?? this.sessionDate,
+      pageNumber: pageNumber ?? this.pageNumber,
+      timestamp: timestamp ?? this.timestamp,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReadingSession &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          pageNumber == other.pageNumber &&
+          sessionDate == other.sessionDate;
+
+  @override
+  int get hashCode => Object.hash(id, pageNumber, sessionDate);
+}
+
+// --- Reading Statistics Model ---
+@immutable
+class ReadingStatistics {
+  final int totalPagesRead; // Unique pages read (all-time)
+  final int totalReadingDays; // Days with at least 1 page read
+  final int currentStreak; // Current consecutive days streak
+  final int longestStreak; // Longest streak ever achieved
+  final int pagesToday; // Pages read today
+  final int pagesThisWeek; // Pages read this week
+  final int pagesThisMonth; // Pages read this month
+  final int daysThisWeek; // Days read this week (1-7)
+  final int daysThisMonth; // Days read this month
+  final double averagePagesPerDay; // Average pages per reading day
+
+  const ReadingStatistics({
+    required this.totalPagesRead,
+    required this.totalReadingDays,
+    required this.currentStreak,
+    required this.longestStreak,
+    required this.pagesToday,
+    required this.pagesThisWeek,
+    required this.pagesThisMonth,
+    required this.daysThisWeek,
+    required this.daysThisMonth,
+    required this.averagePagesPerDay,
+  });
+
+  double get overallProgress => totalPagesRead / 604; // 0.0 to 1.0
+  int get overallProgressPercent => (overallProgress * 100).round();
+}

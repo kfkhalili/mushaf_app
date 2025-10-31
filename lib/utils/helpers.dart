@@ -97,3 +97,103 @@ String formatRelativeDate(DateTime dateTime) {
     return '$day $month';
   }
 }
+
+/// Formats pages read today with proper Arabic grammar.
+///
+/// Rules:
+/// - 0: "لا صفحات اليوم"
+/// - 1: "صفحة واحدة اليوم"
+/// - 2: "صفحتان اليوم" (dual form)
+/// - 3-10: "٣ صفحات اليوم" (plural form)
+/// - 11+: "صفحة اليوم" (singular form)
+String formatPagesToday(int count) {
+  if (count == 0) {
+    return 'لا صفحات اليوم';
+  } else if (count == 1) {
+    return 'صفحة واحدة اليوم';
+  } else if (count == 2) {
+    return 'صفحتان اليوم';
+  } else if (count >= 3 && count <= 10) {
+    return '${convertToEasternArabicNumerals(count.toString())} صفحات اليوم';
+  } else {
+    // 11 and above use singular form
+    return '${convertToEasternArabicNumerals(count.toString())} صفحة اليوم';
+  }
+}
+
+/// Formats a count of pages with proper Arabic grammar (without "اليوم").
+///
+/// Rules:
+/// - 0: "لا صفحات"
+/// - 1: "صفحة واحدة"
+/// - 2: "صفحتان" (dual form)
+/// - 3-10: "٣ صفحات" (plural form)
+/// - 11+: "١١ صفحة" (singular form)
+String formatPages(int count) {
+  if (count == 0) {
+    return 'لا صفحات';
+  } else if (count == 1) {
+    return 'صفحة واحدة';
+  } else if (count == 2) {
+    return 'صفحتان';
+  } else if (count >= 3 && count <= 10) {
+    return '${convertToEasternArabicNumerals(count.toString())} صفحات';
+  } else {
+    // 11 and above use singular form
+    return '${convertToEasternArabicNumerals(count.toString())} صفحة';
+  }
+}
+
+/// Formats a count of days with proper Arabic grammar.
+///
+/// Rules:
+/// - 1: "يوم واحد" or "يوم" (singular)
+/// - 2: "يومان" (dual form)
+/// - 3-10: "٣ أيام" (plural form)
+/// - 11+: "١١ يوما" (singular form with accusative ending)
+String formatDays(int count) {
+  if (count == 1) {
+    return 'يوم واحد';
+  } else if (count == 2) {
+    return 'يومان';
+  } else if (count >= 3 && count <= 10) {
+    return '${convertToEasternArabicNumerals(count.toString())} أيام';
+  } else {
+    // 11 and above use singular form with accusative ending
+    return '${convertToEasternArabicNumerals(count.toString())} يوما';
+  }
+}
+
+/// Formats pages progress (e.g., "X / 604 صفحة").
+/// Handles proper grammar for the read count.
+/// The total is always formatted with "صفحة" since it's 604 (11+).
+String formatPagesProgress(int read, int total) {
+  final readFormatted = formatPages(read);
+  final totalNum = convertToEasternArabicNumerals(total.toString());
+  return '$readFormatted / $totalNum صفحة';
+}
+
+/// Formats pages per day rate (e.g., "5 صفحات/يوم" or "11 صفحة/يوم").
+/// Uses proper grammar based on the count.
+String formatPagesPerDay(int count) {
+  if (count == 0) {
+    return 'لا صفحات/يوم';
+  } else if (count == 1) {
+    return 'صفحة واحدة/يوم';
+  } else if (count == 2) {
+    return 'صفحتان/يوم';
+  } else if (count >= 3 && count <= 10) {
+    return '${convertToEasternArabicNumerals(count.toString())} صفحات/يوم';
+  } else {
+    // 11 and above use singular form
+    return '${convertToEasternArabicNumerals(count.toString())} صفحة/يوم';
+  }
+}
+
+/// Formats days out of a total (e.g., "X من 7 أيام").
+/// Handles proper grammar for both the count and the total.
+String formatDaysOutOf(int count, int total) {
+  final countFormatted = formatDays(count);
+  // For "من 7 أيام", we use plural form since 7 is greater than 10 (always plural)
+  return '$countFormatted من ${convertToEasternArabicNumerals(total.toString())} أيام';
+}

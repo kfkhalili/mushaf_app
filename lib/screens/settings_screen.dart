@@ -4,6 +4,8 @@ import '../providers/theme_provider.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 import '../constants.dart';
+import '../utils/helpers.dart';
+import 'statistics_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -119,6 +121,51 @@ class SettingsScreen extends ConsumerWidget {
                                   // WHY: Invalidate database service to reload with new layout
                                   ref.invalidate(databaseServiceProvider);
                                 }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'إحصائيات القراءة',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              leading: const Icon(Icons.bar_chart),
+                              title: const Text('إحصائيات القراءة'),
+                              subtitle: Consumer(
+                                builder: (context, ref, _) {
+                                  final statsAsync = ref.watch(readingStatisticsProvider);
+                                  return statsAsync.when(
+                                    data: (stats) => Text(
+                                      formatPagesToday(stats.pagesToday),
+                                      textDirection: TextDirection.rtl,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    loading: () => const Text('جارٍ التحميل...'),
+                                    error: (_, __) => const Text('--'),
+                                  );
+                                },
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const StatisticsScreen(),
+                                  ),
+                                );
                               },
                             ),
                           ],

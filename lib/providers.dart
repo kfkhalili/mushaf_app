@@ -8,6 +8,7 @@ import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'services/search_service.dart';
 import 'services/bookmarks_service.dart';
+import 'services/reading_progress_service.dart';
 import 'models.dart';
 import 'constants.dart';
 
@@ -299,4 +300,31 @@ class BookmarksNotifier extends _$BookmarksNotifier {
     ref.invalidateSelf();
     ref.invalidate(isPageBookmarkedProvider(pageNumber));
   }
+}
+
+// --- Reading Progress Service Provider ---
+@Riverpod(keepAlive: true)
+ReadingProgressService readingProgressService(Ref ref) {
+  return SqliteReadingProgressService();
+}
+
+// --- Reading Statistics Provider ---
+@riverpod
+Future<ReadingStatistics> readingStatistics(Ref ref) async {
+  final service = ref.watch(readingProgressServiceProvider);
+  return service.getStatistics();
+}
+
+// --- Pages Read Today Provider ---
+@riverpod
+Future<int> pagesReadToday(Ref ref) async {
+  final service = ref.watch(readingProgressServiceProvider);
+  return service.getPagesReadToday();
+}
+
+// --- Current Streak Provider ---
+@riverpod
+Future<int> currentStreak(Ref ref) async {
+  final service = ref.watch(readingProgressServiceProvider);
+  return service.getCurrentStreak();
 }

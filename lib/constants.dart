@@ -161,6 +161,13 @@ class DbConstants {
   static const String createdAtCol = 'created_at';
   static const String noteCol = 'note';
 
+  // --- Reading Progress Table ---
+  static const String readingSessionsTable = 'reading_sessions';
+  // pageNumberCol is already defined in Common Columns
+  static const String sessionDateCol = 'session_date';
+  static const String timestampCol = 'timestamp';
+  static const String durationSecondsCol = 'duration_seconds';
+
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
 }

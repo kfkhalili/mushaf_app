@@ -515,7 +515,7 @@ final class SelectionTabIndexProvider
   }
 }
 
-String _$selectionTabIndexHash() => r'85f4b96562efbaa5261c8bf1ef36ed105e2387c3';
+String _$selectionTabIndexHash() => r'7cfefe9a7077eb938eaa001a77d19ca39bacdc27';
 
 abstract class _$SelectionTabIndex extends $Notifier<int> {
   int build();
@@ -1025,3 +1025,158 @@ abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(readingProgressService)
+const readingProgressServiceProvider = ReadingProgressServiceProvider._();
+
+final class ReadingProgressServiceProvider
+    extends
+        $FunctionalProvider<
+          ReadingProgressService,
+          ReadingProgressService,
+          ReadingProgressService
+        >
+    with $Provider<ReadingProgressService> {
+  const ReadingProgressServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'readingProgressServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$readingProgressServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ReadingProgressService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ReadingProgressService create(Ref ref) {
+    return readingProgressService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ReadingProgressService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ReadingProgressService>(value),
+    );
+  }
+}
+
+String _$readingProgressServiceHash() =>
+    r'7b7b2083be80eb43cfc22161bc9989d90dcae967';
+
+@ProviderFor(readingStatistics)
+const readingStatisticsProvider = ReadingStatisticsProvider._();
+
+final class ReadingStatisticsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ReadingStatistics>,
+          ReadingStatistics,
+          FutureOr<ReadingStatistics>
+        >
+    with
+        $FutureModifier<ReadingStatistics>,
+        $FutureProvider<ReadingStatistics> {
+  const ReadingStatisticsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'readingStatisticsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$readingStatisticsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ReadingStatistics> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ReadingStatistics> create(Ref ref) {
+    return readingStatistics(ref);
+  }
+}
+
+String _$readingStatisticsHash() => r'4e9c3f612ab9e704415d02b8bc41403348133e43';
+
+@ProviderFor(pagesReadToday)
+const pagesReadTodayProvider = PagesReadTodayProvider._();
+
+final class PagesReadTodayProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  const PagesReadTodayProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pagesReadTodayProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pagesReadTodayHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return pagesReadToday(ref);
+  }
+}
+
+String _$pagesReadTodayHash() => r'6bc60598952979c57cb177c89d91885b7b8d6f23';
+
+@ProviderFor(currentStreak)
+const currentStreakProvider = CurrentStreakProvider._();
+
+final class CurrentStreakProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  const CurrentStreakProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentStreakProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentStreakHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return currentStreak(ref);
+  }
+}
+
+String _$currentStreakHash() => r'255b02ef08a067f91b1334c30fb7b4acb1964538';
