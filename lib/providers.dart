@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/database_service.dart';
 import 'services/font_service.dart';
 import 'services/search_service.dart';
+import 'services/bookmarks_service.dart';
 import 'models.dart';
 import 'constants.dart';
 
@@ -127,11 +128,14 @@ Future<String> pageFontFamily(Ref ref, int pageNumber) async {
 class SelectionTabIndex extends _$SelectionTabIndex {
   @override
   int build() {
-    return 2; // Default to Surah tab
+    return 1; // Default to Surah tab (index 1: Bookmarks=0, Surah=1, Juz=2, Pages=3)
   }
 
   void setTabIndex(int index) {
-    state = index;
+    // Clamp index to valid range (0-3)
+    if (index >= 0 && index <= 3) {
+      state = index;
+    }
   }
 }
 
@@ -247,5 +251,52 @@ class SearchHistory extends _$SearchHistory {
 
     final prefs = ref.read(sharedPreferencesProvider).value;
     prefs?.setStringList(_searchHistoryKey, currentHistory);
+  }
+}
+
+// --- Bookmarks Service Provider ---
+@Riverpod(keepAlive: true)
+BookmarksService bookmarksService(Ref ref) {
+  return SqliteBookmarksService();
+}
+
+// --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
+
+// --- Is Page Bookmarked Provider ---
+@riverpod
+Future<bool> isPageBookmarked(Ref ref, int pageNumber) async {
+  final service = ref.watch(bookmarksServiceProvider);
+  return service.isBookmarked(pageNumber);
+}
+
+// --- Bookmarks Notifier ---
+@Riverpod(keepAlive: true)
+class BookmarksNotifier extends _$BookmarksNotifier {
+  @override
+  Future<List<Bookmark>> build() async {
+    final service = ref.read(bookmarksServiceProvider);
+    return service.getAllBookmarks();
+  }
+
+  Future<void> toggleBookmark(int pageNumber) async {
+    final service = ref.read(bookmarksServiceProvider);
+    final isBookmarked = await service.isBookmarked(pageNumber);
+
+    if (isBookmarked) {
+      await service.removeBookmark(pageNumber);
+    } else {
+      await service.addBookmark(pageNumber);
+    }
+
+    // Invalidate to refresh list
+    ref.invalidateSelf();
+    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+  }
+
+  Future<void> removeBookmark(int pageNumber) async {
+    final service = ref.read(bookmarksServiceProvider);
+    await service.removeBookmark(pageNumber);
+    ref.invalidateSelf();
+    ref.invalidate(isPageBookmarkedProvider(pageNumber));
   }
 }

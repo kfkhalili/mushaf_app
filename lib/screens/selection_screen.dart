@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
 import '../widgets/page_list_view.dart';
+import '../widgets/bookmarks_list_view.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
@@ -23,13 +24,15 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   void initState() {
     super.initState();
     _preloadedViews = [
-      const PageListView(),
-      const JuzListView(),
-      const SurahListView(),
+      const BookmarksListView(), // 0: Bookmarks (rightmost in RTL)
+      const SurahListView(),      // 1: Surahs
+      const JuzListView(),        // 2: Juz
+      const PageListView(),       // 3: Pages (leftmost in RTL)
     ];
 
-    // Initialize PageController with reverse order (Pages=0, Juz=1, Surah=2)
-    _pageController = PageController(initialPage: 2);
+    // Initialize PageController with reverse order (RTL: Bookmarks=0, Surah=1, Juz=2, Pages=3)
+    // Default to Surah tab (index 1)
+    _pageController = PageController(initialPage: 1);
   }
 
   @override
@@ -41,11 +44,13 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   String _getScreenTitle(int currentIndex) {
     switch (currentIndex) {
       case 0:
-        return '';
+        return ''; // Bookmarks
       case 1:
-        return '';
+        return ''; // Surahs
       case 2:
-        return '';
+        return ''; // Juz
+      case 3:
+        return ''; // Pages
       default:
         return '';
     }

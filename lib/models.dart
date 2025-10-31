@@ -186,3 +186,44 @@ class JuzInfo {
 
   const JuzInfo({required this.juzNumber, required this.startingPage});
 }
+
+// --- Bookmark Model ---
+@immutable
+class Bookmark {
+  final int id; // Primary key (auto-increment)
+  final int pageNumber; // The bookmarked page (1-604)
+  final DateTime createdAt; // When bookmark was created
+  final String? note; // Optional user note (future enhancement)
+
+  const Bookmark({
+    required this.id,
+    required this.pageNumber,
+    required this.createdAt,
+    this.note,
+  });
+
+  Bookmark copyWith({
+    int? id,
+    int? pageNumber,
+    DateTime? createdAt,
+    String? note,
+  }) {
+    return Bookmark(
+      id: id ?? this.id,
+      pageNumber: pageNumber ?? this.pageNumber,
+      createdAt: createdAt ?? this.createdAt,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Bookmark &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          pageNumber == other.pageNumber;
+
+  @override
+  int get hashCode => Object.hash(id, pageNumber);
+}

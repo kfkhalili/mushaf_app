@@ -515,7 +515,7 @@ final class SelectionTabIndexProvider
   }
 }
 
-String _$selectionTabIndexHash() => r'1c04c273ee33cbe2d5543511691a69512c93d9f1';
+String _$selectionTabIndexHash() => r'85f4b96562efbaa5261c8bf1ef36ed105e2387c3';
 
 abstract class _$SelectionTabIndex extends $Notifier<int> {
   int build();
@@ -859,6 +859,166 @@ abstract class _$SearchHistory extends $Notifier<List<String>> {
             as $ClassProviderElement<
               AnyNotifier<List<String>, List<String>>,
               List<String>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(bookmarksService)
+const bookmarksServiceProvider = BookmarksServiceProvider._();
+
+final class BookmarksServiceProvider
+    extends
+        $FunctionalProvider<
+          BookmarksService,
+          BookmarksService,
+          BookmarksService
+        >
+    with $Provider<BookmarksService> {
+  const BookmarksServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'bookmarksServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$bookmarksServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<BookmarksService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  BookmarksService create(Ref ref) {
+    return bookmarksService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(BookmarksService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BookmarksService>(value),
+    );
+  }
+}
+
+String _$bookmarksServiceHash() => r'6583f469e99953d2251c4d998fbec6981fff1d20';
+
+@ProviderFor(isPageBookmarked)
+const isPageBookmarkedProvider = IsPageBookmarkedFamily._();
+
+final class IsPageBookmarkedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  const IsPageBookmarkedProvider._({
+    required IsPageBookmarkedFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'isPageBookmarkedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isPageBookmarkedHash();
+
+  @override
+  String toString() {
+    return r'isPageBookmarkedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as int;
+    return isPageBookmarked(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsPageBookmarkedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isPageBookmarkedHash() => r'0d7c921f03339088efadfae111e289eb5a03b2be';
+
+final class IsPageBookmarkedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, int> {
+  const IsPageBookmarkedFamily._()
+    : super(
+        retry: null,
+        name: r'isPageBookmarkedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  IsPageBookmarkedProvider call(int pageNumber) =>
+      IsPageBookmarkedProvider._(argument: pageNumber, from: this);
+
+  @override
+  String toString() => r'isPageBookmarkedProvider';
+}
+
+@ProviderFor(BookmarksNotifier)
+const bookmarksProvider = BookmarksNotifierProvider._();
+
+final class BookmarksNotifierProvider
+    extends $AsyncNotifierProvider<BookmarksNotifier, List<Bookmark>> {
+  const BookmarksNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'bookmarksProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$bookmarksNotifierHash();
+
+  @$internal
+  @override
+  BookmarksNotifier create() => BookmarksNotifier();
+}
+
+String _$bookmarksNotifierHash() => r'1e6977ec67f16b249c71ff8ed2d240185be06785';
+
+abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
+  FutureOr<List<Bookmark>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<List<Bookmark>>, List<Bookmark>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Bookmark>>, List<Bookmark>>,
+              AsyncValue<List<Bookmark>>,
               Object?,
               Object?
             >;

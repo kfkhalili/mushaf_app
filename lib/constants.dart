@@ -155,6 +155,12 @@ class DbConstants {
   static const String firstVerseKeyCol = 'first_verse_key';
   static const String lastVerseKeyCol = 'last_verse_key';
 
+  // --- Bookmarks Table ---
+  static const String bookmarksTable = 'bookmarks';
+  // pageNumberCol is already defined in Common Columns
+  static const String createdAtCol = 'created_at';
+  static const String noteCol = 'note';
+
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
 }
