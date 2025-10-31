@@ -98,49 +98,27 @@ class BookmarkItemCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      // 2nd line: Surah name glyph (large) → Juz name glyph
+                      // 2nd line: Surah name glyph (28px)
                       pageDataAsync.when(
                         data: (pageData) {
-                          final surahNumPadded =
-                              pageData.pageSurahNumber.toString().padLeft(3, '0');
-                          final surahNameGlyph =
-                              'surah$surahNumPadded surah-icon';
-                          final juzGlyph =
-                              'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            textDirection: TextDirection.rtl,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (pageData.pageSurahNumber > 0)
-                                Text(
-                                  surahNameGlyph,
-                                  style: TextStyle(
-                                    fontFamily: surahNameFontFamily,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w400,
-                                    color: theme.textTheme.bodyLarge?.color,
-                                  ),
-                                  textDirection: TextDirection.rtl,
-                                  textAlign: TextAlign.left,
-                                ),
-                              if (pageData.pageSurahNumber > 0 && pageData.juzNumber > 0)
-                                const SizedBox(width: 8),
-                              if (pageData.juzNumber > 0)
-                                Text(
-                                  juzGlyph,
-                                  style: TextStyle(
-                                    fontFamily: quranCommonFontFamily,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w400,
-                                    color: theme.textTheme.bodyLarge?.color,
-                                  ),
-                                  textDirection: TextDirection.rtl,
-                                  textAlign: TextAlign.left,
-                                ),
-                            ],
-                          );
+                          if (pageData.pageSurahNumber > 0) {
+                            final surahNumPadded =
+                                pageData.pageSurahNumber.toString().padLeft(3, '0');
+                            final surahNameGlyph =
+                                'surah$surahNumPadded surah-icon';
+                            return Text(
+                              surahNameGlyph,
+                              style: TextStyle(
+                                fontFamily: surahNameFontFamily,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w400,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
+                              textDirection: TextDirection.rtl,
+                              textAlign: TextAlign.left,
+                            );
+                          }
+                          return const SizedBox.shrink();
                         },
                         loading: () => const SizedBox(
                           width: 60,
@@ -150,7 +128,38 @@ class BookmarkItemCard extends ConsumerWidget {
                         error: (_, __) => const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 4),
-                      // 3rd line: Date
+                      // 3rd line: Juz name glyph (22px, right aligned)
+                      pageDataAsync.when(
+                        data: (pageData) {
+                          if (pageData.juzNumber > 0) {
+                            final juzGlyph =
+                                'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                            return Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                juzGlyph,
+                                style: TextStyle(
+                                  fontFamily: quranCommonFontFamily,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w400,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.right,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        loading: () => const SizedBox(
+                          width: 60,
+                          height: 22,
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 4),
+                      // 4th line: Date (left aligned)
                       Text(
                         formatRelativeDate(bookmark.createdAt),
                         style: TextStyle(
