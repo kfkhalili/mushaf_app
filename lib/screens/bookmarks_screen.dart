@@ -11,10 +11,7 @@ class BookmarksScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            AppHeader(
-              title: '',
-              showBackButton: true,
-            ),
+            AppHeader(title: '', showBackButton: true),
             const Expanded(
               child: Directionality(
                 textDirection: TextDirection.rtl,
@@ -27,4 +24,3 @@ class BookmarksScreen extends StatelessWidget {
     );
   }
 }
-

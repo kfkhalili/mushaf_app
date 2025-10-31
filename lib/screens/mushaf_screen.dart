@@ -53,7 +53,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     Future.microtask(
       () => ref.read(currentPageProvider.notifier).setPage(widget.initialPage),
     );
-
   }
 
   @override
@@ -90,36 +89,34 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
             .read(memorizationSessionProvider.notifier)
             .onTap(totalAyatOnPage: totalAyatOnPage)
             .then((_) async {
-          final updated = ref.read(memorizationSessionProvider);
-          if (updated != null && updated.pageNumber == currentPage) {
-            // Advance only when the last ayah has fully faded out and slid away
-            final bool atLastAyah =
-                updated.lastAyahIndexShown >= (totalAyatOnPage - 1);
-            final bool windowEmpty =
-                updated.window.ayahIndices.isEmpty;
-            if (atLastAyah && windowEmpty) {
-              final nextPage = currentPage + 1;
-              if (nextPage <= totalPages) {
-                _pageController.animateToPage(
-                  nextPage - 1,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                );
-                ref.read(currentPageProvider.notifier).setPage(nextPage);
-                await ref
-                    .read(memorizationSessionProvider.notifier)
-                    .startSession(pageNumber: nextPage, firstAyahIndex: 0);
+              final updated = ref.read(memorizationSessionProvider);
+              if (updated != null && updated.pageNumber == currentPage) {
+                // Advance only when the last ayah has fully faded out and slid away
+                final bool atLastAyah =
+                    updated.lastAyahIndexShown >= (totalAyatOnPage - 1);
+                final bool windowEmpty = updated.window.ayahIndices.isEmpty;
+                if (atLastAyah && windowEmpty) {
+                  final nextPage = currentPage + 1;
+                  if (nextPage <= totalPages) {
+                    _pageController.animateToPage(
+                      nextPage - 1,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                    );
+                    ref.read(currentPageProvider.notifier).setPage(nextPage);
+                    await ref
+                        .read(memorizationSessionProvider.notifier)
+                        .startSession(pageNumber: nextPage, firstAyahIndex: 0);
+                  }
+                }
               }
-            }
-          }
-        });
+            });
       });
       return;
     }
 
     // No legacy fallback
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +173,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                           'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
                       final String surahNameGlyphString =
                           (pageData.pageSurahNumber > 0)
-                              ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
-                              : '';
+                          ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
+                          : '';
 
                       // Build the complete title with juz and surah glyphs only
                       String title = juzGlyphString;
@@ -205,7 +202,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                     onHorizontalDragStart: (details) {
                       final session = ref.read(memorizationSessionProvider);
                       final int page = ref.read(currentPageProvider);
-                      final bool isBetaMemorizing = enableMemorizationBeta &&
+                      final bool isBetaMemorizing =
+                          enableMemorizationBeta &&
                           session != null &&
                           session.pageNumber == page;
                       if (isBetaMemorizing) {
@@ -216,12 +214,14 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                     onHorizontalDragUpdate: (details) {
                       final session = ref.read(memorizationSessionProvider);
                       final int page = ref.read(currentPageProvider);
-                      final bool isBetaMemorizing = enableMemorizationBeta &&
+                      final bool isBetaMemorizing =
+                          enableMemorizationBeta &&
                           session != null &&
                           session.pageNumber == page;
                       if (isBetaMemorizing) {
                         // absorb gesture by doing nothing and flashing
-                        memorizationIconFlashTick.value = memorizationIconFlashTick.value + 1;
+                        memorizationIconFlashTick.value =
+                            memorizationIconFlashTick.value + 1;
                       }
                     },
                     child: PageView.builder(
@@ -241,7 +241,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                         _savePageToPrefs(newPageNumber);
 
                         // Record reading progress (fire-and-forget, no await needed)
-                        ref.read(readingProgressServiceProvider).recordPageView(newPageNumber);
+                        ref
+                            .read(readingProgressServiceProvider)
+                            .recordPageView(newPageNumber);
                       },
                       itemBuilder: (context, index) {
                         return MushafPage(pageNumber: index + 1);
@@ -290,14 +292,19 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                     final allQuranWordsOnPage = extractQuranWordsFromPage(
                       pageData.layout,
                     );
-                    final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-                      groupWordsByAyahKey(allQuranWordsOnPage),
-                    );
+                    final ayahsOnPageMap =
+                        SplayTreeMap<String, List<Word>>.from(
+                          groupWordsByAyahKey(allQuranWordsOnPage),
+                        );
                     final orderedKeys = ayahsOnPageMap.keys.toList();
 
                     if (orderedKeys.isNotEmpty) {
-                      final int idx = session.lastAyahIndexShown.clamp(0, orderedKeys.length - 1);
-                      final String currentKey = orderedKeys[idx]; // format: sss:aaa
+                      final int idx = session.lastAyahIndexShown.clamp(
+                        0,
+                        orderedKeys.length - 1,
+                      );
+                      final String currentKey =
+                          orderedKeys[idx]; // format: sss:aaa
                       final parts = currentKey.split(':');
                       final int currentSurah = int.tryParse(parts[0]) ?? 0;
                       final int currentAyahNum = int.tryParse(parts[1]) ?? 1;
@@ -313,13 +320,20 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                         }
                       }
                       // Compute starting ayah number m for the current surah on this page
-                      final String firstKeyOfCurrentSurah = orderedKeys[firstIndexOfCurrentSurah];
+                      final String firstKeyOfCurrentSurah =
+                          orderedKeys[firstIndexOfCurrentSurah];
                       final int startAyahNumForCurrentSurah =
-                          int.tryParse(firstKeyOfCurrentSurah.split(':')[1]) ?? 1;
+                          int.tryParse(firstKeyOfCurrentSurah.split(':')[1]) ??
+                          1;
 
-                      final String m = convertToEasternArabicNumerals(startAyahNumForCurrentSurah.toString());
-                      final String n = convertToEasternArabicNumerals(currentAyahNum.toString());
-                      centerLabel = currentAyahNum <= startAyahNumForCurrentSurah
+                      final String m = convertToEasternArabicNumerals(
+                        startAyahNumForCurrentSurah.toString(),
+                      );
+                      final String n = convertToEasternArabicNumerals(
+                        currentAyahNum.toString(),
+                      );
+                      centerLabel =
+                          currentAyahNum <= startAyahNumForCurrentSurah
                           ? m
                           : '$m–$n';
                     }

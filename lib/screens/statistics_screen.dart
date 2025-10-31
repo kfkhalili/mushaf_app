@@ -11,10 +11,7 @@ class StatisticsScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            AppHeader(
-              title: 'إحصائيات القراءة',
-              showBackButton: true,
-            ),
+            AppHeader(title: 'إحصائيات القراءة', showBackButton: true),
             const Expanded(
               child: Directionality(
                 textDirection: TextDirection.rtl,
@@ -27,4 +24,3 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 }
-

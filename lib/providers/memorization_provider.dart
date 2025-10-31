@@ -3,10 +3,11 @@ import '../memorization/models.dart';
 import '../services/memorization_service.dart';
 import '../services/memorization_storage.dart';
 
-class MemorizationSessionNotifier extends StateNotifier<MemorizationSessionState?> {
+class MemorizationSessionNotifier
+    extends StateNotifier<MemorizationSessionState?> {
   MemorizationSessionNotifier({MemorizationStorage? storage})
-      : _storage = storage ?? InMemoryMemorizationStorage(),
-        super(null);
+    : _storage = storage ?? InMemoryMemorizationStorage(),
+      super(null);
 
   final MemorizationService _service = const MemorizationService();
   final MemorizationStorage _storage;
@@ -71,6 +72,9 @@ class MemorizationSessionNotifier extends StateNotifier<MemorizationSessionState
 }
 
 final memorizationSessionProvider =
-    StateNotifierProvider<MemorizationSessionNotifier, MemorizationSessionState?>((ref) {
-  return MemorizationSessionNotifier();
-});
+    StateNotifierProvider<
+      MemorizationSessionNotifier,
+      MemorizationSessionState?
+    >((ref) {
+      return MemorizationSessionNotifier();
+    });

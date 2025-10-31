@@ -16,7 +16,9 @@ class ResponsiveMetrics {
     final Size size = MediaQuery.of(context).size;
     final double widthScale = size.width / referenceScreenWidth;
     final double heightScale = size.height / referenceScreenHeight;
-    final double scaleFactor = widthScale < heightScale ? widthScale : heightScale;
+    final double scaleFactor = widthScale < heightScale
+        ? widthScale
+        : heightScale;
     return ResponsiveMetrics(
       scaleFactor: scaleFactor,
       widthScale: widthScale,
@@ -27,15 +29,15 @@ class ResponsiveMetrics {
   double footerFontSize(double base) => base * scaleFactor;
 
   EdgeInsets pagePadding({double top = 0}) => EdgeInsets.only(
-        top: top,
-        bottom: pageBottomPadding * scaleFactor,
-        left: pageHorizontalPadding,
-        right: pageHorizontalPadding,
-      );
+    top: top,
+    bottom: pageBottomPadding * scaleFactor,
+    left: pageHorizontalPadding,
+    right: pageHorizontalPadding,
+  );
 
   EdgeInsets footerPadding() => EdgeInsets.only(
-        bottom: footerBottomPadding * scaleFactor,
-        right: footerRightPadding,
-        left: footerLeftPadding,
-      );
+    bottom: footerBottomPadding * scaleFactor,
+    right: footerRightPadding,
+    left: footerLeftPadding,
+  );
 }

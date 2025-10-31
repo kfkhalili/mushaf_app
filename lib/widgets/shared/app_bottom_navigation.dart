@@ -63,7 +63,8 @@ class AppBottomNavigation extends ConsumerWidget {
                 context,
                 index: 0,
                 label: 'السور',
-                isSelected: selectedIndex == 0, // Surah is at index 0 in PageView
+                isSelected:
+                    selectedIndex == 0, // Surah is at index 0 in PageView
                 onTap: () => onIndexChanged?.call(0),
               ),
               _buildSelectionNavItem(
@@ -77,7 +78,8 @@ class AppBottomNavigation extends ConsumerWidget {
                 context,
                 index: 2,
                 label: 'الصفحات',
-                isSelected: selectedIndex == 2, // Pages is at index 2 in PageView
+                isSelected:
+                    selectedIndex == 2, // Pages is at index 2 in PageView
                 onTap: () => onIndexChanged?.call(2),
               ),
             ],

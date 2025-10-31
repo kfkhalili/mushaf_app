@@ -85,7 +85,9 @@ class _CountdownCircleState extends State<CountdownCircle>
                               color: foregroundColor,
                               fontWeight: FontWeight.bold,
                               fontSize: fontSize,
-                              fontFamily: theme.textTheme.bodyMedium?.fontFamily ?? 'IBMPlexSansArabic',
+                              fontFamily:
+                                  theme.textTheme.bodyMedium?.fontFamily ??
+                                  'IBMPlexSansArabic',
                               height: 1.0,
                             ),
                           ),

@@ -22,7 +22,8 @@ String derivePreviewText(PageData pageData, {int wordCount = 3}) {
   return buffer.isEmpty ? '…' : buffer.toString();
 }
 
-({Set<Word> visibleWords, Map<String, double> ayahOpacity}) computeMemorizationVisibility(
+({Set<Word> visibleWords, Map<String, double> ayahOpacity})
+computeMemorizationVisibility(
   PageLayout layout,
   MemorizationSessionState? session,
 ) {
@@ -52,7 +53,12 @@ String derivePreviewText(PageData pageData, {int wordCount = 3}) {
       visible.addAll(ayahsOnPageMap[ayahKey] ?? const <Word>[]);
     }
   }
-  for (int i = 0; i < session.window.ayahIndices.length && i < session.window.opacities.length; i++) {
+  for (
+    int i = 0;
+    i < session.window.ayahIndices.length &&
+        i < session.window.opacities.length;
+    i++
+  ) {
     final int idx = session.window.ayahIndices[i];
     if (idx >= 0 && idx < orderedAyahKeys.length) {
       final String key = orderedAyahKeys[idx];

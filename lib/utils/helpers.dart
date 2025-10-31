@@ -90,7 +90,7 @@ String formatRelativeDate(DateTime dateTime) {
       'سبتمبر',
       'أكتوبر',
       'نوفمبر',
-      'ديسمبر'
+      'ديسمبر',
     ];
     final day = convertToEasternArabicNumerals(dateTime.day.toString());
     final month = months[dateTime.month - 1];

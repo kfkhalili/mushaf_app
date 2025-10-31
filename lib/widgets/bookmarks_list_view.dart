@@ -25,9 +25,7 @@ class BookmarksListView extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -40,9 +38,7 @@ class BookmarksListView extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               'حدث خطأ أثناء تحميل العلامات المرجعية',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
         ),
@@ -83,7 +79,9 @@ class _EmptyBookmarksState extends StatelessWidget {
               'ابدأ القراءة واحفظ صفحاتك المفضلة للوصول إليها بسرعة لاحقاً',
               style: TextStyle(
                 fontSize: 16,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
               ),
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.center,
@@ -101,7 +99,10 @@ class _EmptyBookmarksState extends StatelessWidget {
               icon: const Icon(Icons.arrow_forward_ios, size: 18),
               label: const Text('ابدأ القراءة'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -110,4 +111,3 @@ class _EmptyBookmarksState extends StatelessWidget {
     );
   }
 }
-

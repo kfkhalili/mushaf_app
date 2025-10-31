@@ -8,7 +8,10 @@ Future<T?> pushSlideFromLeft<T>(BuildContext context, Widget page) {
         const begin = Offset(-1.0, 0.0);
         const end = Offset(0.0, 0.0);
         const curve = Curves.easeInOut;
-        final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        final tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     ),

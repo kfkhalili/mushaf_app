@@ -12,7 +12,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mushaf_app/main.dart';
 
 void main() {
-  testWidgets('App builds to Selection screen without crashing', (tester) async {
+  testWidgets('App builds to Selection screen without crashing', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(const ProviderScope(child: MushafApp()));

@@ -6,7 +6,8 @@ class MemorizationConfig {
   final double fadeStepPerTap; // e.g., 0.15
   final int tapsPerReveal; // fixed taps required before revealing next ayah
   final double revealThresholdNext; // when current <= 0.40
-  final double revealThresholdSecondNext; // when current <= 0.70 and next <= 0.40
+  final double
+  revealThresholdSecondNext; // when current <= 0.70 and next <= 0.40
 
   const MemorizationConfig({
     this.visibleWindowSize = 3,
@@ -46,12 +47,12 @@ class MemorizationConfig {
 
   @override
   int get hashCode => Object.hash(
-        visibleWindowSize,
-        fadeStepPerTap,
-        tapsPerReveal,
-        revealThresholdNext,
-        revealThresholdSecondNext,
-      );
+    visibleWindowSize,
+    fadeStepPerTap,
+    tapsPerReveal,
+    revealThresholdNext,
+    revealThresholdSecondNext,
+  );
 }
 
 @immutable

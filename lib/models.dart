@@ -193,7 +193,8 @@ class Bookmark {
   final int id; // Primary key (auto-increment)
   final int surahNumber; // Universal - Surah number (1-114)
   final int ayahNumber; // Universal - Ayah number within surah
-  final int? cachedPageNumber; // Optional: current layout's page (for performance, invalidated on layout change)
+  final int?
+  cachedPageNumber; // Optional: current layout's page (for performance, invalidated on layout change)
   final DateTime createdAt; // When bookmark was created
   final String? note; // Optional user note (future enhancement)
   final String? ayahText; // Optional: text of the ayah
