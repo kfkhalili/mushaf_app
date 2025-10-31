@@ -17,7 +17,8 @@
 #### Selection Screen
 - **Icon:** Always filled grey bookmark icon (`Icons.bookmark`)
 - **Color:** Grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light) - matches Settings/Search icons
-- **Position:** Left side of header Row (RTL layout), after Search icon
+- **Position:** **RIGHT side** of header Row (RTL layout) - **separated from Settings/Search**
+- **Placement:** Use `trailing` parameter or add to right side of Row (opposite from Settings/Search)
 - **Behavior:** Tap icon → Navigate to full-screen `BookmarksScreen`
 - **Always visible** when on Selection Screen
 
@@ -71,8 +72,9 @@ The bookmark list cards now have better RTL design:
 
 ### Header Integration (`app_header.dart`)
 - Look for `onBookmarkPressed` parameter addition
-- Bookmark icon added to left side Row (with Settings/Search)
-- Icon placement: After Search icon in the Row
+- **Mushaf Screen:** Bookmark icon added to left side Row (with Settings/Search)
+- **Selection Screen:** Bookmark icon added to **RIGHT side** (trailing side) - **separated from Settings/Search**
+- Use `trailing` parameter or add to right side of Row for Selection Screen
 - Conditional rendering: Show filled grey icon when `onBookmarkPressed` provided
 
 ### Selection Screen Changes
@@ -91,25 +93,64 @@ The bookmark list cards now have better RTL design:
    - Left-aligned chevron icon
 
 ### RTL Layout Requirements
-- All Arabic text: `textDirection: TextDirection.rtl`
-- Content alignment: Right-aligned (use `CrossAxisAlignment.end`)
+- **CRITICAL:** All Arabic text: `textDirection: TextDirection.rtl`
+- **CRITICAL:** Content alignment: **RIGHT-ALIGNED** (use `CrossAxisAlignment.end`)
+- **CRITICAL:** All Text widgets: `textAlign: TextAlign.right`
+- **CRITICAL:** Content Column: `crossAxisAlignment: CrossAxisAlignment.end`
+- **CRITICAL:** Content Row: `mainAxisAlignment: MainAxisAlignment.end`
+- **Arrow position:** Chevron on **LEFT** side pointing **LEFT** (←)
+- **Text position:** All text on **RIGHT** side, right-aligned
 - Swipe direction: `DismissDirection.endToStart` for RTL
-- Chevron icon: Points left (←) for RTL navigation
 
 ---
 
 ## Quick Implementation Checklist
 
 - [ ] Add `onBookmarkPressed` callback to `AppHeader`
-- [ ] Add filled grey bookmark icon to Selection Screen header
+- [ ] **CRITICAL:** Add filled grey bookmark icon to Selection Screen header **ON THE RIGHT** (trailing side)
+- [ ] **CRITICAL:** Icon must be separated from Settings/Search (opposite side)
 - [ ] Create `BookmarksScreen` (full screen)
-- [ ] Update `BookmarksListView` with improved RTL layout
-- [ ] Update `BookmarkItemCard` with right-aligned content
+- [ ] **CRITICAL:** Update `BookmarkItemCard` with RIGHT-ALIGNED text content
+  - [ ] Wrap in `Directionality(textDirection: TextDirection.rtl)`
+  - [ ] Use `CrossAxisAlignment.end` for Column
+  - [ ] Use `TextAlign.right` for all Text widgets
+  - [ ] Arrow on LEFT side pointing LEFT (←)
+  - [ ] Text content on RIGHT side, right-aligned
 - [ ] Remove bookmark tab from bottom navigation (if exists)
-- [ ] Test RTL layout and alignment
+- [ ] **DO NOT CHANGE** bottom navigation order (السور | الأجزاء | الصفحات)
+- [ ] Test RTL layout and alignment (text must appear right-aligned)
 - [ ] Verify icon states (filled grey vs dynamic)
+- [ ] Verify icon position (right side on Selection Screen)
 
 ---
 
 **Key Takeaway:** Bookmarks are now accessed via header icon (not bottom nav), and the list has a cleaner RTL layout with right-aligned Arabic content.
+
+---
+
+## ⚠️ Important Corrections - Read These First!
+
+### 1. Bottom Navigation Order - DO NOT CHANGE
+- **Current order (correct):** السور (0) | الأجزاء (1) | الصفحات (2)
+- **DO NOT REVERSE** or modify this order
+- **NO modifications needed** to `app_bottom_navigation.dart`
+- Bookmarks is **NOT** added as a 4th tab
+- The spec previously mentioned a different order - **IGNORE that**, keep existing order
+
+### 2. Selection Screen Header Icon Position (CRITICAL - FIXED)
+- **MUST BE ON THE RIGHT** (trailing side of header Row)
+- **NOT with Settings/Search** (they are on left side)
+- Use `trailing` parameter OR add to right side of Row (before Expanded title)
+- **Separated** from Settings/Search icons (opposite side of header)
+- In RTL layout, this appears visually on the left side, but logically is the trailing/right side of the Row
+
+### 3. Bookmarks List RTL Alignment (CRITICAL - FIXED)
+- **ALL TEXT MUST BE RIGHT-ALIGNED** - Text should appear on the right side
+- **Arrow MUST be on LEFT** pointing LEFT (←) - Navigation indicator
+- Implementation requirements:
+  - Wrap entire card in `Directionality(textDirection: TextDirection.rtl)`
+  - Column: `crossAxisAlignment: CrossAxisAlignment.end` (RIGHT alignment)
+  - Row (with text): `mainAxisAlignment: MainAxisAlignment.end` (RIGHT alignment)
+  - All Text widgets: `textAlign: TextAlign.right`
+  - Arrow icon: Fixed position on LEFT edge of card
 

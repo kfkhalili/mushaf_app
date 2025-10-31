@@ -123,8 +123,18 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 **Icon Placement (RTL-aware):**
 
-- Position: **Left side** of header in RTL layout (same row as Settings and Search)
-- Order: Settings | Search | **Bookmarks** (from left to right in RTL visual layout)
+- **Mushaf Screen:**
+
+  - Position: **Left side** of header in RTL layout (same row as Settings and Search)
+  - Order: Settings | Search | **Bookmarks** (from left to right in RTL visual layout)
+  - Icon appears with Settings/Search icons
+
+- **Selection Screen:**
+
+  - Position: **Right side** of header in RTL layout (opposite from Settings/Search)
+  - Separated from Settings and Search icons (on different side of header)
+  - Appears on the **trailing** side (right side in RTL, visually left side)
+
 - Size: Match existing header icon size (`kAppHeaderIconSize = 24.0`)
 - Color:
   - Mushaf Screen: Dynamic (outlined grey / filled primary)
@@ -172,17 +182,17 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 │         [Bookmark List - RTL Layout]   │
 │                                         │
 │  ┌─────────────────────────────────────┐│
-│  │ 📖 الصفحة ١٥                    ←   ││
-│  │    البقرة                            ││
-│  │    منذ يومين • juz01                 ││
+│  │  ←                         ١٥ 📖   ││  ← Arrow LEFT, content RIGHT
+│  │                               البقرة ││  ← Right-aligned text
+│  │                    منذ يومين • juz01 ││  ← Right-aligned text
 │  ├─────────────────────────────────────┤│
-│  │ 📖 الصفحة ٣٤٧                  ←   ││
-│  │    آل عمران                          ││
-│  │    أمس • juz04                      ││
+│  │  ←                       ٣٤٧ 📖   ││
+│  │                            آل عمران ││
+│  │                        أمس • juz04 ││
 │  ├─────────────────────────────────────┤│
-│  │ 📖 الصفحة ٤٠٣                  ←   ││
-│  │    النساء                            ││
-│  │    اليوم • juz05                    ││
+│  │  ←                       ٤٠٣ 📖   ││
+│  │                              النساء ││
+│  │                        اليوم • juz05││
 │  └─────────────────────────────────────┘│
 │                                         │
 └─────────────────────────────────────────┘
@@ -240,27 +250,30 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 ```
 ┌─────────────────────────────────────────┐
-│                              ←    📖 ١٥  │ ← Right-aligned: Icon + Page
-│                                البقرة     │ ← Right-aligned: Surah
-│                    منذ يومين • juz01      │ ← Right-aligned: Meta
+│  ←                              📖 ١٥    │ ← Arrow on left, content on right
+│                                     البقرة│ ← Right-aligned: Surah
+│                        منذ يومين • juz01│ ← Right-aligned: Meta
 └─────────────────────────────────────────┘
 ```
 
-- **Right Side (Primary Content):**
+- **Right Side (Primary Content - MUST be right-aligned):**
 
   - Bookmark icon (📖) + Page number (الصفحة ١٥) on same line
-  - Icon: 20px size, positioned at right edge with 4px spacing from page number
+  - Icon: 20px size, positioned at **right edge** with 4px spacing from page number
   - Page number: Large, bold, Eastern Arabic numerals
   - Surah name: Below page number, medium weight
   - Metadata: Below surah, small muted text (date • juz)
-  - All right-aligned within card (RTL natural flow)
+  - **ALL TEXT MUST BE RIGHT-ALIGNED** - Use `CrossAxisAlignment.end` in Column
+  - Use `TextAlign.right` for all Text widgets
+  - Content Column should use `crossAxisAlignment: CrossAxisAlignment.end`
 
-- **Left Side (Navigation):**
+- **Left Side (Navigation - Fixed position):**
 
-  - Chevron icon (←) pointing left
+  - Chevron icon (←) pointing **left** (RTL direction)
+  - Position: Fixed on **left edge** of card
   - Light grey color, subtle
   - 24px size, centered vertically
-  - Indicates tap to navigate (RTL direction)
+  - Indicates tap to navigate (RTL direction - left is "forward")
 
 - **Typography:**
 
@@ -312,7 +325,7 @@ Mushaf Screen (الصفحة ١٥)
 
 ```
 Selection Screen
-  → Tap filled grey bookmark icon in header (left side, with Settings/Search)
+  → Tap filled grey bookmark icon in header (RIGHT side, separated from Settings/Search)
   → Navigate to Bookmarks Screen (full screen)
   → Tap bookmark item (right-aligned content)
   → Navigate to Mushaf Screen at bookmarked page
@@ -596,39 +609,63 @@ AppHeader(
 
 **Features:**
 
-- Improved RTL layout with right-aligned content
-- Bookmark icon inline with page number
+- **CRITICAL RTL:** All text content **right-aligned** (not left-aligned)
+- **CRITICAL RTL:** Wrap in `Directionality(textDirection: TextDirection.rtl)`
+- Bookmark icon inline with page number (at right edge)
 - Clear visual hierarchy
 - Tap to navigate
 - Swipe gesture support
 - Theme-aware styling
-- Chevron icon on left for RTL navigation indication
+- Chevron icon on **left edge** pointing **left** (←) for RTL navigation indication
+- **Text alignment:** All Arabic text must use `TextAlign.right` and `CrossAxisAlignment.end`
 
-**Layout Structure:**
+**Layout Structure (RTL - Right-aligned Text):**
 
 ```dart
 Card(
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      // Left: Chevron
-      Icon(Icons.chevron_left, color: mutedColor),
+  child: Directionality(
+    textDirection: TextDirection.rtl,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Left: Chevron (fixed position)
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Icon(Icons.chevron_left, color: mutedColor),
+        ),
 
-      // Center: Spacer (Expanded)
-
-      // Right: Content (Column, right-aligned)
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row([Icon, PageNumber]),
-          SurahName,
-          MetaInfo,
-        ],
-      ),
-    ],
+        // Right: Content (Column, MUST be right-aligned)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end, // RIGHT alignment
+            children: [
+              // Page number + Icon row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end, // RIGHT alignment
+                children: [
+                  Text('الصفحة ١٥', textAlign: TextAlign.right),
+                  SizedBox(width: 4),
+                  Icon(Icons.bookmark), // Icon at right edge
+                ],
+              ),
+              Text('البقرة', textAlign: TextAlign.right), // RIGHT aligned
+              Text('منذ يومين • juz01', textAlign: TextAlign.right), // RIGHT aligned
+            ],
+          ),
+        ),
+      ],
+    ),
   ),
 )
 ```
+
+**Critical RTL Requirements:**
+
+- Wrap entire card in `Directionality(textDirection: TextDirection.rtl)`
+- All Column widgets: `crossAxisAlignment: CrossAxisAlignment.end`
+- All Row widgets with content: `mainAxisAlignment: MainAxisAlignment.end`
+- All Text widgets: `textAlign: TextAlign.right`
+- Ensure no left-alignment appears in the content area
 
 ---
 
@@ -642,9 +679,11 @@ Card(
 
 1. Add bookmark icon to `AppHeader` in Selection Screen
    - Pass `onBookmarkPressed` callback to header
+   - **Icon must appear on RIGHT side (trailing side), separated from Settings/Search**
    - Navigate to Bookmarks Screen when tapped
-2. Remove Bookmarks tab from bottom navigation (if previously added)
-3. Bookmarks Screen accessed via header icon only
+2. **DO NOT modify** bottom navigation order (السور | الأجزاء | الصفحات - indices 0, 1, 2)
+3. **DO NOT add** Bookmarks tab to bottom navigation
+4. Bookmarks Screen accessed via header icon only
 
 ### 7.2 Mushaf Screen
 
@@ -657,18 +696,25 @@ Card(
 3. Handle bookmark toggle in header callback
 4. Invalidate bookmark providers after toggle
 
-### 7.3 App Header (Selection Screen)
+### 7.3 App Header (Both Screens)
 
 **File:** `lib/widgets/shared/app_header.dart`
 
 **Changes Required:**
 
-- Add bookmark icon button to left side Row (with Settings and Search)
-- Icon: Always filled `Icons.bookmark`
-- Color: Grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light)
-- Add optional `onBookmarkPressed` callback parameter
-- Show icon only when callback is provided (for Selection Screen)
-- Icon appears after Search icon in the Row
+- **Mushaf Screen:** Add bookmark icon to left side Row (with Settings and Search)
+
+  - Icon: Dynamic (outlined when not bookmarked, filled when bookmarked)
+  - Color: Grey when outlined, Primary when filled
+  - Appears after Search icon in the Row
+
+- **Selection Screen:** Add bookmark icon to **trailing** side (right side in RTL)
+  - Icon: Always filled `Icons.bookmark`
+  - Color: Grey (`Colors.grey.shade400` dark / `Colors.grey.shade600` light)
+  - Position: Use existing `trailing` parameter or add to right side of Row
+  - Separated from Settings/Search icons (on opposite side)
+  - Add optional `onBookmarkPressed` callback parameter
+  - Show icon only when callback is provided (for Selection Screen)
 
 ---
 
@@ -893,13 +939,16 @@ All required packages are already available in the project.
 
 - [ ] Integrate bookmark icon into `AppHeader`
   - [ ] Add `onBookmarkPressed` parameter for Selection Screen
-  - [ ] Add bookmark icon to left side Row (with Settings/Search)
+  - [ ] **Mushaf Screen:** Add bookmark icon to left side Row (with Settings/Search)
+  - [ ] **Selection Screen:** Add bookmark icon to **RIGHT side** (trailing parameter)
+  - [ ] **CRITICAL:** Icon on Selection Screen must be separated from Settings/Search (opposite side)
   - [ ] Icon shows filled grey on Selection Screen
   - [ ] Icon shows dynamic state (outlined/filled) on Mushaf Screen
 - [ ] Create `BookmarksScreen` (full screen)
 - [ ] Connect Selection Screen header to navigate to Bookmarks Screen
 - [ ] Connect Mushaf Screen to bookmark state
 - [ ] Update navigation flows
+- [ ] **DO NOT modify** bottom navigation order or add bookmarks tab
 - [ ] Add onboarding/tooltip (optional)
 
 ### Phase 5: Polish & Testing

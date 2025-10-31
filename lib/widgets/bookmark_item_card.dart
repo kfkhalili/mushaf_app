@@ -94,6 +94,7 @@ class BookmarkItemCard extends ConsumerWidget {
                               color: theme.textTheme.bodyLarge?.color,
                             ),
                             textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.right,
                           ),
                           const SizedBox(width: 4),
                           const Icon(
@@ -120,6 +121,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
                               textDirection: TextDirection.rtl,
+                              textAlign: TextAlign.right,
                             );
                           }
                           return const SizedBox.shrink();
@@ -147,6 +149,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                   ?.withValues(alpha: 0.6),
                             ),
                             textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.right,
                           ),
                           pageDataAsync.when(
                             data: (pageData) {
@@ -163,6 +166,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                       color: theme.textTheme.bodySmall?.color
                                           ?.withValues(alpha: 0.6),
                                     ),
+                                    textAlign: TextAlign.right,
                                   ),
                                   Text(
                                     juzGlyph,
@@ -174,6 +178,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                           ?.withValues(alpha: 0.6),
                                     ),
                                     textDirection: TextDirection.rtl,
+                                    textAlign: TextAlign.right,
                                   ),
                                 ],
                               );

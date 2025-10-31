@@ -70,21 +70,22 @@ class AppHeader extends StatelessWidget {
                     color: iconColor,
                   ),
                 ),
-              if (onBookmarkPressed != null)
-                IconButton(
-                  tooltip: 'العلامات المرجعية',
-                  onPressed: onBookmarkPressed,
-                  icon: Icon(
-                    Icons.bookmark,
-                    size: kAppHeaderIconSize,
-                    color: iconColor,
-                  ),
-                ),
             ],
           ),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
-          // Optional trailing widget (e.g., Memorize toggle)
+          // Bookmark icon for Selection Screen (right side, separated from Settings/Search)
+          if (onBookmarkPressed != null && trailing == null)
+            IconButton(
+              tooltip: 'العلامات المرجعية',
+              onPressed: onBookmarkPressed,
+              icon: Icon(
+                Icons.bookmark,
+                size: kAppHeaderIconSize,
+                color: iconColor,
+              ),
+            ),
+          // Optional trailing widget (e.g., BookmarkIconButton for Mushaf Screen)
           if (trailing != null) trailing!,
           // Back button (if enabled) - comes after title for RTL
           if (showBackButton)
