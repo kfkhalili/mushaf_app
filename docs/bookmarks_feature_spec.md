@@ -1,11 +1,11 @@
 # Bookmarks Feature Specification
 
-**Version:** 2.0 (As Implemented)
+**Version:** 3.0 (Ayah-Based Implementation)
 **Date:** January 2025
-**Status:** ✅ Implemented and Complete
+**Status:** 📋 Ready for Implementation
 **Priority:** High (Quarter 1)
 
-**Note:** This specification now reflects the actual implementation of the bookmarks feature as it exists in the codebase.
+**Note:** This specification reflects the **ayah-based bookmarking** approach for universal, layout-independent bookmarks. This is an upgrade from the previous page-based implementation.
 
 ---
 
@@ -13,13 +13,15 @@
 
 ### 1.1 Purpose
 
-The Bookmarks feature allows users to save and quickly access their favorite pages in the Mushaf app. Bookmarks serve as personal collections of meaningful verses and pages, enabling users to return to specific content without navigation complexity.
+The Bookmarks feature allows users to save and quickly access their favorite verses (ayat) in the Mushaf app. **Bookmarks are stored at the ayah-level (surah:ayah)**, ensuring they work perfectly across all Mushaf layouts (Uthmani, Indopak, etc.). This approach provides universal bookmarks that always navigate to the same content regardless of layout differences.
 
 ### 1.2 Goals
 
-- **Quick Access:** Enable users to bookmark any page with a single tap
-- **Visual Organization:** Provide beautiful, intuitive interface for managing bookmarks
-- **Persistence:** Save bookmarks locally with reliable storage
+- **Universal Bookmarks:** Store bookmarks at ayah-level (surah:ayah) for perfect cross-layout compatibility
+- **Quick Access:** Enable users to bookmark the current page (first ayah) with a single tap
+- **Precise Navigation:** Navigate to exact verse content, regardless of layout or page number differences
+- **Visual Organization:** Provide beautiful, intuitive interface showing verse references (e.g., "٢:٢٥٥")
+- **Persistence:** Save bookmarks locally with reliable storage and migration from page-based bookmarks
 - **Seamless Integration:** Integrate naturally into existing app navigation
 - **Performance:** Fast access and minimal overhead
 
@@ -36,11 +38,11 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 ### Primary Stories
 
-1. **As a user**, I want to bookmark the current page while reading, so I can return to it later
-2. **As a user**, I want to see all my bookmarked pages in one place, so I can quickly find what I'm looking for
+1. **As a user**, I want to bookmark the current page while reading, so I can return to the same verse later (regardless of layout)
+2. **As a user**, I want to see all my bookmarked verses in one place, so I can quickly find what I'm looking for
 3. **As a user**, I want to remove bookmarks I no longer need, so my list stays organized
-4. **As a user**, I want to navigate directly to a bookmarked page, so I can continue reading from where I left off
-5. **As a user**, I want to see context about each bookmark (surah name, page number, date), so I can identify it easily
+4. **As a user**, I want to navigate directly to a bookmarked verse, so I can continue reading from the exact same content (works across all layouts)
+5. **As a user**, I want to see context about each bookmark (verse reference like "٢:٢٥٥", surah name, page number in current layout, date), so I can identify it easily
 
 ### Secondary Stories
 
@@ -58,29 +60,47 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 - **Trigger:** Tap bookmark icon in app header (when viewing Mushaf Screen)
 - **Action:**
-  - Toggle bookmark state (add if not bookmarked, remove if already bookmarked)
+  - Determine first ayah on current page using `_getFirstAyahOnPage(pageNumber)`
+  - Extract surah number and ayah number
+  - Toggle bookmark state for that ayah (add if not bookmarked, remove if already bookmarked)
   - Show visual feedback (icon change, brief animation)
-  - Save to persistent storage immediately
+  - Save ayah reference (surah:ayah) to persistent storage immediately
 - **Behavior:**
-  - If page already bookmarked: Remove bookmark (unbookmark)
-  - If page not bookmarked: Add bookmark
+  - Bookmark is stored as surah:ayah pair (e.g., 2:255), not page number
+  - If same ayah already bookmarked: Remove bookmark (unbookmark)
+  - If ayah not bookmarked: Add bookmark
   - Provide immediate visual feedback
-- **Storage:** Save bookmark data to SQLite database
+- **Storage:** Save ayah reference (surah_number, ayah_number) to SQLite database
+- **Edge Cases:**
+  - Page starts with surah name → Assume ayah 1 of that surah
+  - Multiple ayat on page → Bookmark first ayah (most conservative)
 
 #### 3.1.2 Bookmark Display
 
 - **List View:** Show all bookmarks in chronological order (newest first) or customizable order
 - **Each Bookmark Shows:**
-  - Page number (Arabic numerals: ١٥)
-  - Surah name (if page contains surah start or main surah)
-  - Juz number (glyph format: juz01, juz02, etc.)
+  - **Verse reference** (ayah reference: "٢:٢٥٥" - Surah 2, Ayah 255) - **Primary identifier**
+  - **Page number** (Arabic numerals: "الصفحة ٣٠٢") - Secondary, dynamically shown for current layout
+  - Surah name glyph (if available)
   - Date bookmarked (relative: "Today", "Yesterday", "2 days ago", or absolute date)
   - Page preview thumbnail (optional, future enhancement)
+- **Display Format:**
+  - Primary: Verse reference (e.g., "٢:٢٥٥")
+  - Optional: Page number in parentheses (e.g., "٢:٢٥٥ (الصفحة ٣٠٢)")
+  - Page number updates dynamically based on current layout (different layouts may show different page numbers)
 - **Empty State:** Beautiful empty state message when no bookmarks exist
 
 #### 3.1.3 Bookmark Navigation
 
-- **Tap Bookmark:** Navigate directly to the bookmarked page
+- **Tap Bookmark:** Navigate to the page containing the bookmarked ayah in the current layout
+- **Navigation Logic:**
+  1. Get bookmark: (surahNumber, ayahNumber)
+  2. Call: `getPageForAyah(surahNumber, ayahNumber)` to find page in current layout
+  3. Navigate to returned page number
+- **Benefits:**
+  - Always navigates to correct content (same ayah, any layout)
+  - No mapping calculation needed
+  - Works seamlessly across layout switches
 - **Close List:** Return to previous screen or close modal/drawer
 - **Behavior:** Opening bookmark should preserve navigation stack (back button works correctly)
 
@@ -93,10 +113,14 @@ The Bookmarks feature allows users to save and quickly access their favorite pag
 
 #### 3.1.5 Bookmark Status Indication
 
-- **In Header:** Bookmark icon shows filled/outlined state based on current page bookmark status
+- **In Header:** Bookmark icon shows filled/outlined state based on whether the first ayah of the current page is bookmarked
+- **Status Logic:**
+  1. Get first ayah on current page: `_getFirstAyahOnPage(pageNumber)`
+  2. Check if that ayah is bookmarked: `isBookmarked(surah, ayah)`
+  3. Display appropriate icon state
 - **Visual Feedback:**
-  - Outlined icon: Page not bookmarked
-  - Filled icon: Page is bookmarked
+  - Outlined icon: Ayah not bookmarked
+  - Filled icon: Ayah is bookmarked
   - Animation: Brief scale/fill animation when toggling
 
 ### 3.2 UI/UX Requirements
@@ -356,34 +380,47 @@ Option B: From Bookmarks List (RTL Swipe)
 
 ### 4.1 Bookmark Model
 
+**Updated for Ayah-Based Storage:**
+
 ```dart
 @immutable
 class Bookmark {
   final int id; // Primary key (auto-increment)
-  final int pageNumber; // The bookmarked page (1-604)
+  final int surahNumber;  // ✅ Universal - Surah number (1-114)
+  final int ayahNumber;   // ✅ Universal - Ayah number within surah
+  final int? cachedPageNumber; // Optional: current layout's page (for performance, invalidated on layout change)
   final DateTime createdAt; // When bookmark was created
   final String? note; // Optional user note (future enhancement)
 
   const Bookmark({
     required this.id,
-    required this.pageNumber,
+    required this.surahNumber,
+    required this.ayahNumber,
+    this.cachedPageNumber,
     required this.createdAt,
     this.note,
   });
 
   Bookmark copyWith({
     int? id,
-    int? pageNumber,
+    int? surahNumber,
+    int? ayahNumber,
+    int? cachedPageNumber,
     DateTime? createdAt,
     String? note,
   }) {
     return Bookmark(
       id: id ?? this.id,
-      pageNumber: pageNumber ?? this.pageNumber,
+      surahNumber: surahNumber ?? this.surahNumber,
+      ayahNumber: ayahNumber ?? this.ayahNumber,
+      cachedPageNumber: cachedPageNumber ?? this.cachedPageNumber,
       createdAt: createdAt ?? this.createdAt,
       note: note ?? this.note,
     );
   }
+
+  // Get formatted verse reference (e.g., "٢:٢٥٥")
+  String get verseReference => '$surahNumber:$ayahNumber';
 
   @override
   bool operator ==(Object other) =>
@@ -391,45 +428,67 @@ class Bookmark {
       other is Bookmark &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          pageNumber == other.pageNumber;
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber;
 
   @override
-  int get hashCode => Object.hash(id, pageNumber);
+  int get hashCode => Object.hash(id, surahNumber, ayahNumber);
 }
 ```
 
+**Key Changes:**
+- ❌ Removed: `pageNumber` (layout-dependent)
+- ✅ Added: `surahNumber` + `ayahNumber` (universal)
+- ✅ Added: Optional `cachedPageNumber` (performance optimization)
+- ✅ Added: `verseReference` getter for display formatting
+
 ### 4.2 Database Schema
 
-**Table: `bookmarks`**
+**Table: `bookmarks` (Updated for Ayah-Based)**
 
-| Column        | Type    | Constraints               | Description         |
-| ------------- | ------- | ------------------------- | ------------------- |
-| `id`          | INTEGER | PRIMARY KEY AUTOINCREMENT | Unique identifier   |
-| `page_number` | INTEGER | NOT NULL UNIQUE           | Page number (1-604) |
-| `created_at`  | TEXT    | NOT NULL                  | ISO 8601 timestamp  |
-| `note`        | TEXT    | NULL                      | Optional user note  |
+| Column             | Type    | Constraints                      | Description                        |
+| ------------------ | ------- | -------------------------------- | ---------------------------------- |
+| `id`               | INTEGER | PRIMARY KEY AUTOINCREMENT        | Unique identifier                  |
+| `surah_number`     | INTEGER | NOT NULL                         | Surah number (1-114)              |
+| `ayah_number`      | INTEGER | NOT NULL                         | Ayah number within surah          |
+| `cached_page_number` | INTEGER | NULL                          | Optional: current layout's page    |
+| `created_at`       | TEXT    | NOT NULL                         | ISO 8601 timestamp                 |
+| `note`             | TEXT    | NULL                             | Optional user note                |
+
+**Constraints:**
+
+- `UNIQUE(surah_number, ayah_number)` - One bookmark per ayah (prevent duplicates)
 
 **Indexes:**
 
-- `CREATE INDEX idx_bookmarks_page_number ON bookmarks(page_number);`
+- `CREATE INDEX idx_bookmarks_surah_ayah ON bookmarks(surah_number, ayah_number);`
 - `CREATE INDEX idx_bookmarks_created_at ON bookmarks(created_at DESC);`
+- `CREATE INDEX idx_bookmarks_page_number ON bookmarks(cached_page_number);` (optional, for performance)
 
-**SQL Creation:**
+**SQL Creation (Updated Schema):**
 
 ```sql
 CREATE TABLE IF NOT EXISTS bookmarks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  page_number INTEGER NOT NULL UNIQUE,
+  surah_number INTEGER NOT NULL,
+  ayah_number INTEGER NOT NULL,
+  cached_page_number INTEGER,
   created_at TEXT NOT NULL,
-  note TEXT
+  note TEXT,
+  UNIQUE(surah_number, ayah_number)
 );
 
-CREATE INDEX IF NOT EXISTS idx_bookmarks_page_number
-  ON bookmarks(page_number);
+CREATE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
+  ON bookmarks(surah_number, ayah_number);
 
 CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
   ON bookmarks(created_at DESC);
 ```
+
+**Migration Required:**
+
+- Existing bookmarks table (with `page_number`) must be migrated
+- See Section 8.1 for migration strategy
 
 ---
 
@@ -445,18 +504,47 @@ CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
 - Bookmark existence checking
 - List retrieval with ordering
 
-**Interface:**
+**Interface (Updated for Ayah-Based):**
 
 ```dart
 abstract class BookmarksService {
-  Future<void> addBookmark(int pageNumber);
-  Future<void> removeBookmark(int pageNumber);
-  Future<bool> isBookmarked(int pageNumber);
+  // Add bookmark by surah:ayah
+  Future<void> addBookmark(int surahNumber, int ayahNumber);
+
+  // Remove bookmark by surah:ayah
+  Future<void> removeBookmark(int surahNumber, int ayahNumber);
+
+  // Check if specific ayah is bookmarked
+  Future<bool> isBookmarked(int surahNumber, int ayahNumber);
+
+  // Get all bookmarks (sorted by creation date)
   Future<List<Bookmark>> getAllBookmarks({bool newestFirst = true});
-  Future<Bookmark?> getBookmarkByPage(int pageNumber);
+
+  // Get bookmark by surah:ayah
+  Future<Bookmark?> getBookmarkByAyah(int surahNumber, int ayahNumber);
+
+  // Helper: Check if any ayah on a page is bookmarked (for UI status)
+  Future<bool> isPageBookmarked(int pageNumber);
+
+  // Clear all bookmarks
   Future<void> clearAllBookmarks();
+
+  // Migration: Convert page-based bookmark to ayah-based
+  Future<void> migratePageBookmark(int pageNumber);
 }
 ```
+
+**Implementation Details:**
+
+- **`addBookmark(surah, ayah)`:**
+  - Validates surah (1-114) and ayah numbers
+  - Stores surah:ayah pair (unique constraint prevents duplicates)
+  - Optionally calculates and stores `cached_page_number` for current layout
+
+- **`isPageBookmarked(pageNumber)`:**
+  - Helper method for UI status checking
+  - Gets first ayah on page: `_getFirstAyahOnPage(pageNumber)`
+  - Checks if that ayah is bookmarked: `isBookmarked(surah, ayah)`
 
 **Implementation Details:**
 
@@ -484,7 +572,7 @@ abstract class BookmarksService {
 
 **File:** `lib/providers.dart`
 
-**Riverpod Providers (Actual Implementation):**
+**Riverpod Providers (Updated for Ayah-Based):**
 
 ```dart
 // Provider for bookmarks service
@@ -493,11 +581,18 @@ BookmarksService bookmarksService(Ref ref) {
   return SqliteBookmarksService();
 }
 
-// Provider for checking if specific page is bookmarked
+// Provider for checking if specific page is bookmarked (helper for UI)
 @riverpod
 Future<bool> isPageBookmarked(Ref ref, int pageNumber) async {
   final service = ref.watch(bookmarksServiceProvider);
-  return service.isBookmarked(pageNumber);
+  return service.isPageBookmarked(pageNumber);
+}
+
+// Provider for checking if specific ayah is bookmarked
+@riverpod
+Future<bool> isAyahBookmarked(Ref ref, int surahNumber, int ayahNumber) async {
+  final service = ref.watch(bookmarksServiceProvider);
+  return service.isBookmarked(surahNumber, ayahNumber);
 }
 
 // Notifier for bookmark operations (class name: BookmarksNotifier)
@@ -509,34 +604,50 @@ class BookmarksNotifier extends _$BookmarksNotifier {
     return service.getAllBookmarks();
   }
 
-  Future<void> toggleBookmark(int pageNumber) async {
+  // Toggle bookmark for current page (determines ayah first)
+  Future<void> togglePageBookmark(int pageNumber) async {
+    final dbService = ref.read(databaseServiceProvider);
+    final firstAyah = await dbService._getFirstAyahOnPage(pageNumber);
+    final surah = firstAyah['surah']!;
+    final ayah = firstAyah['ayah']!;
+
+    await toggleAyahBookmark(surah, ayah);
+
+    // Invalidate page-specific provider
+    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+  }
+
+  // Toggle bookmark for specific ayah
+  Future<void> toggleAyahBookmark(int surahNumber, int ayahNumber) async {
     final service = ref.read(bookmarksServiceProvider);
-    final isBookmarked = await service.isBookmarked(pageNumber);
+    final isBookmarked = await service.isBookmarked(surahNumber, ayahNumber);
 
     if (isBookmarked) {
-      await service.removeBookmark(pageNumber);
+      await service.removeBookmark(surahNumber, ayahNumber);
     } else {
-      await service.addBookmark(pageNumber);
+      await service.addBookmark(surahNumber, ayahNumber);
     }
 
     // Invalidate to refresh list
     ref.invalidateSelf();
-    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+    ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
   }
 
-  Future<void> removeBookmark(int pageNumber) async {
+  // Remove bookmark by surah:ayah
+  Future<void> removeBookmark(int surahNumber, int ayahNumber) async {
     final service = ref.read(bookmarksServiceProvider);
-    await service.removeBookmark(pageNumber);
+    await service.removeBookmark(surahNumber, ayahNumber);
     ref.invalidateSelf();
-    ref.invalidate(isPageBookmarkedProvider(pageNumber));
+    ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
   }
 }
 ```
 
 **Usage:**
 - Access list: `ref.watch(bookmarksProvider)` (auto-generated from `BookmarksNotifier`)
-- Toggle bookmark: `ref.read(bookmarksProvider.notifier).toggleBookmark(pageNumber)`
-- Remove bookmark: `ref.read(bookmarksProvider.notifier).removeBookmark(pageNumber)`
+- Toggle bookmark for current page: `ref.read(bookmarksProvider.notifier).togglePageBookmark(pageNumber)`
+- Toggle bookmark for specific ayah: `ref.read(bookmarksProvider.notifier).toggleAyahBookmark(surah, ayah)`
+- Remove bookmark: `ref.read(bookmarksProvider.notifier).removeBookmark(surah, ayah)`
 
 ---
 
@@ -737,20 +848,27 @@ Card(
 - Chevron icon (`Icons.chevron_right`) positioned on right side (trailing)
 - Swipe gesture: Swipe **right** to reveal delete button on **left** side
 
-**Content Display:**
-- **Line 1:** Bookmark icon (20px) + Page number (22px, Eastern Arabic numerals)
+**Content Display (Updated for Ayah-Based):**
+- **Line 1:** Bookmark icon (20px) + **Verse reference** (22px, e.g., "٢:٢٥٥") + **Page number in parentheses** (optional, e.g., "(الصفحة ٣٠٢)")
 - **Line 2:** Surah name glyph (28px, surah font) or loading indicator
 - **Line 3:** Relative date (15px, right-aligned, muted color)
 
+**Display Format:**
+- Primary: Verse reference (e.g., "٢:٢٥٥" - Surah 2, Ayah 255)
+- Secondary: Page number in parentheses (dynamically calculated for current layout)
+- Example: "٢:٢٥٥ (الصفحة ٣٠٢)" or just "٢:٢٥٥" if page number not shown
+
 **Data Source:**
-- Uses `pageDataProvider(bookmark.pageNumber)` to fetch page data for surah display
-- Shows `LinearProgressIndicator` while loading surah name
+- Verse reference: From bookmark model (`bookmark.verseReference` or `bookmark.surahNumber:bookmark.ayahNumber`)
+- Page number: Calculate using `getPageForAyah(bookmark.surahNumber, bookmark.ayahNumber)` for current layout
+- Uses `pageDataProvider(pageNumber)` to fetch page data for surah glyph display
+- Shows `LinearProgressIndicator` while loading page data
 - Date formatted using `formatRelativeDate()` helper function (`lib/utils/helpers.dart`)
 
 **Swipe-to-Delete:**
 - Uses `Dismissible` widget with `DismissDirection.endToStart` (swipe right in RTL)
 - Background: Red container with `Icons.delete_outline` on left side
-- On dismiss: Calls `removeBookmark()` and shows Arabic snackbar "تم حذف العلامة المرجعية"
+- On dismiss: Calls `removeBookmark(surahNumber, ayahNumber)` and shows Arabic snackbar "تم حذف العلامة المرجعية"
 - No confirmation dialog (direct deletion)
 
 ### 6.5 Bookmark Icon Button
@@ -761,11 +879,11 @@ Card(
 
 **Widget:** `BookmarkIconButton` extends `ConsumerStatefulWidget`
 
-**Features:**
-- Dynamic icon state based on bookmark status (outlined/filled)
+**Features (Updated for Ayah-Based):**
+- Dynamic icon state based on whether first ayah of current page is bookmarked
 - Scale animation on toggle (1.0 → 1.2 → 1.0)
-- Watches `isPageBookmarkedProvider(pageNumber)` for reactive state
-- Handles toggle via `BookmarksNotifier.toggleBookmark()`
+- Watches `isPageBookmarkedProvider(pageNumber)` for reactive state (internally checks ayah)
+- Handles toggle via `BookmarksNotifier.togglePageBookmark(pageNumber)` (determines ayah first)
 - Loading state: Shows outlined icon, disabled
 - Error state: Shows outlined icon, still clickable
 
@@ -840,7 +958,7 @@ class BookmarkIconButton extends ConsumerStatefulWidget {
 
 **Actual Implementation:**
 
-**Integration:**
+**Integration (Updated for Ayah-Based):**
 1. Uses `BookmarkIconButton` widget via `AppHeader.trailing` parameter
 2. Passes `currentPageNumber` from `ref.watch(currentPageProvider)`
 3. No manual provider watching needed (handled by `BookmarkIconButton` internally)
@@ -854,10 +972,10 @@ AppHeader(
 )
 ```
 
-**BookmarkIconButton** handles:
-- Watching `isPageBookmarkedProvider(pageNumber)`
-- Displaying correct icon state
-- Handling tap to toggle bookmark
+**BookmarkIconButton** handles (Updated):
+- Watching `isPageBookmarkedProvider(pageNumber)` (internally checks first ayah on page)
+- Displaying correct icon state based on ayah bookmark status
+- Handling tap to toggle bookmark (calls `togglePageBookmark()`, which determines ayah first)
 - Animating icon on toggle
 - Provider invalidation after toggle
 
@@ -902,17 +1020,87 @@ Row([
 
 ### 8.1 Database Migration
 
-**Actual Implementation:**
+**Migration Required for Ayah-Based Bookmarks:**
 
-**Approach:** Separate SQLite database file (`bookmarks.db`) created in app documents directory
+**Current State:** Existing bookmarks table has `page_number` column
+**Target State:** Bookmarks table with `surah_number` and `ayah_number` columns
 
-**Location:** `lib/services/bookmarks_service.dart`
+**Migration Strategy:**
 
-**Initialization:**
-- Database created lazily on first access via `_ensureInitialized()`
-- Version: 1 (defined in `openDatabase` call)
-- Table and indexes created in `onCreate` callback
-- No migration needed (new feature, separate database file)
+**Phase 1: Add Ayah Support (Backward Compatible)**
+1. Add `surah_number` and `ayah_number` columns to database (nullable initially)
+2. Keep `page_number` column (deprecated but not removed)
+3. New bookmarks: Store both ayah + cached page
+4. Old bookmarks: Migrate on first access
+
+**Phase 2: Migrate Existing Bookmarks**
+1. On app launch: Check for bookmarks with null `surah_number`
+2. For each old bookmark:
+   - Query: `_getFirstAyahOnPage(oldBookmark.pageNumber)`
+   - Extract: `surah` and `ayah`
+   - Update: Set `surah_number` and `ayah_number`
+3. Validation: Verify all bookmarks have ayah data
+
+**Phase 3: Remove Page-Based Logic (Future)**
+1. After all bookmarks migrated
+2. Remove `page_number` column (future app version)
+3. Remove deprecated functions
+
+**Database Migration Code:**
+```dart
+// In _ensureInitialized() or separate migration method
+Future<void> _migrateToAyahBased() async {
+  if (_db == null) throw StateError('Database not initialized');
+
+  // Check if migration needed (column doesn't exist)
+  final tableInfo = await _db!.rawQuery("PRAGMA table_info(bookmarks)");
+  final hasSurahNumber = tableInfo.any((col) => col['name'] == 'surah_number');
+
+  if (!hasSurahNumber) {
+    // Add new columns
+    await _db!.execute('ALTER TABLE bookmarks ADD COLUMN surah_number INTEGER');
+    await _db!.execute('ALTER TABLE bookmarks ADD COLUMN ayah_number INTEGER');
+    await _db!.execute('ALTER TABLE bookmarks ADD COLUMN cached_page_number INTEGER');
+
+    // Migrate existing bookmarks
+    final oldBookmarks = await _db!.query('bookmarks',
+        columns: ['id', 'page_number']);
+
+    final dbService = DatabaseService();
+    await dbService.init();
+
+    for (final bookmark in oldBookmarks) {
+      final pageNumber = bookmark['page_number'] as int;
+      try {
+        final firstAyah = await dbService._getFirstAyahOnPage(pageNumber);
+        final surah = firstAyah['surah']!;
+        final ayah = firstAyah['ayah']!;
+
+        await _db!.update(
+          'bookmarks',
+          {
+            'surah_number': surah,
+            'ayah_number': ayah,
+            'cached_page_number': pageNumber,
+          },
+          where: 'id = ?',
+          whereArgs: [bookmark['id']],
+        );
+      } catch (e) {
+        // Log error but continue migration
+        print('Error migrating bookmark ${bookmark['id']}: $e');
+      }
+    }
+
+    // Create new unique constraint and indexes
+    // Note: SQLite doesn't support DROP CONSTRAINT, so we'll handle duplicates in application logic
+    await _db!.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
+      ON bookmarks(surah_number, ayah_number)
+    ''');
+  }
+}
+```
 
 **Database File:**
 - Path: `{documentsDirectory}/bookmarks.db`
@@ -946,14 +1134,34 @@ Row([
 
 ### 9.1 Duplicate Bookmarks
 
-- **Prevention:** UNIQUE constraint on `page_number` in database
-- **Behavior:** If user tries to bookmark already-bookmarked page, toggle removes it
+- **Prevention:** UNIQUE constraint on `(surah_number, ayah_number)` in database
+- **Behavior:** If user tries to bookmark same ayah twice, toggle removes it (or updates timestamp)
 - **Error Handling:** Catch UNIQUE constraint violation gracefully
+- **Recommendation:** Update timestamp on duplicate (user may have "re-bookmarked" intentionally)
 
-### 9.2 Invalid Page Numbers
+### 9.2 Invalid Ayah References
 
-- **Validation:** Ensure page numbers are between 1 and 604
-- **Error Handling:** Show error message if invalid page attempted
+- **Validation:**
+  - Ensure surah numbers are between 1 and 114
+  - Ensure ayah numbers are valid for the surah
+  - Query database to confirm ayah exists before storing
+- **Error Handling:** Show error message "الآية غير موجودة" if invalid ayah attempted
+
+### 9.2.1 Page-to-Ayah Lookup Failures
+
+- **Issue:** What if `_getFirstAyahOnPage()` fails?
+- **Solution:**
+  - Fallback: Try next ayah on page
+  - If all fail: Show error, don't bookmark
+  - Log error for debugging
+
+### 9.2.2 Ayah-to-Page Lookup Failures
+
+- **Issue:** What if `getPageForAyah()` fails (ayah not found in current layout)?
+- **Solution:**
+  - This shouldn't happen (ayah exists in all layouts)
+  - If it does: Show error "لا يمكن العثور على الصفحة"
+  - Bookmark remains valid, user can try again after checking layout
 
 ### 9.3 Database Errors
 
@@ -978,18 +1186,22 @@ Row([
 
 ### Functional Criteria
 
-✅ User can bookmark any page (1-604) by tapping header icon in Mushaf Screen
-✅ Bookmark icon shows correct state (filled/outlined) in Mushaf Screen
+✅ User can bookmark current page (first ayah) by tapping header icon in Mushaf Screen
+✅ Bookmark stored as surah:ayah pair (universal across layouts)
+✅ Bookmark icon shows correct state (filled/outlined) based on ayah bookmark status
 ✅ Bookmark icon always visible (filled grey) in Selection Screen header
 ✅ User can access bookmarks by tapping header icon in Selection Screen
 ✅ User can view all bookmarks in dedicated full-screen list
-✅ User can navigate to bookmarked page from list
+✅ Each bookmark displays verse reference (e.g., "٢:٢٥٥") as primary identifier
+✅ Page number shown dynamically for current layout (secondary information)
+✅ User can navigate to bookmarked ayah from list (works across all layouts)
 ✅ User can remove bookmark via toggle (Mushaf) or swipe-to-delete (list)
 ✅ Bookmarks persist across app restarts
 ✅ Bookmark state updates immediately when toggled
-✅ No duplicate bookmarks (same page)
+✅ No duplicate bookmarks (same ayah)
 ✅ Empty state displays when no bookmarks exist
 ✅ Bookmarks list uses proper RTL layout with right-aligned content
+✅ Old page-based bookmarks migrated to ayah-based on app launch
 
 ### UI/UX Criteria
 
@@ -1026,7 +1238,7 @@ These features are **not** included in v1.0 but may be added later:
 - **Bookmark Sorting:** Sort by date, page number, surah, etc.
 - **Bookmark Sharing:** Share bookmark list with others
 - **Page Preview Thumbnails:** Show page preview in bookmark list
-- **Ayah-Level Bookmarks:** Bookmark specific verses (not just pages)
+- ~~**Ayah-Level Bookmarks:** Bookmark specific verses (not just pages)~~ ✅ **IMPLEMENTED**
 - **Bookmark Search:** Search bookmarks by surah name or notes
 - **Bookmark Statistics:** Show bookmark usage analytics
 
@@ -1103,34 +1315,40 @@ All required packages are already available in the project.
 
 ## 15. Implementation Checklist
 
-**Status:** ✅ All phases completed and implemented
+**Status:** 📋 Ready for Implementation (Migration from page-based to ayah-based)
 
-### Phase 1: Database & Service Layer
+### Phase 1: Database & Service Layer (Migration Required)
 
-- [x] Create `Bookmark` model class (`lib/models.dart`)
-- [x] Create database schema (in `SqliteBookmarksService`)
-- [x] Implement `BookmarksService` interface
-- [x] Implement `SqliteBookmarksService` (`lib/services/bookmarks_service.dart`)
-- [x] Add database initialization code (`_ensureInitialized()`)
+- [ ] Update `Bookmark` model class (`lib/models.dart`) - Add surahNumber, ayahNumber, remove pageNumber
+- [ ] Update database schema (in `SqliteBookmarksService`) - Add columns, migration logic
+- [ ] Update `BookmarksService` interface - Change methods to use surah:ayah
+- [ ] Update `SqliteBookmarksService` implementation - Implement ayah-based CRUD
+- [ ] Add database migration code - Migrate existing page-based bookmarks
+- [ ] Add `isPageBookmarked()` helper method - Check ayah on page
 - [ ] Write unit tests for service layer (recommended for future)
 
-### Phase 2: State Management
+### Phase 2: State Management (Update Required)
 
-- [x] Create Riverpod providers for bookmarks (`lib/providers.dart`)
-- [x] Create `BookmarksNotifier` class (not `Bookmarks`)
-- [x] Implement `isPageBookmarked` provider
+- [ ] Update Riverpod providers for bookmarks (`lib/providers.dart`)
+- [ ] Update `BookmarksNotifier` class - Add `togglePageBookmark()` and `toggleAyahBookmark()`
+- [ ] Update `isPageBookmarked` provider - Internally check ayah on page
+- [ ] Add `isAyahBookmarked` provider - Direct ayah checking
+- [ ] Update provider invalidation logic
 - [ ] Write tests for providers (recommended for future)
 
-### Phase 3: UI Components
+### Phase 3: UI Components (Update Required)
 
-- [x] Create `BookmarkIconButton` widget (`lib/widgets/bookmark_icon_button.dart`)
-- [x] Create `BookmarksListView` widget (`lib/widgets/bookmarks_list_view.dart`)
-- [x] Create `BookmarkItemCard` widget (`lib/widgets/bookmark_item_card.dart`)
-- [x] Create empty state widget (`_EmptyBookmarksState`)
-- [x] Implement swipe-to-delete gesture (via `Dismissible`)
+- [ ] Update `BookmarkIconButton` widget - Use `togglePageBookmark()` instead of `toggleBookmark()`
+- [ ] Update `BookmarksListView` widget - No changes needed (uses bookmark model)
+- [ ] Update `BookmarkItemCard` widget - Display verse reference instead of page number
+- [ ] Add page number calculation - Use `getPageForAyah()` to show current layout's page
+- [ ] Update navigation logic - Use `getPageForAyah()` instead of direct page number
+- [ ] Update swipe-to-delete - Use `removeBookmark(surah, ayah)` instead of `removeBookmark(page)`
+- [ ] Create empty state widget (`_EmptyBookmarksState`) - Already implemented
+- [ ] Implement swipe-to-delete gesture (via `Dismissible`) - Already implemented
 - [ ] Write widget tests (recommended for future)
 
-### Phase 4: Integration
+### Phase 4: Integration (Update Navigation Logic)
 
 - [x] Integrate bookmark icon into `AppHeader` (`lib/widgets/shared/app_header.dart`)
   - [x] Add `onBookmarkPressed` parameter for Selection Screen
@@ -1142,15 +1360,19 @@ All required packages are already available in the project.
 - [x] Create `BookmarksScreen` (`lib/screens/bookmarks_screen.dart`)
 - [x] Connect Selection Screen header to navigate to Bookmarks Screen
 - [x] Connect Mushaf Screen to bookmark state via `BookmarkIconButton`
-- [x] Update navigation flows
+- [ ] Update navigation logic in `navigateToMushafPage()` helper - Use `getPageForAyah()` instead of direct page number
+- [ ] Update `BookmarkItemCard` tap handler - Navigate using ayah lookup
 - [x] **DO NOT modify** bottom navigation order (maintained)
 
-### Phase 5: Polish & Testing
+### Phase 5: Migration & Polish
 
+- [ ] Run database migration on app launch
+- [ ] Test migration of existing bookmarks
+- [ ] Verify bookmarks work across layout switches
 - [x] Add animations and transitions (scale animation on toggle)
 - [x] Theme integration (theme-aware colors and styling)
 - [x] RTL layout (proper text direction and alignment)
-- [x] Performance optimization (indexed database, lazy loading)
+- [ ] Performance optimization (indexed database, cached page numbers)
 - [ ] Integration testing (recommended for future)
 - [ ] User acceptance testing (recommended for future)
 
