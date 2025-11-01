@@ -226,3 +226,15 @@ class DbConstants {
 
 // Feature flags
 const bool enableMemorizationBeta = true;
+
+// --- MIGRATION CONSTANTS ---
+// WHY: Centralizes legacy database filenames for migration service.
+// Prevents magic strings and typos when referencing old database files.
+class MigrationConstants {
+  // WHY: Legacy database filenames from before unified app_data.db migration
+  static const String legacyBookmarksDb = 'bookmarks.db';
+  static const String legacyReadingProgressDb = 'reading_progress.db';
+
+  // WHY: Private constructor to prevent instantiation.
+  const MigrationConstants._();
+}

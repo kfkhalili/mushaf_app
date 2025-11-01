@@ -101,7 +101,7 @@ class SqliteBookmarksService implements BookmarksService {
     } catch (e) {
       // If page lookup fails, continue without cached page number
       if (kDebugMode) {
-        print('Could not cache page number for bookmark: $e');
+        debugPrint('Could not cache page number for bookmark: $e');
       }
     }
 

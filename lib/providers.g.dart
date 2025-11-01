@@ -517,6 +517,82 @@ final class PageFontFamilyFamily extends $Family
   String toString() => r'pageFontFamilyProvider';
 }
 
+@ProviderFor(pagePreviewWithFont)
+const pagePreviewWithFontProvider = PagePreviewWithFontFamily._();
+
+final class PagePreviewWithFontProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<(String, String)>,
+          (String, String),
+          FutureOr<(String, String)>
+        >
+    with $FutureModifier<(String, String)>, $FutureProvider<(String, String)> {
+  const PagePreviewWithFontProvider._({
+    required PagePreviewWithFontFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'pagePreviewWithFontProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pagePreviewWithFontHash();
+
+  @override
+  String toString() {
+    return r'pagePreviewWithFontProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<(String, String)> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<(String, String)> create(Ref ref) {
+    final argument = this.argument as int;
+    return pagePreviewWithFont(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PagePreviewWithFontProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pagePreviewWithFontHash() =>
+    r'e32af8b86cd0f568131169d1456b208d2a6c56e7';
+
+final class PagePreviewWithFontFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<(String, String)>, int> {
+  const PagePreviewWithFontFamily._()
+    : super(
+        retry: null,
+        name: r'pagePreviewWithFontProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PagePreviewWithFontProvider call(int pageNumber) =>
+      PagePreviewWithFontProvider._(argument: pageNumber, from: this);
+
+  @override
+  String toString() => r'pagePreviewWithFontProvider';
+}
+
 @ProviderFor(SelectionTabIndex)
 const selectionTabIndexProvider = SelectionTabIndexProvider._();
 
@@ -935,7 +1011,7 @@ final class BookmarksServiceProvider
   }
 }
 
-String _$bookmarksServiceHash() => r'aab81efa776dd352190a45c7dbd3404e6a7a6f5f';
+String _$bookmarksServiceHash() => r'd98c721dc9efa6326cc9242716e708b58ab3c297';
 
 @ProviderFor(isAyahBookmarked)
 const isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
@@ -1211,11 +1287,13 @@ const readingProgressServiceProvider = ReadingProgressServiceProvider._();
 final class ReadingProgressServiceProvider
     extends
         $FunctionalProvider<
+          AsyncValue<ReadingProgressService>,
           ReadingProgressService,
-          ReadingProgressService,
-          ReadingProgressService
+          FutureOr<ReadingProgressService>
         >
-    with $Provider<ReadingProgressService> {
+    with
+        $FutureModifier<ReadingProgressService>,
+        $FutureProvider<ReadingProgressService> {
   const ReadingProgressServiceProvider._()
     : super(
         from: null,
@@ -1232,26 +1310,18 @@ final class ReadingProgressServiceProvider
 
   @$internal
   @override
-  $ProviderElement<ReadingProgressService> $createElement(
+  $FutureProviderElement<ReadingProgressService> $createElement(
     $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  ) => $FutureProviderElement(pointer);
 
   @override
-  ReadingProgressService create(Ref ref) {
+  FutureOr<ReadingProgressService> create(Ref ref) {
     return readingProgressService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ReadingProgressService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ReadingProgressService>(value),
-    );
   }
 }
 
 String _$readingProgressServiceHash() =>
-    r'0d332c17a63c60884df7e575b4c88ba50150013d';
+    r'51ae74f95ad5d87850b1520db052aee85ac0673b';
 
 @ProviderFor(readingStatistics)
 const readingStatisticsProvider = ReadingStatisticsProvider._();
@@ -1292,7 +1362,7 @@ final class ReadingStatisticsProvider
   }
 }
 
-String _$readingStatisticsHash() => r'4e9c3f612ab9e704415d02b8bc41403348133e43';
+String _$readingStatisticsHash() => r'11644989a0c8eac4fcd7ffd4eb809c1f43b0275d';
 
 @ProviderFor(pagesReadToday)
 const pagesReadTodayProvider = PagesReadTodayProvider._();
@@ -1325,7 +1395,7 @@ final class PagesReadTodayProvider
   }
 }
 
-String _$pagesReadTodayHash() => r'6bc60598952979c57cb177c89d91885b7b8d6f23';
+String _$pagesReadTodayHash() => r'2a0d28df25e63ccce6fb47565e121658c340eea5';
 
 @ProviderFor(currentStreak)
 const currentStreakProvider = CurrentStreakProvider._();
@@ -1358,7 +1428,7 @@ final class CurrentStreakProvider
   }
 }
 
-String _$currentStreakHash() => r'255b02ef08a067f91b1334c30fb7b4acb1964538';
+String _$currentStreakHash() => r'e92074e4a2350a1e4fcc5e444be86a364ff6a968';
 
 @ProviderFor(ThemeNotifier)
 const themeProvider = ThemeNotifierProvider._();

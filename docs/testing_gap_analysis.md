@@ -45,7 +45,7 @@ On iOS (SqfliteDarwinDatabase), executing `PRAGMA busy_timeout=5000` on **read-o
 test('handles PRAGMA exceptions gracefully on read-only databases', () async {
   // This would require actually running on iOS or mocking the iOS behavior
   await service.init(layout: MushafLayout.uthmani15Lines);
-  
+
   // Verify database still works even if PRAGMA fails
   final surahs = await service.getAllSurahs();
   expect(surahs, isNotEmpty);
@@ -93,7 +93,7 @@ group('Error Recovery Tests', () {
     final surahs = await service.getAllSurahs();
     expect(surahs.length, 114);
   });
-  
+
   test('database initialization succeeds even with PRAGMA exceptions', () async {
     // Test that initialization completes successfully
     // even if optional PRAGMA settings fail

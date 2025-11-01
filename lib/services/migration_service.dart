@@ -51,7 +51,10 @@ class MigrationService {
   /// Used by migration transaction to ensure atomicity.
   Future<void> _migrateBookmarksWithTxn(Transaction txn) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
-    final oldDbPath = p.join(documentsDirectory.path, 'bookmarks.db');
+    final oldDbPath = p.join(
+      documentsDirectory.path,
+      MigrationConstants.legacyBookmarksDb,
+    );
 
     try {
       final oldDb = await openDatabase(oldDbPath, readOnly: true);
@@ -87,7 +90,10 @@ class MigrationService {
   /// Used by migration transaction to ensure atomicity.
   Future<void> _migrateReadingSessionsWithTxn(Transaction txn) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
-    final oldDbPath = p.join(documentsDirectory.path, 'reading_progress.db');
+    final oldDbPath = p.join(
+      documentsDirectory.path,
+      MigrationConstants.legacyReadingProgressDb,
+    );
 
     try {
       final oldDb = await openDatabase(oldDbPath, readOnly: true);

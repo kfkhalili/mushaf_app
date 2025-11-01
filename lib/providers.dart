@@ -2,6 +2,7 @@
 
 // WHY: These are the only two imports you need for this file.
 // 'riverpod_annotation' provides the @riverpod annotation and the 'Ref' type.
+import 'package:flutter/foundation.dart'; // For kDebugMode and debugPrint
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/database_service.dart';
@@ -57,18 +58,22 @@ class DatabaseServiceNotifier extends _$DatabaseServiceNotifier {
 
   @override
   Future<DatabaseService> build() async {
-    // When the provider is rebuilt (e.g., due to layout change),
-    // close the old database connections before creating a new service.
-    await _service?.close();
+    // WHY: Close previous service if exists (layout change scenario)
+    // Store reference to prevent double-close if provider rebuilds quickly
+    final previousService = _service;
+    if (previousService != null) {
+      await previousService.close();
+    }
 
     final layout = ref.watch(mushafLayoutSettingProvider);
     _service = DatabaseService();
     await _service!.init(layout: layout);
 
-    // Ensure the database connections are closed when the provider is disposed.
+    // WHY: Ensure cleanup on dispose. Clear reference first to prevent double-close.
     ref.onDispose(() async {
-      await _service?.close();
-      _service = null;
+      final serviceToClose = _service;
+      _service = null; // Clear reference first to prevent race conditions
+      await serviceToClose?.close();
     });
 
     return _service!;
@@ -394,6 +399,15 @@ Future<int?> bookmarkPageNumber(
     final dbService = await ref.watch(databaseServiceProvider.future);
     return await dbService.getPageForAyah(surahNumber, ayahNumber);
   } catch (e) {
+    // WHY: Log error for debugging and monitoring
+    // Silent failures make it impossible to diagnose production issues
+    if (kDebugMode) {
+      debugPrint(
+        'Failed to get page number for bookmark (surah: $surahNumber, ayah: $ayahNumber): $e',
+      );
+      // TODO: Include stackTrace and report to crash analytics when implemented
+      // catch (e, stackTrace) { ... FirebaseCrashlytics.instance.recordError(e, stackTrace); }
+    }
     return null;
   }
 }

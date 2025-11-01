@@ -391,9 +391,11 @@ Added `includeAyahText` parameter to `getAllBookmarks()` (defaults to `false`):
 - Fonts are managed by LRU cache which evicts least recently used fonts
 
 **Files Modified:**
+
 - `lib/screens/mushaf_screen.dart` - Added memory management documentation comments
 
 **Additional Recommendations:**
+
 - Profile memory usage with Instruments (monitoring task)
 - Consider font unloading for pages far from viewport (future enhancement)
 
@@ -412,9 +414,11 @@ Added `includeAyahText` parameter to `getAllBookmarks()` (defaults to `false`):
 - Prevents data loss when app is backgrounded during reading
 
 **Files Modified:**
+
 - `lib/screens/mushaf_screen.dart` - Added `WidgetsBindingObserver` with lifecycle handling
 
 **Additional Recommendations:**
+
 - Consider using `isolate` for heavy database queries (future enhancement)
 
 **Priority:** 🟠 Low

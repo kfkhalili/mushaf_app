@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // Import for print
+import 'package:flutter/foundation.dart'; // For kDebugMode and debugPrint
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -219,7 +219,9 @@ class DatabaseService with InitializationMixin {
       return ''; // Return empty string if not found
     } catch (e) {
       if (kDebugMode) {
-        print("Error fetching ayah text for $verseKey: $e");
+        debugPrint("Error fetching ayah text for $verseKey: $e");
+        // TODO: Include stackTrace when implementing crash analytics
+        // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
       }
       return ''; // Return empty string on error
     }
@@ -276,7 +278,9 @@ class DatabaseService with InitializationMixin {
       return ayahTexts;
     } catch (e) {
       if (kDebugMode) {
-        print("Error fetching bulk ayah texts: $e");
+        debugPrint("Error fetching bulk ayah texts: $e");
+        // TODO: Include stackTrace when implementing crash analytics
+        // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
       }
       // Return map with empty strings for all keys on error
       return Map.fromEntries(verseKeys.map((key) => MapEntry(key, '')));
@@ -852,7 +856,7 @@ class DatabaseService with InitializationMixin {
             } else {
               // Log warning for invalid keys but continue processing others.
               if (kDebugMode) {
-                print(
+                debugPrint(
                   "Warning: Invalid verse key '$firstVerseKey' for Juz $juzNum",
                 );
               }
@@ -861,7 +865,9 @@ class DatabaseService with InitializationMixin {
         } catch (e) {
           // Log errors during processing but continue.
           if (kDebugMode) {
-            print("Error processing Juz $juzNum start page lookup: $e");
+            debugPrint("Error processing Juz $juzNum start page lookup: $e");
+            // TODO: Include stackTrace when implementing crash analytics
+            // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
           }
         }
       }
@@ -917,7 +923,7 @@ class DatabaseService with InitializationMixin {
     // If no valid starting word was found after checking lines
     if (firstWordId == 0) {
       if (kDebugMode) {
-        print(
+        debugPrint(
           "Warning: No valid starting word ID found for preview on page $pageNumber.",
         );
       }

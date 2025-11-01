@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For kDebugMode and debugPrint
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/mushaf_page.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
@@ -266,12 +267,24 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                         _savePageToPrefs(newPageNumber);
 
                         // Record reading progress (fire-and-forget, no await needed)
+                        // WHY: Add error handling to prevent silent failures in production
                         ref
                             .read(readingProgressServiceProvider.future)
                             .then(
                               (service) =>
                                   service.recordPageView(newPageNumber),
-                            );
+                            )
+                            .catchError((error, stackTrace) {
+                              // WHY: Log errors for debugging and monitoring
+                              // Silent failures would make statistics inaccurate
+                              if (kDebugMode) {
+                                debugPrint(
+                                  'Failed to record page view for page $newPageNumber: $error',
+                                );
+                              }
+                              // TODO: Consider adding crash analytics reporting here
+                              // FirebaseCrashlytics.instance.recordError(error, stackTrace);
+                            });
                       },
                       itemBuilder: (context, index) {
                         return MushafPage(pageNumber: index + 1);
