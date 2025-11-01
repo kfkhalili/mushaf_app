@@ -17,7 +17,7 @@ flutter test --coverage
 
 # Check if golden files need updating
 echo "🖼️  Checking golden tests..."
-if flutter test test/golden/ --update-goldens=false 2>&1 | grep -q "Golden file mismatch"; then
+if ! flutter test test/golden/; then
   echo "❌ Golden test mismatch detected!"
   echo "Run 'flutter test test/golden/ --update-goldens' if UI changes are intentional"
   exit 1

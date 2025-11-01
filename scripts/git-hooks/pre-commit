@@ -1,29 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[pre-commit] Formatting check..."
-dart format --set-exit-if-changed .
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍 Pre-commit Checks"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-echo "[pre-commit] Static analysis (treat infos as fatal)..."
-dart analyze --fatal-infos
+# 1. Formatting check
+echo ""
+echo "📝 [1/5] Formatting check..."
+dart format --set-exit-if-changed . || {
+  echo "❌ Code formatting issues detected!"
+  echo "Run: dart format ."
+  exit 1
+}
 
-echo "[pre-commit] Running tests..."
-flutter test --coverage
+# 2. Static analysis
+echo ""
+echo "🔍 [2/5] Static analysis..."
+flutter analyze || {
+  echo "❌ Static analysis failed!"
+  exit 1
+}
 
-echo "[pre-commit] Checking golden files..."
-# Check if golden files changed (but allow if intentionally updating)
-if [ -n "$(git diff --name-only test/golden/ 2>/dev/null)" ]; then
-  echo "⚠️  WARNING: Golden files changed!"
-  echo "If this is intentional (UI update), run: flutter test --update-goldens"
-  echo "If not intentional, review the changes carefully."
-  read -p "Continue anyway? (y/N) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "❌ Commit aborted. Review golden file changes."
-    exit 1
-  fi
+# 3. Code generation
+echo ""
+echo "⚙️  [3/5] Code generation..."
+flutter pub run build_runner build --delete-conflicting-outputs || {
+  echo "❌ Code generation failed!"
+  exit 1
+}
+
+# 4. Run tests (excluding golden tests - run separately)
+echo ""
+echo "🧪 [4/5] Running unit and widget tests..."
+flutter test --coverage --exclude-tags=golden || {
+  echo "❌ Tests failed!"
+  exit 1
+}
+
+# 5. Golden tests
+echo ""
+echo "🖼️  [5/5] Checking golden tests..."
+if ! flutter test test/golden/; then
+  echo ""
+  echo "❌ Golden tests failed!"
+  echo ""
+  echo "If UI changes are intentional, run:"
+  echo "  flutter test test/golden/ --update-goldens"
+  echo ""
+  echo "Then review the changes and commit the updated golden files."
+  exit 1
 fi
 
-echo "[pre-commit] ✅ All checks passed"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ All pre-commit checks passed!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 
