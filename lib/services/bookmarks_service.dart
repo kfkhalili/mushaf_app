@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../exceptions/database_exceptions.dart';
 import 'database_service.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
@@ -91,8 +92,12 @@ class SqliteBookmarksService implements BookmarksService {
         DbConstants.cachedPageNumberCol: cachedPageNumber,
         DbConstants.createdAtCol: now,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
-    } catch (e) {
-      throw Exception('Failed to add bookmark: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to add bookmark',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -107,8 +112,12 @@ class SqliteBookmarksService implements BookmarksService {
             '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
         whereArgs: [surahNumber, ayahNumber],
       );
-    } catch (e) {
-      throw Exception('Failed to remove bookmark: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to remove bookmark',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -127,8 +136,12 @@ class SqliteBookmarksService implements BookmarksService {
       );
 
       return result.isNotEmpty;
-    } catch (e) {
-      throw Exception('Failed to check bookmark status: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to check bookmark status',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -181,8 +194,12 @@ class SqliteBookmarksService implements BookmarksService {
         );
       }
       return bookmarks;
-    } catch (e) {
-      throw Exception('Failed to get bookmarks: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to get bookmarks',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -215,8 +232,12 @@ class SqliteBookmarksService implements BookmarksService {
         note: row[DbConstants.noteCol] as String?,
         ayahText: ayahText,
       );
-    } catch (e) {
-      throw Exception('Failed to get bookmark by ayah: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to get bookmark by ayah',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -226,8 +247,12 @@ class SqliteBookmarksService implements BookmarksService {
 
     try {
       await _db.delete(DbConstants.bookmarksTable);
-    } catch (e) {
-      throw Exception('Failed to clear bookmarks: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to clear bookmarks',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -251,8 +276,12 @@ class SqliteBookmarksService implements BookmarksService {
 
       // Create new bookmark with ayah data
       await addBookmark(surah, ayah);
-    } catch (e) {
-      throw Exception('Failed to migrate page bookmark: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to migrate page bookmark',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

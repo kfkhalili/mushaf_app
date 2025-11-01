@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/date_helpers.dart';
+import '../exceptions/database_exceptions.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
 
@@ -63,8 +64,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
       // Invalidate statistics cache
       _cachedStatistics = null;
-    } catch (e) {
-      throw Exception('Failed to record page view: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to record page view',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -106,8 +111,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       );
 
       return _cachedStatistics!;
-    } catch (e) {
-      throw Exception('Failed to get statistics: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to get statistics',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -389,8 +398,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
     try {
       await _db.delete(DbConstants.readingSessionsTable);
       _cachedStatistics = null;
-    } catch (e) {
-      throw Exception('Failed to clear reading progress data: $e');
+    } catch (e, stackTrace) {
+      throw DatabaseOperationException(
+        'Failed to clear reading progress data',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }
