@@ -33,7 +33,7 @@ flutter pub run build_runner build --delete-conflicting-outputs || {
 # 4. Run tests (excluding golden tests - run separately)
 echo ""
 echo "🧪 [4/5] Running unit and widget tests..."
-flutter test --coverage --exclude-tags=golden || {
+flutter test --coverage --exclude-tags=golden --concurrency=1 || {
   echo "❌ Tests failed!"
   exit 1
 }
@@ -41,7 +41,7 @@ flutter test --coverage --exclude-tags=golden || {
 # 5. Golden tests
 echo ""
 echo "🖼️  [5/5] Checking golden tests..."
-if ! flutter test test/golden/; then
+if ! flutter test test/golden/ --concurrency=1; then
   echo ""
   echo "❌ Golden tests failed!"
   echo ""

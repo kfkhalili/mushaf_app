@@ -8,7 +8,7 @@ echo "[pre-push] Static analysis (fatal infos)..."
 dart analyze --fatal-infos
 
 echo "[pre-push] Running tests..."
-flutter test -r expanded
+flutter test --concurrency=1 -r expanded
 
 echo "[pre-push] OK"
 
