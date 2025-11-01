@@ -63,3 +63,20 @@ class DatabaseNotFoundException extends DatabaseException {
     super.stackTrace,
   });
 }
+
+/// Thrown when font loading fails (non-database asset error)
+class FontException implements Exception {
+  final String message;
+  final Object? originalError;
+  final StackTrace? stackTrace;
+
+  const FontException(this.message, {this.originalError, this.stackTrace});
+
+  @override
+  String toString() {
+    if (originalError != null) {
+      return 'FontException: $message\nOriginal error: $originalError';
+    }
+    return 'FontException: $message';
+  }
+}

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../exceptions/database_exceptions.dart';
 
 class DatabaseService {
   Database? _layoutDb;
@@ -165,9 +166,11 @@ class DatabaseService {
       );
       await dbFile.parent.create(recursive: true); // Ensure directory exists
       await dbFile.writeAsBytes(bytes, flush: true);
-    } catch (e) {
-      throw Exception(
-        "DatabaseService: Error copying database '$assetFileName' from assets: $e",
+    } catch (e, stackTrace) {
+      throw DatabaseConnectionException(
+        "Error copying database '$assetFileName' from assets",
+        originalError: e,
+        stackTrace: stackTrace,
       );
     }
   }
@@ -176,7 +179,9 @@ class DatabaseService {
   Future<String> getAyahText(int surahNumber, int ayahNumber) async {
     await init();
     if (_ayahTextDb == null) {
-      throw Exception("Ayah text database is not initialized.");
+      throw DatabaseNotInitializedException(
+        "Ayah text database is not initialized",
+      );
     }
 
     final verseKey = '$surahNumber:$ayahNumber';
@@ -210,7 +215,9 @@ class DatabaseService {
   ) async {
     await init();
     if (_ayahTextDb == null) {
-      throw Exception("Ayah text database is not initialized.");
+      throw DatabaseNotInitializedException(
+        "Ayah text database is not initialized",
+      );
     }
 
     if (ayahs.isEmpty) {
@@ -262,8 +269,8 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getSurahByName(String surahName) async {
     await init();
     if (_metadataDb == null) {
-      throw Exception(
-        "Metadata database for getSurahByName is not initialized.",
+      throw DatabaseNotInitializedException(
+        "Metadata database for getSurahByName is not initialized",
       );
     }
     return _metadataDb!.query(
@@ -278,8 +285,8 @@ class DatabaseService {
   Future<List<SurahInfo>> getAllSurahs() async {
     await init();
     if (_metadataDb == null || _layoutDb == null) {
-      throw Exception(
-        "Required databases for getAllSurahs are not initialized.",
+      throw DatabaseNotInitializedException(
+        "Required databases for getAllSurahs are not initialized",
       );
     }
 
@@ -322,7 +329,9 @@ class DatabaseService {
   /// Retrieves the Arabic name of a Surah given its ID (1-114).
   Future<String> getSurahName(int surahId) async {
     await init();
-    if (_metadataDb == null) throw Exception("Metadata DB not initialized.");
+    if (_metadataDb == null) {
+      throw DatabaseNotInitializedException("Metadata DB not initialized");
+    }
     if (surahId <= 0 || surahId > 114) return ""; // Handle invalid IDs
 
     try {
@@ -359,7 +368,9 @@ class DatabaseService {
   Future<Map<String, int>> _getFirstAyahOnPage(int pageNumber) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {
-      throw Exception("Required DBs not initialized for _getFirstAyahOnPage.");
+      throw DatabaseNotInitializedException(
+        "Required DBs not initialized for _getFirstAyahOnPage",
+      );
     }
 
     // Get all layout lines for the page, ordered.
@@ -371,8 +382,8 @@ class DatabaseService {
     );
 
     if (lines.isEmpty) {
-      throw Exception(
-        "DatabaseService: No layout data found for page $pageNumber.",
+      throw DatabaseNotFoundException(
+        "No layout data found for page $pageNumber",
       );
     }
 
@@ -412,8 +423,8 @@ class DatabaseService {
     }
 
     // Should not happen with valid data, but throw if no Surah/Ayah found.
-    throw Exception(
-      "DatabaseService: Could not determine first Surah/Ayah for page $pageNumber.",
+    throw DatabaseOperationException(
+      "Could not determine first Surah/Ayah for page $pageNumber",
     );
   }
 
@@ -421,7 +432,9 @@ class DatabaseService {
   Future<List<Map<String, int>>> getAyahsOnPage(int pageNumber) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {
-      throw Exception("Required DBs not initialized for getAyahsOnPage.");
+      throw DatabaseNotInitializedException(
+        "Required DBs not initialized for getAyahsOnPage",
+      );
     }
 
     // 1. Get all 'ayah' type lines for the page to find word ranges.
@@ -574,7 +587,9 @@ class DatabaseService {
   Future<PageLayout> getPageLayout(int pageNumber) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {
-      throw Exception("Required DBs not initialized for getPageLayout.");
+      throw DatabaseNotInitializedException(
+        "Required DBs not initialized for getPageLayout",
+      );
     }
 
     // Get all layout lines for the page.
@@ -586,8 +601,8 @@ class DatabaseService {
     );
 
     if (linesData.isEmpty) {
-      throw Exception(
-        "DatabaseService: No layout data found for page $pageNumber.",
+      throw DatabaseNotFoundException(
+        "No layout data found for page $pageNumber",
       );
     }
 
@@ -674,7 +689,9 @@ class DatabaseService {
   Future<int> getPageForAyah(int surahNumber, int ayahNumber) async {
     await init();
     if (_scriptDb == null || _layoutDb == null) {
-      throw Exception("Required DBs not initialized for getPageForAyah.");
+      throw DatabaseNotInitializedException(
+        "Required DBs not initialized for getPageForAyah",
+      );
     }
 
     // 1. Find the first word ID for the given surah and ayah.
@@ -692,8 +709,8 @@ class DatabaseService {
       if (ayahNumber == 1) {
         return getPageForSurah(surahNumber);
       }
-      throw Exception(
-        "DatabaseService: Word not found for Surah $surahNumber, Ayah $ayahNumber.",
+      throw DatabaseNotFoundException(
+        "Word not found for Surah $surahNumber, Ayah $ayahNumber",
       );
     }
     final int firstWordId = _parseInt(words.first[DbConstants.idCol]);
@@ -736,8 +753,8 @@ class DatabaseService {
       return getPageForSurah(surahNumber);
     }
 
-    throw Exception(
-      "DatabaseService: Page not found containing word ID $firstWordId (Surah $surahNumber, Ayah $ayahNumber).",
+    throw DatabaseNotFoundException(
+      "Page not found containing word ID $firstWordId (Surah $surahNumber, Ayah $ayahNumber)",
     );
   }
 
@@ -745,7 +762,9 @@ class DatabaseService {
   Future<int> getPageForSurah(int surahNumber) async {
     await init();
     if (_layoutDb == null) {
-      throw Exception("Layout DB not initialized for getPageForSurah.");
+      throw DatabaseNotInitializedException(
+        "Layout DB not initialized for getPageForSurah",
+      );
     }
     // Manually handle Surah 1 starting on page 1
     if (surahNumber == 1) return 1;
@@ -780,8 +799,8 @@ class DatabaseService {
       return _parseInt(broaderResult.first[DbConstants.startPageAlias]);
     }
 
-    throw Exception(
-      "DatabaseService: Starting page not found for Surah $surahNumber.",
+    throw DatabaseNotFoundException(
+      "Starting page not found for Surah $surahNumber",
     );
   }
 
@@ -789,7 +808,9 @@ class DatabaseService {
   Future<List<JuzInfo>> getAllJuzInfo() async {
     await init();
     if (_juzCache.isEmpty) {
-      throw Exception("Juz' data cache is empty or not initialized.");
+      throw DatabaseNotInitializedException(
+        "Juz' data cache is empty or not initialized",
+      );
     }
 
     List<JuzInfo> juzList = [];
@@ -835,7 +856,9 @@ class DatabaseService {
   Future<String> getFirstWordsOfPage(int pageNumber, {int count = 3}) async {
     await init();
     if (_layoutDb == null || _scriptDb == null) {
-      throw Exception("Required DBs not initialized for getFirstWordsOfPage.");
+      throw DatabaseNotInitializedException(
+        "Required DBs not initialized for getFirstWordsOfPage",
+      );
     }
 
     // 1. Find the first 'ayah' line on the page that has words.

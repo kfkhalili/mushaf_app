@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../exceptions/database_exceptions.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -130,9 +131,11 @@ class SearchService {
       );
       await dbFile.parent.create(recursive: true); // Ensure directory exists
       await dbFile.writeAsBytes(bytes, flush: true);
-    } catch (e) {
-      throw Exception(
-        "SearchService: Error copying database '$assetFileName' from assets: $e",
+    } catch (e, stackTrace) {
+      throw DatabaseConnectionException(
+        "Error copying database '$assetFileName' from assets",
+        originalError: e,
+        stackTrace: stackTrace,
       );
     }
   }
@@ -150,7 +153,9 @@ class SearchService {
     }
 
     if (_imlaeiDb == null || _imlaeiScriptDb == null) {
-      throw Exception('SearchService databases not initialized');
+      throw DatabaseNotInitializedException(
+        'SearchService databases not initialized',
+      );
     }
 
     try {

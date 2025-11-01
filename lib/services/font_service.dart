@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'dart:collection'; // For LinkedHashMap
 import '../constants.dart';
+import '../exceptions/database_exceptions.dart';
 
 /// WHY: LRU cache implementation using LinkedHashMap.
 /// LinkedHashMap maintains insertion order, allowing O(1) operations.
@@ -85,10 +86,12 @@ class FontService {
       // WHY: LRU put may evict least recently used font if cache is full.
       _loadedFonts.put(cacheKey, pageFontFamily);
       return pageFontFamily;
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Provide more specific error context
-      throw Exception(
-        "FontService: Error loading font for page $pageNumber with layout ${layout.name} from '$fontAssetPath'. Ensure the file exists in assets and is declared in pubspec.yaml. Original error: $e",
+      throw FontException(
+        "Error loading font for page $pageNumber with layout ${layout.name} from '$fontAssetPath'. Ensure the file exists in assets and is declared in pubspec.yaml",
+        originalError: e,
+        stackTrace: stackTrace,
       );
     }
   }
@@ -124,9 +127,11 @@ class FontService {
 
       _loadedCommonFonts[layout.name] = fontFamily;
       return fontFamily;
-    } catch (e) {
-      throw Exception(
-        "FontService: Error loading common font for layout ${layout.name} from '$fontAssetPath'. Ensure the file exists in assets and is declared in pubspec.yaml. Original error: $e",
+    } catch (e, stackTrace) {
+      throw FontException(
+        "Error loading common font for layout ${layout.name} from '$fontAssetPath'. Ensure the file exists in assets and is declared in pubspec.yaml",
+        originalError: e,
+        stackTrace: stackTrace,
       );
     }
   }
