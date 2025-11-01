@@ -146,6 +146,7 @@ class PageData {
   final int pageSurahNumber;
   final int juzNumber;
   final int hizbNumber;
+  final bool isLoading;
 
   const PageData({
     required this.layout,
@@ -154,7 +155,41 @@ class PageData {
     required this.pageSurahNumber,
     required this.juzNumber,
     required this.hizbNumber,
+    this.isLoading = false,
   });
+
+  // Factory constructor for a loading state
+  factory PageData.loading() {
+    return PageData(
+      layout: const PageLayout(pageNumber: 0, lines: []),
+      pageFontFamily: '',
+      pageSurahName: '',
+      pageSurahNumber: 0,
+      juzNumber: 0,
+      hizbNumber: 0,
+      isLoading: true,
+    );
+  }
+
+  PageData copyWith({
+    PageLayout? layout,
+    String? pageFontFamily,
+    String? pageSurahName,
+    int? pageSurahNumber,
+    int? juzNumber,
+    int? hizbNumber,
+    bool? isLoading,
+  }) {
+    return PageData(
+      layout: layout ?? this.layout,
+      pageFontFamily: pageFontFamily ?? this.pageFontFamily,
+      pageSurahName: pageSurahName ?? this.pageSurahName,
+      pageSurahNumber: pageSurahNumber ?? this.pageSurahNumber,
+      juzNumber: juzNumber ?? this.juzNumber,
+      hizbNumber: hizbNumber ?? this.hizbNumber,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -165,7 +200,8 @@ class PageData {
           pageSurahName == other.pageSurahName &&
           pageSurahNumber == other.pageSurahNumber &&
           juzNumber == other.juzNumber &&
-          hizbNumber == other.hizbNumber;
+          hizbNumber == other.hizbNumber &&
+          isLoading == other.isLoading;
 
   @override
   int get hashCode => Object.hash(
@@ -175,6 +211,7 @@ class PageData {
     pageSurahNumber,
     juzNumber,
     hizbNumber,
+    isLoading,
   );
 }
 

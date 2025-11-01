@@ -8,6 +8,7 @@ import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 import '../screens/bookmarks_screen.dart';
 import 'search_screen.dart';
+import 'dart:developer' as dev;
 
 class SelectionScreen extends ConsumerStatefulWidget {
   const SelectionScreen({super.key});
@@ -23,6 +24,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   @override
   void initState() {
     super.initState();
+    dev.log("SelectionScreen: initState", name: "UI_LIFECYCLE");
     // WHY: Order matches RTL tab order: Surah (rightmost), Juz, Pages (leftmost)
     _preloadedViews = [
       const SurahListView(), // 0: Surahs (rightmost in RTL)
@@ -37,6 +39,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
 
   @override
   void dispose() {
+    dev.log("SelectionScreen: dispose", name: "UI_LIFECYCLE");
     _pageController.dispose();
     super.dispose();
   }
@@ -57,6 +60,10 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(selectionTabIndexProvider);
+    dev.log(
+      "SelectionScreen: build, currentIndex=$currentIndex",
+      name: "UI_BUILD",
+    );
 
     // Sync PageController with current index
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,6 +99,10 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                 controller: _pageController,
                 reverse: true,
                 onPageChanged: (index) {
+                  dev.log(
+                    "SelectionScreen: PageView changed to index=$index",
+                    name: "UI_EVENT",
+                  );
                   ref
                       .read(selectionTabIndexProvider.notifier)
                       .setTabIndex(index);

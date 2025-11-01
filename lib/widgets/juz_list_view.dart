@@ -73,7 +73,10 @@ class JuzListItem extends StatelessWidget {
       onTap: () {
         if (juzInfo.startingPage > 0) {
           // WHY: Use the centralized navigation helper.
-          navigateToMushafPage(context, juzInfo.startingPage);
+          // Capture Navigator and mounted state before async gap
+          final navigator = Navigator.of(context);
+          final isMounted = context.mounted;
+          navigateToMushafPage(navigator, isMounted, juzInfo.startingPage);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

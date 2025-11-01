@@ -86,6 +86,10 @@ class DatabaseService {
     _isInitialized = true;
   }
 
+  Future<void> close() async {
+    await _closeDatabases();
+  }
+
   Future<void> _closeDatabases() async {
     await Future.wait(
       [
@@ -165,6 +169,22 @@ class DatabaseService {
       }
       return ''; // Return empty string on error
     }
+  }
+
+  /// Search by Surah name to get the surah number
+  Future<List<Map<String, dynamic>>> getSurahByName(String surahName) async {
+    await init();
+    if (_metadataDb == null) {
+      throw Exception(
+        "Metadata database for getSurahByName is not initialized.",
+      );
+    }
+    return _metadataDb!.query(
+      DbConstants.chaptersTable,
+      columns: [DbConstants.idCol],
+      where: '${DbConstants.nameArabicCol} LIKE ?',
+      whereArgs: ['%$surahName%'],
+    );
   }
 
   /// Fetches all surahs with their names, revelation place, and starting page.
@@ -308,6 +328,65 @@ class DatabaseService {
     throw Exception(
       "DatabaseService: Could not determine first Surah/Ayah for page $pageNumber.",
     );
+  }
+
+  /// Retrieves a list of all ayahs (surah and ayah numbers) on a given page.
+  Future<List<Map<String, int>>> getAyahsOnPage(int pageNumber) async {
+    await init();
+    if (_layoutDb == null || _scriptDb == null) {
+      throw Exception("Required DBs not initialized for getAyahsOnPage.");
+    }
+
+    // 1. Get all 'ayah' type lines for the page to find word ranges.
+    final List<Map<String, dynamic>> lines = await _layoutDb!.query(
+      DbConstants.pagesTable,
+      columns: [DbConstants.firstWordIdCol, DbConstants.lastWordIdCol],
+      where:
+          '${DbConstants.pageNumberCol} = ? AND ${DbConstants.lineTypeCol} = ?',
+      whereArgs: [pageNumber.toString(), 'ayah'],
+    );
+
+    if (lines.isEmpty) {
+      return [];
+    }
+
+    // 2. Collect all word IDs from all lines on the page.
+    final wordIds = <int>{};
+    for (final line in lines) {
+      final firstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
+      final lastWordId = _parseInt(line[DbConstants.lastWordIdCol]);
+
+      if (firstWordId > 0 && lastWordId > 0) {
+        for (var i = firstWordId; i <= lastWordId; i++) {
+          wordIds.add(i);
+        }
+      } else if (firstWordId > 0) {
+        wordIds.add(firstWordId);
+      }
+    }
+
+    if (wordIds.isEmpty) {
+      return [];
+    }
+
+    // 3. Query the script DB to get unique surah/ayah pairs for these word IDs.
+    final List<Map<String, dynamic>> words = await _scriptDb!.query(
+      DbConstants.wordsTable,
+      distinct: true,
+      columns: [DbConstants.surahCol, DbConstants.ayahNumberCol],
+      where: '${DbConstants.idCol} IN (${wordIds.join(', ')})',
+    );
+
+    // 4. Map the results to the required format.
+    return words
+        .map(
+          (word) => {
+            'surah': _parseInt(word[DbConstants.surahCol]),
+            'ayah': _parseInt(word[DbConstants.ayahNumberCol]),
+          },
+        )
+        .where((ayah) => ayah['surah']! > 0 && ayah['ayah']! > 0)
+        .toList();
   }
 
   /// Checks if a given ayah (s:a) falls within a range (sFirst:aFirst to sLast:aLast).

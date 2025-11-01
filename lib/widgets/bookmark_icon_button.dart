@@ -36,13 +36,18 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
   }
 
   Future<void> _handleTap() async {
+    // Capture the context-dependent properties *before* the async gap.
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final isMounted = mounted;
+
     _animationController.forward().then((_) {
       _animationController.reverse();
     });
 
     try {
       // Get first ayah on page for ayah-based bookmarking
-      final dbService = ref.read(databaseServiceProvider);
+      final dbService = await ref.read(databaseServiceProvider.future);
       final firstAyah = await dbService.getFirstAyahOnPage(widget.pageNumber);
       final surahNumber = firstAyah['surah']!;
       final ayahNumber = firstAyah['ayah']!;
@@ -52,10 +57,14 @@ class _BookmarkIconButtonState extends ConsumerState<BookmarkIconButton>
           .toggleAyahBookmark(surahNumber, ayahNumber);
     } catch (e) {
       // Handle error silently or show snackbar
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (isMounted) {
+        scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('فشل حفظ العلامة المرجعية: $e'),
+            content: Text(
+              'فشل حفظ العلامة المرجعية: $e',
+              style: TextStyle(color: theme.colorScheme.onError),
+            ),
+            backgroundColor: theme.colorScheme.error,
             duration: const Duration(seconds: 2),
           ),
         );

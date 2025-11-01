@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as dev;
 import '../widgets/shared/app_header.dart';
 import '../widgets/bookmarks_list_view.dart';
 
@@ -7,6 +8,7 @@ class BookmarksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    dev.log("BookmarksScreen: build", name: "UI_BUILD");
     return Scaffold(
       body: SafeArea(
         child: Column(

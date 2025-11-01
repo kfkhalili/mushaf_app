@@ -169,6 +169,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                 AppHeader(
                   title: asyncPageData.when(
                     data: (pageData) {
+                      if (pageData.isLoading) {
+                        return ''; // Don't show title while loading page data
+                      }
                       final String juzGlyphString =
                           'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
                       final String surahNameGlyphString =

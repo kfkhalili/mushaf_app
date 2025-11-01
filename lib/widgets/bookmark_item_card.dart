@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
@@ -11,55 +12,100 @@ class BookmarkItemCard extends ConsumerWidget {
   const BookmarkItemCard({super.key, required this.bookmark});
 
   Future<void> _handleTap(BuildContext context, WidgetRef ref) async {
+    dev.log(
+      "BookmarkItemCard: _handleTap START for s:${bookmark.surahNumber} a:${bookmark.ayahNumber}",
+      name: "BOOKMARK_TAP",
+    );
+    // Show a brief loading message
+    // Capture context-dependent values BEFORE async gap
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final isMounted = context.mounted;
+
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('...جاري الفتح'),
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+
     try {
-      final pageNumberProvider = bookmarkPageNumberProvider(
-        bookmark.surahNumber,
-        bookmark.ayahNumber,
+      dev.log("BookmarkItemCard: Awaiting page number", name: "BOOKMARK_TAP");
+      final pageNumber = await ref.read(
+        bookmarkPageNumberProvider(
+          bookmark.surahNumber,
+          bookmark.ayahNumber,
+        ).future,
       );
-      final pageNumberAsync = ref.read(pageNumberProvider);
-      pageNumberAsync.when(
-        data: (pageNumber) {
-          if (pageNumber != null) {
-            navigateToMushafPage(context, pageNumber);
-          } else if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('لا يمكن العثور على الصفحة'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        },
-        loading: () {},
-        error: (error, stack) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('لا يمكن العثور على الصفحة: $error'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        },
+      dev.log(
+        "BookmarkItemCard: Page number received: $pageNumber",
+        name: "BOOKMARK_TAP",
       );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('لا يمكن العثور على الصفحة: $e'),
-            duration: const Duration(seconds: 2),
+
+      // Hide the loading snackbar once we have a result
+      messenger.hideCurrentSnackBar();
+
+      if (!isMounted) {
+        dev.log(
+          "BookmarkItemCard: Widget is unmounted, aborting navigation.",
+          name: "BOOKMARK_TAP",
+        );
+        return;
+      }
+
+      if (pageNumber != null) {
+        dev.log(
+          "BookmarkItemCard: Navigating to page $pageNumber",
+          name: "BOOKMARK_TAP",
+        );
+        navigateToMushafPage(navigator, isMounted, pageNumber);
+      } else {
+        dev.log(
+          "BookmarkItemCard: Page number is null, showing error.",
+          name: "BOOKMARK_TAP",
+        );
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('لا يمكن العثور على الصفحة لهذا المصحف'),
+            duration: Duration(seconds: 2),
           ),
         );
       }
+    } catch (e, s) {
+      dev.log(
+        "BookmarkItemCard: ERROR in _handleTap",
+        name: "BOOKMARK_TAP",
+        error: e,
+        stackTrace: s,
+      );
+      if (!isMounted) {
+        dev.log(
+          "BookmarkItemCard: Widget is unmounted, not showing error snackbar.",
+          name: "BOOKMARK_TAP",
+        );
+        return;
+      }
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('خطأ في العثور على الصفحة: $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
   Future<void> _handleDelete(BuildContext context, WidgetRef ref) async {
+    // Capture context before async gap to prevent crash if widget is disposed.
+    final messenger = ScaffoldMessenger.of(context);
+    final isMounted = context.mounted;
+
     await ref
         .read(bookmarksProvider.notifier)
         .removeBookmark(bookmark.surahNumber, bookmark.ayahNumber);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+
+    if (isMounted) {
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('تم حذف العلامة المرجعية'),
           duration: Duration(seconds: 2),

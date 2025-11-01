@@ -106,7 +106,7 @@ abstract class _$CurrentPage extends $Notifier<int> {
 const databaseServiceProvider = DatabaseServiceNotifierProvider._();
 
 final class DatabaseServiceNotifierProvider
-    extends $NotifierProvider<DatabaseServiceNotifier, DatabaseService> {
+    extends $AsyncNotifierProvider<DatabaseServiceNotifier, DatabaseService> {
   const DatabaseServiceNotifierProvider._()
     : super(
         from: null,
@@ -124,31 +124,24 @@ final class DatabaseServiceNotifierProvider
   @$internal
   @override
   DatabaseServiceNotifier create() => DatabaseServiceNotifier();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(DatabaseService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<DatabaseService>(value),
-    );
-  }
 }
 
 String _$databaseServiceNotifierHash() =>
-    r'7d050374e9e3d2d5a836ebe85abc0446e6b89f4b';
+    r'b9e65e1c82f97af7523daf27cfdf3ec9165d0bf2';
 
-abstract class _$DatabaseServiceNotifier extends $Notifier<DatabaseService> {
-  DatabaseService build();
+abstract class _$DatabaseServiceNotifier
+    extends $AsyncNotifier<DatabaseService> {
+  FutureOr<DatabaseService> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<DatabaseService, DatabaseService>;
+    final ref = this.ref as $Ref<AsyncValue<DatabaseService>, DatabaseService>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<DatabaseService, DatabaseService>,
-              DatabaseService,
+              AnyNotifier<AsyncValue<DatabaseService>, DatabaseService>,
+              AsyncValue<DatabaseService>,
               Object?,
               Object?
             >;
@@ -247,7 +240,7 @@ final class PageDataProvider
   }
 }
 
-String _$pageDataHash() => r'34fef09de4d86ba503e2f60d103a3eec9988acb4';
+String _$pageDataHash() => r'3cbfb785df106228b99ac4fff7fa50ba22b3cf0f';
 
 final class PageDataFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PageData>, int> {
@@ -304,7 +297,7 @@ final class SurahListProvider
   }
 }
 
-String _$surahListHash() => r'34e7a323a4b57d7319eb30ae63696ca059f73eb5';
+String _$surahListHash() => r'772efb4d154cf1a63d0b740a9277fb8da360b7cc';
 
 @ProviderFor(juzList)
 const juzListProvider = JuzListProvider._();
@@ -343,7 +336,7 @@ final class JuzListProvider
   }
 }
 
-String _$juzListHash() => r'7a13b0b3bab83527732a93f6f0e8fe45f0698fca';
+String _$juzListHash() => r'22515260ff8ac16d6e63f46fd1e8067debe78fdc';
 
 @ProviderFor(pagePreview)
 const pagePreviewProvider = PagePreviewFamily._();
@@ -394,7 +387,7 @@ final class PagePreviewProvider
   }
 }
 
-String _$pagePreviewHash() => r'c565a25b480e011bf067281ca5785eb84383a9f3';
+String _$pagePreviewHash() => r'855711048ca7bd04f2bf594db7547ad226945408';
 
 final class PagePreviewFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, int> {
@@ -647,8 +640,13 @@ abstract class _$FontSizeSetting extends $Notifier<double> {
 const searchServiceProvider = SearchServiceProvider._();
 
 final class SearchServiceProvider
-    extends $FunctionalProvider<SearchService, SearchService, SearchService>
-    with $Provider<SearchService> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<SearchService>,
+          SearchService,
+          FutureOr<SearchService>
+        >
+    with $FutureModifier<SearchService>, $FutureProvider<SearchService> {
   const SearchServiceProvider._()
     : super(
         from: null,
@@ -665,24 +663,17 @@ final class SearchServiceProvider
 
   @$internal
   @override
-  $ProviderElement<SearchService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<SearchService> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  SearchService create(Ref ref) {
+  FutureOr<SearchService> create(Ref ref) {
     return searchService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(SearchService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<SearchService>(value),
-    );
   }
 }
 
-String _$searchServiceHash() => r'207d8b64eef13d406bccb1ef7d50a367fd04d74c';
+String _$searchServiceHash() => r'0d5b88bfba67f5e1f3f5b9a92d362f8ed7b8e69b';
 
 @ProviderFor(SearchQuery)
 const searchQueryProvider = SearchQueryProvider._();
@@ -793,7 +784,7 @@ final class SearchResultsProvider
   }
 }
 
-String _$searchResultsHash() => r'c3436c513cf168955cc0cfef696ae27037610c71';
+String _$searchResultsHash() => r'd06301fb48730166d9c74332618adbfe4c4ca58c';
 
 final class SearchResultsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<SearchResult>>, String> {
@@ -872,11 +863,11 @@ const bookmarksServiceProvider = BookmarksServiceProvider._();
 final class BookmarksServiceProvider
     extends
         $FunctionalProvider<
+          AsyncValue<BookmarksService>,
           BookmarksService,
-          BookmarksService,
-          BookmarksService
+          FutureOr<BookmarksService>
         >
-    with $Provider<BookmarksService> {
+    with $FutureModifier<BookmarksService>, $FutureProvider<BookmarksService> {
   const BookmarksServiceProvider._()
     : super(
         from: null,
@@ -893,24 +884,17 @@ final class BookmarksServiceProvider
 
   @$internal
   @override
-  $ProviderElement<BookmarksService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<BookmarksService> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  BookmarksService create(Ref ref) {
+  FutureOr<BookmarksService> create(Ref ref) {
     return bookmarksService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(BookmarksService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<BookmarksService>(value),
-    );
   }
 }
 
-String _$bookmarksServiceHash() => r'6583f469e99953d2251c4d998fbec6981fff1d20';
+String _$bookmarksServiceHash() => r'1e6d08f9953d7b36773c13e272e6eb94dde9c323';
 
 @ProviderFor(isPageBookmarked)
 const isPageBookmarkedProvider = IsPageBookmarkedFamily._();
@@ -961,7 +945,7 @@ final class IsPageBookmarkedProvider
   }
 }
 
-String _$isPageBookmarkedHash() => r'94928e1b47d14bc4bbcd6a064d09683b1199a757';
+String _$isPageBookmarkedHash() => r'1c97e24927c2b1f16c7f4df7393ae3127f58ca46';
 
 final class IsPageBookmarkedFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<bool>, int> {
@@ -1030,7 +1014,7 @@ final class IsAyahBookmarkedProvider
   }
 }
 
-String _$isAyahBookmarkedHash() => r'01ed3f928ec9087de6e01fbcdbb780ad912539bc';
+String _$isAyahBookmarkedHash() => r'62957e968a9a625e4fcc37ecfaf6e954f2d0ee70';
 
 final class IsAyahBookmarkedFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<bool>, (int, int)> {
@@ -1077,7 +1061,7 @@ final class BookmarksNotifierProvider
   BookmarksNotifier create() => BookmarksNotifier();
 }
 
-String _$bookmarksNotifierHash() => r'8edc2e438198b13d23b31b04eb9d5b19665cde5b';
+String _$bookmarksNotifierHash() => r'd4ac7c9fb22235ee8695a96f09ee346be200af52';
 
 abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
   FutureOr<List<Bookmark>> build();
@@ -1148,7 +1132,7 @@ final class BookmarkPageNumberProvider
 }
 
 String _$bookmarkPageNumberHash() =>
-    r'55be274e051ebfe795ac30ea4528b45111a875af';
+    r'382e781e5848dfa6599003410bc911d02f277265';
 
 final class BookmarkPageNumberFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<int?>, (int, int)> {

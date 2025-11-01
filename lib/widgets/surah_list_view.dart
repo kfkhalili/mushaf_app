@@ -66,7 +66,10 @@ class SurahListItem extends StatelessWidget {
       ),
       onTap: () {
         // WHY: Use the centralized navigation helper.
-        navigateToMushafPage(context, surah.startingPage);
+        // Capture Navigator and mounted state before async gap
+        final navigator = Navigator.of(context);
+        final isMounted = context.mounted;
+        navigateToMushafPage(navigator, isMounted, surah.startingPage);
       },
     );
   }

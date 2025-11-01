@@ -25,15 +25,20 @@ String convertToEasternArabicNumerals(String input) {
 /// WHY: This helper centralizes the navigation logic used by all
 /// list views (Surah, Juz, Page). It handles clearing the
 /// 'last_page' preference before pushing the new screen.
-Future<void> navigateToMushafPage(BuildContext context, int pageNumber) async {
+///
+/// Takes NavigatorState to avoid using BuildContext across async gaps.
+Future<void> navigateToMushafPage(
+  NavigatorState navigator,
+  bool isMounted,
+  int pageNumber,
+) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove('last_page');
 
-  // WHY: Check context.mounted *after* the async gap.
-  if (!context.mounted) return;
+  // WHY: Check mounted state *after* the async gap.
+  if (!isMounted) return;
 
-  Navigator.push(
-    context,
+  navigator.push(
     MaterialPageRoute(
       builder: (context) => MushafScreen(initialPage: pageNumber),
     ),

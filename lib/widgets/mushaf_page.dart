@@ -60,7 +60,10 @@ class _MushafPageState extends ConsumerState<MushafPage> {
 
   @override
   void dispose() {
-    _dismissOverlay();
+    // It's not necessary to call _dismissOverlay() here, as the overlay is tied
+    // to the widget's lifecycle and will be removed when the widget is disposed.
+    // Calling it here causes an error because it tries to call setState on a disposed widget.
+    _overlayEntry?.remove();
     super.dispose();
   }
 

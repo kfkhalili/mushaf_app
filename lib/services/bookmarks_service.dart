@@ -36,7 +36,9 @@ abstract class BookmarksService {
 class SqliteBookmarksService implements BookmarksService {
   Database? _db;
   bool _initialized = false;
-  DatabaseService? _databaseService;
+  final DatabaseService _databaseService;
+
+  SqliteBookmarksService(this._databaseService);
 
   Future<void> _ensureInitialized() async {
     if (_initialized && _db != null) {
@@ -227,11 +229,7 @@ class SqliteBookmarksService implements BookmarksService {
     // Optionally calculate cached page number for current layout
     int? cachedPageNumber;
     try {
-      if (_databaseService == null) {
-        _databaseService = DatabaseService();
-        await _databaseService!.init();
-      }
-      cachedPageNumber = await _databaseService!.getPageForAyah(
+      cachedPageNumber = await _databaseService.getPageForAyah(
         surahNumber,
         ayahNumber,
       );
@@ -298,11 +296,6 @@ class SqliteBookmarksService implements BookmarksService {
     if (_db == null) throw StateError('Database not initialized');
 
     try {
-      if (_databaseService == null) {
-        _databaseService = DatabaseService();
-        await _databaseService!.init();
-      }
-
       final results = await _db!.query(
         DbConstants.bookmarksTable,
         orderBy: newestFirst
@@ -315,7 +308,7 @@ class SqliteBookmarksService implements BookmarksService {
         final surahNumber = row[DbConstants.surahNumberCol] as int;
         final ayahNumber = row[DbConstants.ayahNumberCol] as int;
 
-        final ayahText = await _databaseService!.getAyahText(
+        final ayahText = await _databaseService.getAyahText(
           surahNumber,
           ayahNumber,
         );
@@ -355,17 +348,10 @@ class SqliteBookmarksService implements BookmarksService {
       if (results.isEmpty) return null;
 
       final row = results.first;
-
-      if (_databaseService == null) {
-        _databaseService = DatabaseService();
-        await _databaseService!.init();
-      }
-
-      final ayahText = await _databaseService!.getAyahText(
+      final ayahText = await _databaseService.getAyahText(
         surahNumber,
         ayahNumber,
       );
-
       return Bookmark(
         id: row[DbConstants.idCol] as int,
         surahNumber: row[DbConstants.surahNumberCol] as int,
@@ -382,19 +368,34 @@ class SqliteBookmarksService implements BookmarksService {
 
   @override
   Future<bool> isPageBookmarked(int pageNumber) async {
-    // Helper method: Check if any ayah on a page is bookmarked
-    // Gets first ayah on page and checks if it's bookmarked
+    await _ensureInitialized();
+    if (_db == null) throw StateError('Database not initialized');
+
     try {
-      if (_databaseService == null) {
-        _databaseService = DatabaseService();
-        await _databaseService!.init();
-      }
-      final firstAyah = await _databaseService!.getFirstAyahOnPage(pageNumber);
-      final surah = firstAyah['surah']!;
-      final ayah = firstAyah['ayah']!;
-      return await isBookmarked(surah, ayah);
+      final ayahsOnPage = await _databaseService.getAyahsOnPage(pageNumber);
+      if (ayahsOnPage.isEmpty) return false;
+
+      // Create a list of placeholders for the query, e.g., "(?, ?), (?, ?)"
+      final placeholders = ayahsOnPage.map((_) => '(?, ?)').join(', ');
+      // Flatten the list of maps into a list of [surah, ayah, surah, ayah, ...]
+      final args = ayahsOnPage
+          .expand((ayah) => [ayah['surah'], ayah['ayah']])
+          .toList();
+
+      final result = await _db!.query(
+        DbConstants.bookmarksTable,
+        columns: [DbConstants.idCol],
+        where:
+            '(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol}) IN ($placeholders)',
+        whereArgs: args,
+        limit: 1,
+      );
+
+      return result.isNotEmpty;
     } catch (e) {
-      // If we can't determine the ayah, return false
+      if (kDebugMode) {
+        print('Error checking if page is bookmarked: $e');
+      }
       return false;
     }
   }
@@ -419,11 +420,7 @@ class SqliteBookmarksService implements BookmarksService {
     if (_db == null) throw StateError('Database not initialized');
 
     try {
-      if (_databaseService == null) {
-        _databaseService = DatabaseService();
-        await _databaseService!.init();
-      }
-      final firstAyah = await _databaseService!.getFirstAyahOnPage(pageNumber);
+      final firstAyah = await _databaseService.getFirstAyahOnPage(pageNumber);
       final surah = firstAyah['surah']!;
       final ayah = firstAyah['ayah']!;
 

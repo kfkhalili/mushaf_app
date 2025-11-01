@@ -78,7 +78,10 @@ class PageListItem extends ConsumerWidget {
       ),
       onTap: () {
         // WHY: Use the centralized navigation helper.
-        navigateToMushafPage(context, pageNumber);
+        // Capture Navigator and mounted state before async gap
+        final navigator = Navigator.of(context);
+        final isMounted = context.mounted;
+        navigateToMushafPage(navigator, isMounted, pageNumber);
       },
     );
   }

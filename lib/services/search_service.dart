@@ -8,13 +8,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
-import '../utils/helpers.dart';
+import 'database_service.dart';
 
 /// Service for searching Quranic text
 class SearchService {
-  Database? _layoutDb;
-  Database? _scriptDb;
-  Database? _metadataDb;
+  final DatabaseService _databaseService;
   Database? _imlaeiDb; // Database with searchable Arabic text
   Database? _imlaeiScriptDb; // Database with ayah-by-ayah script text
 
@@ -26,6 +24,8 @@ class SearchService {
 
   bool _isInitialized = false;
   Future<void>? _initFuture;
+
+  SearchService(this._databaseService);
 
   /// Initialize the search service with the current layout
   Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
@@ -64,9 +64,6 @@ class SearchService {
 
       // Initialize all databases using the same pattern as DatabaseService
       final databases = await Future.wait([
-        _initDb(documentsDirectory, dbAssetPath, layout.layoutDatabaseFileName),
-        _initDb(documentsDirectory, dbAssetPath, layout.scriptDatabaseFileName),
-        _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
         _initDb(documentsDirectory, dbAssetPath, 'imlaei-simple.db'),
         _initDb(
           documentsDirectory,
@@ -75,11 +72,8 @@ class SearchService {
         ),
       ]);
 
-      _layoutDb = databases[0];
-      _scriptDb = databases[1];
-      _metadataDb = databases[2];
-      _imlaeiDb = databases[3];
-      _imlaeiScriptDb = databases[4];
+      _imlaeiDb = databases[0];
+      _imlaeiScriptDb = databases[1];
 
       _isInitialized = true;
     } catch (e) {
@@ -97,16 +91,10 @@ class SearchService {
   Future<void> _closeDatabases() async {
     await Future.wait(
       [
-        _layoutDb?.close(),
-        _scriptDb?.close(),
-        _metadataDb?.close(),
         _imlaeiDb?.close(),
         _imlaeiScriptDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
-    _layoutDb = null;
-    _scriptDb = null;
-    _metadataDb = null;
     _imlaeiDb = null;
     _imlaeiScriptDb = null;
   }
@@ -161,10 +149,7 @@ class SearchService {
       return _searchCache[cacheKey]!;
     }
 
-    if (_imlaeiDb == null ||
-        _imlaeiScriptDb == null ||
-        _layoutDb == null ||
-        _metadataDb == null) {
+    if (_imlaeiDb == null || _imlaeiScriptDb == null) {
       throw Exception('SearchService databases not initialized');
     }
 
@@ -327,7 +312,10 @@ class SearchService {
 
     try {
       // Use the existing DatabaseService method for accurate page mapping
-      final int pageNumber = await _getPageForAyah(surahNumber, ayahNumber);
+      final int pageNumber = await _databaseService.getPageForAyah(
+        surahNumber,
+        ayahNumber,
+      );
       _verseToPageCache[verseKey] = pageNumber;
       return pageNumber;
     } catch (e) {
@@ -342,118 +330,6 @@ class SearchService {
       _verseToPageCache[verseKey] = 1;
       return 1;
     }
-  }
-
-  /// Find the page number containing the start of a specific ayah
-  Future<int> _getPageForAyah(int surahNumber, int ayahNumber) async {
-    if (_scriptDb == null || _layoutDb == null) {
-      throw Exception("Required DBs not initialized for _getPageForAyah.");
-    }
-
-    // 1. Find the first word ID for the given surah and ayah
-    final List<Map<String, dynamic>> words = await _scriptDb!.query(
-      DbConstants.wordsTable,
-      columns: [DbConstants.idCol],
-      where: '${DbConstants.surahCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
-      whereArgs: [surahNumber.toString(), ayahNumber.toString()],
-      orderBy: '${DbConstants.idCol} ASC',
-      limit: 1,
-    );
-
-    if (words.isEmpty) {
-      // Fallback: If ayah 1 doesn't exist, try finding page for surah start
-      if (ayahNumber == 1) {
-        return _getPageForSurah(surahNumber);
-      }
-      throw Exception(
-        "SearchService: Word not found for Surah $surahNumber, Ayah $ayahNumber.",
-      );
-    }
-    final int firstWordId = _parseInt(words.first[DbConstants.idCol]);
-
-    // 2. Find the page layout entry containing this word ID
-    final List<Map<String, dynamic>> pages = await _layoutDb!.query(
-      DbConstants.pagesTable,
-      columns: [DbConstants.pageNumberCol],
-      where:
-          '${DbConstants.firstWordIdCol} <= ? AND ${DbConstants.lastWordIdCol} >= ? AND ${DbConstants.lineTypeCol} = ?',
-      whereArgs: [firstWordId.toString(), firstWordId.toString(), 'ayah'],
-      orderBy:
-          '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC',
-      limit: 1,
-    );
-
-    if (pages.isNotEmpty) {
-      return _parseInt(pages.first[DbConstants.pageNumberCol]);
-    }
-
-    // Fallback: Check if it's the very first word on a line
-    final List<Map<String, dynamic>> firstWordPages = await _layoutDb!.query(
-      DbConstants.pagesTable,
-      columns: [DbConstants.pageNumberCol],
-      where:
-          '${DbConstants.firstWordIdCol} = ? AND ${DbConstants.lineTypeCol} = ?',
-      whereArgs: [firstWordId.toString(), 'ayah'],
-      orderBy:
-          '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC',
-      limit: 1,
-    );
-
-    if (firstWordPages.isNotEmpty) {
-      return _parseInt(firstWordPages.first[DbConstants.pageNumberCol]);
-    }
-
-    // Final fallback specifically for Surah starts
-    if (ayahNumber == 1) {
-      return _getPageForSurah(surahNumber);
-    }
-
-    throw Exception(
-      "SearchService: Page not found containing word ID $firstWordId (Surah $surahNumber, Ayah $ayahNumber).",
-    );
-  }
-
-  /// Helper to get the starting page number for a Surah
-  Future<int> _getPageForSurah(int surahNumber) async {
-    if (_layoutDb == null) {
-      throw Exception("Layout DB not initialized for _getPageForSurah.");
-    }
-    // Manually handle Surah 1 starting on page 1
-    if (surahNumber == 1) return 1;
-
-    // Try finding the page where the 'surah_name' line appears first
-    final List<Map<String, dynamic>> result = await _layoutDb!.query(
-      DbConstants.pagesTable,
-      columns: [
-        'MIN(${DbConstants.pageNumberCol}) as ${DbConstants.startPageAlias}',
-      ],
-      where:
-          '${DbConstants.surahNumberCol} = ? AND ${DbConstants.lineTypeCol} = ?',
-      whereArgs: [surahNumber.toString(), 'surah_name'],
-      limit: 1,
-    );
-
-    if (result.isNotEmpty && result.first[DbConstants.startPageAlias] != null) {
-      return _parseInt(result.first[DbConstants.startPageAlias]);
-    }
-    // Broader fallback if surah_name line isn't found
-    final List<Map<String, dynamic>> broaderResult = await _layoutDb!.query(
-      DbConstants.pagesTable,
-      columns: [
-        'MIN(${DbConstants.pageNumberCol}) as ${DbConstants.startPageAlias}',
-      ],
-      where: '${DbConstants.surahNumberCol} = ?',
-      whereArgs: [surahNumber.toString()],
-      limit: 1,
-    );
-    if (broaderResult.isNotEmpty &&
-        broaderResult.first[DbConstants.startPageAlias] != null) {
-      return _parseInt(broaderResult.first[DbConstants.startPageAlias]);
-    }
-
-    throw Exception(
-      "SearchService: Starting page not found for Surah $surahNumber.",
-    );
   }
 
   /// Highlight the search term in the verse text
@@ -510,17 +386,7 @@ class SearchService {
       return _surahNameCache[surahNumber]!;
     }
 
-    final List<Map<String, dynamic>> results = await _metadataDb!.query(
-      DbConstants.chaptersTable,
-      columns: [DbConstants.nameArabicCol],
-      where: '${DbConstants.idCol} = ?',
-      whereArgs: [surahNumber.toString()],
-      limit: 1,
-    );
-
-    final String surahName = results.isNotEmpty
-        ? results.first[DbConstants.nameArabicCol] as String
-        : 'سورة ${convertToEasternArabicNumerals(surahNumber.toString())}';
+    final String surahName = await _databaseService.getSurahName(surahNumber);
 
     _surahNameCache[surahNumber] = surahName;
     return surahName;
@@ -532,12 +398,8 @@ class SearchService {
 
     if (surahName.trim().isEmpty) return [];
 
-    final List<Map<String, dynamic>> surahResults = await _metadataDb!.query(
-      DbConstants.chaptersTable,
-      columns: [DbConstants.idCol],
-      where: '${DbConstants.nameArabicCol} LIKE ?',
-      whereArgs: ['%$surahName%'],
-    );
+    final List<Map<String, dynamic>> surahResults = await _databaseService
+        .getSurahByName(surahName);
 
     if (surahResults.isEmpty) return [];
 

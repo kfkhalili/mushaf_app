@@ -41,18 +41,25 @@ class CurrentPage extends _$CurrentPage {
 // WHY: This is a keepAlive provider for managing database operations with layout switching.
 @Riverpod(keepAlive: true)
 class DatabaseServiceNotifier extends _$DatabaseServiceNotifier {
-  @override
-  DatabaseService build() {
-    final layout = ref.watch(mushafLayoutSettingProvider);
-    final service = DatabaseService();
-    service.init(layout: layout);
-    return service;
-  }
+  DatabaseService? _service;
 
-  // WHY: Method to switch layout and reinitialize database service
-  Future<void> switchLayout(MushafLayout layout) async {
-    await state.switchLayout(layout);
-    ref.invalidateSelf();
+  @override
+  Future<DatabaseService> build() async {
+    // When the provider is rebuilt (e.g., due to layout change),
+    // close the old database connections before creating a new service.
+    await _service?.close();
+
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    _service = DatabaseService();
+    await _service!.init(layout: layout);
+
+    // Ensure the database connections are closed when the provider is disposed.
+    ref.onDispose(() async {
+      await _service?.close();
+      _service = null;
+    });
+
+    return _service!;
   }
 }
 
@@ -68,25 +75,33 @@ FontService fontService(Ref ref) {
 // but it *still* uses the unified 'Ref' type.
 @riverpod
 Future<PageData> pageData(Ref ref, int pageNumber) async {
-  final dbService = ref.watch(databaseServiceProvider);
-  final fontService = ref.watch(fontServiceProvider);
-  final layout = ref.watch(mushafLayoutSettingProvider);
+  final dbServiceAsync = ref.watch(databaseServiceProvider);
 
-  String pageFontFamilyName = await fontService.loadFontForPage(
-    pageNumber,
-    layout: layout,
-  );
+  // Handle loading and error states for the async database service
+  return dbServiceAsync.when(
+    data: (dbService) async {
+      final fontService = ref.watch(fontServiceProvider);
+      final layout = ref.watch(mushafLayoutSettingProvider);
 
-  final layoutData = await dbService.getPageLayout(pageNumber);
-  final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
+      final pageFontFamilyName = await fontService.loadFontForPage(
+        pageNumber,
+        layout: layout,
+      );
 
-  return PageData(
-    layout: layoutData,
-    pageFontFamily: pageFontFamilyName,
-    pageSurahName: headerInfo['surahName'] as String? ?? '',
-    pageSurahNumber: headerInfo['surahNumber'] as int? ?? 0,
-    juzNumber: headerInfo['juz'] as int? ?? 0,
-    hizbNumber: headerInfo['hizb'] as int? ?? 0,
+      final layoutData = await dbService.getPageLayout(pageNumber);
+      final headerInfo = await dbService.getPageHeaderInfo(pageNumber);
+
+      return PageData(
+        layout: layoutData,
+        pageFontFamily: pageFontFamilyName,
+        pageSurahName: headerInfo['surahName'] as String? ?? '',
+        pageSurahNumber: headerInfo['surahNumber'] as int? ?? 0,
+        juzNumber: headerInfo['juz'] as int? ?? 0,
+        hizbNumber: headerInfo['hizb'] as int? ?? 0,
+      );
+    },
+    loading: () => Future.value(PageData.loading()), // Return a loading state
+    error: (error, stack) => throw error, // Propagate error to be handled by UI
   );
 }
 
@@ -94,7 +109,7 @@ Future<PageData> pageData(Ref ref, int pageNumber) async {
 // WHY: All provider functions now use the unified 'Ref' type.
 @Riverpod(keepAlive: true)
 Future<List<SurahInfo>> surahList(Ref ref) async {
-  final dbService = ref.watch(databaseServiceProvider);
+  final dbService = await ref.watch(databaseServiceProvider.future);
   return dbService.getAllSurahs();
 }
 
@@ -102,7 +117,7 @@ Future<List<SurahInfo>> surahList(Ref ref) async {
 // WHY: All provider functions now use the unified 'Ref' type.
 @Riverpod(keepAlive: true)
 Future<List<JuzInfo>> juzList(Ref ref) async {
-  final dbService = ref.watch(databaseServiceProvider);
+  final dbService = await ref.watch(databaseServiceProvider.future);
   return dbService.getAllJuzInfo();
 }
 
@@ -110,7 +125,7 @@ Future<List<JuzInfo>> juzList(Ref ref) async {
 // WHY: Lightweight provider for list view previews (DB-only, no font loading or full layout).
 @riverpod
 Future<String> pagePreview(Ref ref, int pageNumber) async {
-  final dbService = ref.watch(databaseServiceProvider);
+  final dbService = await ref.watch(databaseServiceProvider.future);
   return dbService.getFirstWordsOfPage(pageNumber, count: 3);
 }
 
@@ -167,10 +182,11 @@ class FontSizeSetting extends _$FontSizeSetting {
 
 // --- Search Service Provider ---
 @Riverpod(keepAlive: true)
-SearchService searchService(Ref ref) {
+Future<SearchService> searchService(Ref ref) async {
   final layout = ref.watch(mushafLayoutSettingProvider);
-  final service = SearchService();
-  service.init(layout: layout);
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  final service = SearchService(dbService);
+  await service.init(layout: layout);
   return service;
 }
 
@@ -196,7 +212,7 @@ class SearchQuery extends _$SearchQuery {
 Future<List<SearchResult>> searchResults(Ref ref, String query) async {
   if (query.trim().isEmpty) return [];
 
-  final searchService = ref.watch(searchServiceProvider);
+  final searchService = await ref.watch(searchServiceProvider.future);
   return searchService.searchText(query);
 }
 
@@ -257,8 +273,9 @@ class SearchHistory extends _$SearchHistory {
 
 // --- Bookmarks Service Provider ---
 @Riverpod(keepAlive: true)
-BookmarksService bookmarksService(Ref ref) {
-  return SqliteBookmarksService();
+Future<BookmarksService> bookmarksService(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return SqliteBookmarksService(dbService);
 }
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
@@ -266,14 +283,14 @@ BookmarksService bookmarksService(Ref ref) {
 // --- Is Page Bookmarked Provider --- (Helper for UI status checking)
 @riverpod
 Future<bool> isPageBookmarked(Ref ref, int pageNumber) async {
-  final service = ref.watch(bookmarksServiceProvider);
+  final service = await ref.watch(bookmarksServiceProvider.future);
   return service.isPageBookmarked(pageNumber);
 }
 
 // --- Is Ayah Bookmarked Provider ---
 @riverpod
 Future<bool> isAyahBookmarked(Ref ref, int surahNumber, int ayahNumber) async {
-  final service = ref.watch(bookmarksServiceProvider);
+  final service = await ref.watch(bookmarksServiceProvider.future);
   return service.isBookmarked(surahNumber, ayahNumber);
 }
 
@@ -282,13 +299,14 @@ Future<bool> isAyahBookmarked(Ref ref, int surahNumber, int ayahNumber) async {
 class BookmarksNotifier extends _$BookmarksNotifier {
   @override
   Future<List<Bookmark>> build() async {
-    final service = ref.read(bookmarksServiceProvider);
+    final service = await ref.watch(bookmarksServiceProvider.future);
     return service.getAllBookmarks();
   }
 
   // Toggle bookmark for specific ayah
   Future<void> toggleAyahBookmark(int surahNumber, int ayahNumber) async {
-    final service = ref.read(bookmarksServiceProvider);
+    final service = await ref.read(bookmarksServiceProvider.future);
+    final dbService = await ref.read(databaseServiceProvider.future);
     final isBookmarked = await service.isBookmarked(surahNumber, ayahNumber);
 
     if (isBookmarked) {
@@ -297,17 +315,47 @@ class BookmarksNotifier extends _$BookmarksNotifier {
       await service.addBookmark(surahNumber, ayahNumber);
     }
 
+    int? pageNumber;
+    try {
+      pageNumber = await dbService.getPageForAyah(surahNumber, ayahNumber);
+    } catch (e) {
+      // Silently fail if page number can't be found, but invalidation of
+      // other providers should still proceed.
+    }
+
     // Invalidate to refresh list
     ref.invalidateSelf();
     ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
+    if (pageNumber != null) {
+      ref.invalidate(isPageBookmarkedProvider(pageNumber));
+    }
   }
 
   // Remove bookmark by surah:ayah
   Future<void> removeBookmark(int surahNumber, int ayahNumber) async {
-    final service = ref.read(bookmarksServiceProvider);
-    await service.removeBookmark(surahNumber, ayahNumber);
-    ref.invalidateSelf();
-    ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
+    final service = await ref.read(bookmarksServiceProvider.future);
+
+    // Optimistically update the UI to remove the bookmark instantly.
+    final previousState = await future;
+    state = AsyncValue.data(
+      previousState
+          .where(
+            (b) =>
+                !(b.surahNumber == surahNumber && b.ayahNumber == ayahNumber),
+          )
+          .toList(),
+    );
+
+    try {
+      // Perform the actual deletion from the database.
+      await service.removeBookmark(surahNumber, ayahNumber);
+      // Invalidate the provider that checks if a specific ayah is bookmarked.
+      ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
+    } catch (e) {
+      // If the deletion fails, revert the state to show the bookmark again.
+      state = AsyncValue.data(previousState);
+      // Optionally, you could show an error message to the user here.
+    }
   }
 }
 
@@ -320,7 +368,7 @@ Future<int?> bookmarkPageNumber(
   int ayahNumber,
 ) async {
   try {
-    final dbService = ref.watch(databaseServiceProvider);
+    final dbService = await ref.watch(databaseServiceProvider.future);
     return await dbService.getPageForAyah(surahNumber, ayahNumber);
   } catch (e) {
     return null;
