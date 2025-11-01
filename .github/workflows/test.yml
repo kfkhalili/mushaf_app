@@ -175,58 +175,19 @@ jobs:
           echo "Available Flutter devices:"
           flutter devices
 
-          # Extract iOS simulator device ID from Flutter output
-          # Flutter format: "Device Name • device_id • platform info"
-          # We need the device_id (second field after first •)
-
-          # Method 1: Extract device ID from grep output (format: "Device • device_id • ...")
-          DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | sed 's/.*• \([^ ]*\).*/\1/' | awk '{print $1}' || echo "")
-
-          # Method 2: If that doesn't work, try getting the second word after "•"
-          if [ -z "$DEVICE_ID" ]; then
-            DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk -F'•' '{print $2}' | awk '{print $1}' | tr -d ' ' || echo "")
-          fi
-
-          # Method 3: Use simulator UUID directly
-          if [ -z "$DEVICE_ID" ] && [ -n "$SIMULATOR_UUID" ]; then
-            # Check if Flutter recognizes the UUID
-            if flutter devices | grep -q "$SIMULATOR_UUID"; then
-              DEVICE_ID="$SIMULATOR_UUID"
-            fi
-          fi
-
-          # Method 4: Try parsing by column position
-          if [ -z "$DEVICE_ID" ]; then
-            DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk '{for(i=1;i<=NF;i++) {if($i=="•" && i+1<=NF) {print $(i+1); exit}}}' || echo "")
-          fi
-
-          # Debug: Show what we found
-          echo ""
-          echo "Device detection results:"
-          echo "  SIMULATOR_UUID: $SIMULATOR_UUID"
-          echo "  DEVICE_ID: $DEVICE_ID"
-          echo ""
-
-          if [ -n "$DEVICE_ID" ]; then
-            echo "✅ Found iOS simulator device ID: $DEVICE_ID"
-            echo "Running integration tests on iOS simulator..."
-            flutter test integration_test/ -d "$DEVICE_ID"
-          else
-            echo "⚠️ Could not automatically detect iOS simulator device ID"
+          # Use the simulator UUID we booted (it's the device ID Flutter needs)
+          if [ -n "$SIMULATOR_UUID" ]; then
             echo ""
-            echo "Attempting fallback: Using 'ios' device selector..."
-            # Fallback: Let Flutter auto-select iOS device when only one is available
-            flutter test integration_test/ -d ios || {
-              echo "❌ Integration tests failed!"
-              echo ""
-              echo "Debug information:"
-              echo "Available Flutter devices:"
-              flutter devices
-              echo ""
-              echo "Available simulators:"
-              xcrun simctl list devices | grep -i "iphone" | head -5
-              exit 1
-            }
+            echo "✅ Using iOS simulator UUID: $SIMULATOR_UUID"
+            echo "Running integration tests on iOS simulator..."
+            flutter test integration_test/ -d "$SIMULATOR_UUID"
+          else
+            echo "❌ No simulator UUID found!"
+            echo ""
+            echo "Debug information:"
+            echo "Available Flutter devices:"
+            flutter devices
+            exit 1
           fi
 
       - name: Upload integration test results
