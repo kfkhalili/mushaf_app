@@ -7,6 +7,7 @@ import '../utils/selectors.dart';
 import 'mushaf_line.dart';
 import '../constants.dart'; // Import constants
 import 'ayah_context_menu.dart';
+import 'overlay_mixin.dart';
 
 class MushafPage extends ConsumerStatefulWidget {
   final int pageNumber;
@@ -17,8 +18,7 @@ class MushafPage extends ConsumerStatefulWidget {
   ConsumerState<MushafPage> createState() => _MushafPageState();
 }
 
-class _MushafPageState extends ConsumerState<MushafPage> {
-  OverlayEntry? _overlayEntry;
+class _MushafPageState extends ConsumerState<MushafPage> with OverlayMixin {
   Offset? _tapPosition;
   String? _selectedAyahKey; // Track selected ayah for highlighting
 
@@ -32,25 +32,22 @@ class _MushafPageState extends ConsumerState<MushafPage> {
       _selectedAyahKey = selectedKey;
     });
 
-    // Create overlay entry for context menu
-    _overlayEntry = OverlayEntry(
-      builder: (context) => AyahContextMenu(
-        surahNumber: surahNumber,
-        ayahNumber: ayahNumber,
-        tapPosition: _tapPosition ?? Offset.zero,
-        onDismiss: _dismissOverlay,
-      ),
+    // Create overlay widget for context menu
+    final overlayWidget = AyahContextMenu(
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+      tapPosition: _tapPosition ?? Offset.zero,
+      onDismiss: _dismissOverlay,
     );
 
-    // Insert overlay
-    Overlay.of(context).insert(_overlayEntry!);
+    // Show overlay using mixin
+    showOverlay(overlayWidget, context);
   }
 
   void _dismissOverlay() {
-    if (_overlayEntry != null) {
-      _overlayEntry!.remove();
-      _overlayEntry = null;
-    }
+    // Use mixin's dismissOverlay to handle overlay removal
+    dismissOverlay();
+    // Clear widget-specific state
     setState(() {
       _tapPosition = null;
       _selectedAyahKey = null; // Clear highlight when dismissing
@@ -59,10 +56,7 @@ class _MushafPageState extends ConsumerState<MushafPage> {
 
   @override
   void dispose() {
-    // It's not necessary to call _dismissOverlay() here, as the overlay is tied
-    // to the widget's lifecycle and will be removed when the widget is disposed.
-    // Calling it here causes an error because it tries to call setState on a disposed widget.
-    _overlayEntry?.remove();
+    // Mixin's dispose() handles overlay cleanup
     super.dispose();
   }
 
