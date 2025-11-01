@@ -32,9 +32,6 @@ jobs:
       - name: Run unit and widget tests
         run: flutter test --coverage --exclude-tags=golden
 
-      - name: Run integration tests
-        run: flutter test integration_test/
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -79,7 +76,7 @@ jobs:
 
   integration-test:
     name: Integration Tests (E2E)
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -96,8 +93,28 @@ jobs:
       - name: Generate code
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
+      - name: Boot iOS Simulator
+        run: |
+          # List available simulators
+          xcrun simctl list devices available
+          # Boot iPhone 15 (commonly available on GitHub Actions)
+          xcrun simctl boot "iPhone 15" 2>/dev/null || xcrun simctl boot "iPhone 14" 2>/dev/null || xcrun simctl boot "iPhone 13" 2>/dev/null || echo "Simulator may already be booted"
+          # Wait a moment for simulator to be ready
+          sleep 5
+
       - name: Run integration tests
-        run: flutter test integration_test/
+        run: |
+          # List available Flutter devices
+          flutter devices
+          # Find first iOS simulator device ID
+          DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk '{print $NF}' | tr -d '()')
+          if [ -n "$DEVICE_ID" ]; then
+            echo "Running tests on iOS simulator: $DEVICE_ID"
+            flutter test integration_test/ -d "$DEVICE_ID"
+          else
+            echo "No iOS simulator found, running with auto-detection"
+            flutter test integration_test/
+          fi
 
       - name: Upload integration test results
         if: always()
