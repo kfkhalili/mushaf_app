@@ -68,8 +68,9 @@ class _MushafPageState extends ConsumerState<MushafPage> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncPageData = ref.watch(pageDataProvider(widget.pageNumber));
-    final asyncBookmarks = ref.watch(bookmarksProvider);
+    final asyncCombined = ref.watch(
+      pageDataWithBookmarksProvider(widget.pageNumber),
+    );
     final session = ref.watch(memorizationSessionProvider);
     final bool isMemorizing =
         session != null && session.pageNumber == widget.pageNumber;
@@ -85,90 +86,71 @@ class _MushafPageState extends ConsumerState<MushafPage> {
       color: textColor,
     );
 
-    return asyncPageData.when(
-      data: (pageData) {
-        return asyncBookmarks.when(
-          data: (bookmarks) {
-            // Determine which ayahs on this page are bookmarked
-            final pageAyahs = <String>{};
-            for (final line in pageData.layout.lines) {
-              for (final word in line.words) {
-                if (word.ayahNumber > 0) {
-                  pageAyahs.add(
-                    generateAyahKey(word.surahNumber, word.ayahNumber),
-                  );
-                }
-              }
+    return asyncCombined.when(
+      data: (combined) {
+        final (pageData, bookmarks) = combined;
+        // Determine which ayahs on this page are bookmarked
+        final pageAyahs = <String>{};
+        for (final line in pageData.layout.lines) {
+          for (final word in line.words) {
+            if (word.ayahNumber > 0) {
+              pageAyahs.add(generateAyahKey(word.surahNumber, word.ayahNumber));
             }
+          }
+        }
 
-            final allBookmarkedKeys = bookmarks
-                .map((b) => generateAyahKey(b.surahNumber, b.ayahNumber))
-                .toSet();
-            final bookmarkedAyahKeysOnPage = pageAyahs.intersection(
-              allBookmarkedKeys,
-            );
+        final allBookmarkedKeys = bookmarks
+            .map((b) => generateAyahKey(b.surahNumber, b.ayahNumber))
+            .toSet();
+        final bookmarkedAyahKeysOnPage = pageAyahs.intersection(
+          allBookmarkedKeys,
+        );
 
-            final visibility = computeMemorizationVisibility(
-              pageData.layout,
-              isMemorizing ? session : null,
-            );
+        final visibility = computeMemorizationVisibility(
+          pageData.layout,
+          isMemorizing ? session : null,
+        );
 
-            final pageNum = convertToEasternArabicNumerals(
-              widget.pageNumber.toString(),
-            );
+        final pageNum = convertToEasternArabicNumerals(
+          widget.pageNumber.toString(),
+        );
 
-            return Scaffold(
-              body: GestureDetector(
-                onTap: _dismissOverlay, // Dismiss overlay on tap outside
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Padding(
-                      padding: metrics.pagePadding(top: 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: pageData.layout.lines.map((line) {
-                          return MushafLine(
-                            line: line,
-                            pageFontFamily: pageData.pageFontFamily,
-                            isMemorizationMode: isMemorizing,
-                            wordsToShow: visibility.visibleWords,
-                            ayahOpacities: visibility.ayahOpacity,
-                            onAyahLongPress: _handleAyahLongPress,
-                            selectedAyahKey:
-                                _selectedAyahKey, // Pass selected ayah for highlighting
-                            bookmarkedAyahKeys: bookmarkedAyahKeysOnPage,
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    Align(
-                      alignment: (widget.pageNumber % 2 != 0)
-                          ? Alignment.bottomRight
-                          : Alignment.bottomLeft,
-                      child: Padding(
-                        padding: metrics.footerPadding(),
-                        child: Text(pageNum, style: footerTextStyle),
-                      ),
-                    ),
-                  ],
+        return Scaffold(
+          body: GestureDetector(
+            onTap: _dismissOverlay, // Dismiss overlay on tap outside
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Padding(
+                  padding: metrics.pagePadding(top: 0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: pageData.layout.lines.map((line) {
+                      return MushafLine(
+                        line: line,
+                        pageFontFamily: pageData.pageFontFamily,
+                        isMemorizationMode: isMemorizing,
+                        wordsToShow: visibility.visibleWords,
+                        ayahOpacities: visibility.ayahOpacity,
+                        onAyahLongPress: _handleAyahLongPress,
+                        selectedAyahKey:
+                            _selectedAyahKey, // Pass selected ayah for highlighting
+                        bookmarkedAyahKeys: bookmarkedAyahKeysOnPage,
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-            );
-          },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (err, stack) => Scaffold(
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(pageHorizontalPadding),
-                child: Text(
-                  'فشل تحميل الإشارات المرجعية.\n\nخطأ: $err',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.colorScheme.error),
+                Align(
+                  alignment: (widget.pageNumber % 2 != 0)
+                      ? Alignment.bottomRight
+                      : Alignment.bottomLeft,
+                  child: Padding(
+                    padding: metrics.footerPadding(),
+                    child: Text(pageNum, style: footerTextStyle),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

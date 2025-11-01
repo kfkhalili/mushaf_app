@@ -353,6 +353,18 @@ class BookmarksNotifier extends _$BookmarksNotifier {
   }
 }
 
+// --- Page Data with Bookmarks Provider ---
+// WHY: Combines pageData and bookmarks to avoid nested AsyncValue.when() calls
+@riverpod
+Future<(PageData, List<Bookmark>)> pageDataWithBookmarks(
+  Ref ref,
+  int pageNumber,
+) async {
+  final pageData = await ref.watch(pageDataProvider(pageNumber).future);
+  final bookmarks = await ref.watch(bookmarksProvider.future);
+  return (pageData, bookmarks);
+}
+
 // --- Bookmark Page Number Provider ---
 // Provider for getting page number for a bookmark's ayah in current layout
 @riverpod
