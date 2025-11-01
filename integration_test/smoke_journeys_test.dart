@@ -13,7 +13,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: MushafApp()));
     // Allow initial frames and any splash navigation timers
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+    for (int i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
   }
 
   testWidgets('Launch goes to SelectionScreen and opens Settings & Search', (
@@ -31,14 +34,20 @@ void main() {
     // Open Settings via header icon
     expect(find.byIcon(Icons.settings), findsOneWidget);
     await tester.tap(find.byIcon(Icons.settings));
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle
+    for (int i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     // Settings title in Arabic
     expect(find.text('الإعدادات'), findsOneWidget);
 
     // Go back using header back button (arrow)
     await tester.tap(find.byIcon(Icons.arrow_forward_ios));
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle
+    for (int i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     // Back on Selection screen
     expect(find.text('السور'), findsOneWidget);
@@ -46,14 +55,20 @@ void main() {
     // Open Search via header icon
     expect(find.byIcon(Icons.search), findsOneWidget);
     await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle
+    for (int i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     // Search title in Arabic
     expect(find.text('البحث'), findsOneWidget);
 
     // Back again
     await tester.tap(find.byIcon(Icons.arrow_forward_ios));
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle
+    for (int i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     expect(find.text('السور'), findsOneWidget);
   });
@@ -76,7 +91,10 @@ void main() {
 
     // Tap back to return to Selection screen
     await tester.tap(backIcon.first);
-    await tester.pumpAndSettle();
+    // Use timed pumps instead of pumpAndSettle
+    for (int i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     // Confirm Selection screen labels
     expect(find.text('السور'), findsOneWidget);

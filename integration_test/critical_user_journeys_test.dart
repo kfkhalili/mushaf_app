@@ -15,7 +15,10 @@ void main() {
       // 1. Launch app → Selection Screen
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       expect(find.text('السور'), findsOneWidget);
       expect(find.text('الأجزاء'), findsOneWidget);
@@ -25,7 +28,10 @@ void main() {
       final surahItems = find.byType(ListTile);
       if (surahItems.evaluate().isNotEmpty) {
         await tester.tap(surahItems.first);
-        await tester.pumpAndSettle();
+        // Use timed pumps instead of pumpAndSettle
+        for (int i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 200));
+        }
 
         // 3. Verify Mushaf Screen opens
         expect(find.byType(PageView), findsOneWidget);
@@ -35,17 +41,26 @@ void main() {
     testWidgets('Complete reading journey - Juz selection', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Navigate to Juz tab
       await tester.tap(find.text('الأجزاء'));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Select first juz
       final juzItems = find.byType(ListTile);
       if (juzItems.evaluate().isNotEmpty) {
         await tester.tap(juzItems.first);
-        await tester.pumpAndSettle();
+        // Use timed pumps instead of pumpAndSettle
+        for (int i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 200));
+        }
 
         expect(find.byType(PageView), findsOneWidget);
       }
@@ -57,7 +72,10 @@ void main() {
 
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify PageView exists
       expect(find.byType(PageView), findsOneWidget);
@@ -65,7 +83,10 @@ void main() {
       // Swipe to next page
       final pageView = find.byType(PageView);
       await tester.drag(pageView, const Offset(-300, 0));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify page navigation occurred (PageView still exists)
       expect(find.byType(PageView), findsOneWidget);
@@ -74,19 +95,28 @@ void main() {
     testWidgets('Settings navigation journey', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Open Settings
       expect(find.byIcon(Icons.settings), findsOneWidget);
       await tester.tap(find.byIcon(Icons.settings));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify Settings screen
       expect(find.text('الإعدادات'), findsOneWidget);
 
       // Go back
       await tester.tap(find.byIcon(Icons.arrow_forward_ios).first);
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify back on Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -95,19 +125,28 @@ void main() {
     testWidgets('Search navigation journey', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Open Search
       expect(find.byIcon(Icons.search), findsOneWidget);
       await tester.tap(find.byIcon(Icons.search));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify Search screen
       expect(find.text('البحث'), findsOneWidget);
 
       // Go back
       await tester.tap(find.byIcon(Icons.arrow_forward_ios).first);
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify back on Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -116,11 +155,17 @@ void main() {
     testWidgets('Theme switching preserves state', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Navigate to Settings
       await tester.tap(find.byIcon(Icons.settings));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Verify Settings screen loads
       expect(find.text('الإعدادات'), findsOneWidget);
@@ -135,14 +180,20 @@ void main() {
 
       await tester.pumpWidget(const ProviderScope(child: MushafApp()));
       await tester.pump(const Duration(milliseconds: 600));
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Should open Mushaf screen
       expect(find.byType(PageView), findsOneWidget);
 
       // Navigate back
       await tester.tap(find.byIcon(Icons.arrow_forward_ios).first);
-      await tester.pumpAndSettle();
+      // Use timed pumps instead of pumpAndSettle
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
 
       // Should return to Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -151,7 +202,10 @@ void main() {
       final surahItems = find.byType(ListTile);
       if (surahItems.evaluate().isNotEmpty) {
         await tester.tap(surahItems.first);
-        await tester.pumpAndSettle();
+        // Use timed pumps instead of pumpAndSettle
+        for (int i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 200));
+        }
         expect(find.byType(PageView), findsOneWidget);
       }
     });
