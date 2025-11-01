@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import 'database_service.dart';
+import 'app_data_service.dart';
+import 'migration_service.dart';
 
 abstract class BookmarksService {
   // Add bookmark by surah:ayah
@@ -30,184 +30,32 @@ abstract class BookmarksService {
   Future<void> migratePageBookmark(int pageNumber);
 }
 
+/// WHY: Updated to use unified app_data.db instead of separate bookmarks.db.
+/// Migrates data from old database on first use.
 class SqliteBookmarksService implements BookmarksService {
-  Database? _db;
-  bool _initialized = false;
+  final AppDataService _appDataService;
   final DatabaseService _databaseService;
+  final MigrationService _migrationService;
+  bool _initialized = false;
 
-  SqliteBookmarksService(this._databaseService);
+  SqliteBookmarksService(this._appDataService, this._databaseService)
+    : _migrationService = MigrationService(_appDataService);
 
+  /// WHY: Ensures unified database is initialized and runs migration if needed.
   Future<void> _ensureInitialized() async {
-    if (_initialized && _db != null) {
-      // Check if migration is needed even if initialized
-      await _checkAndRunMigration();
-      return;
-    }
+    if (_initialized) return;
 
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(documentsDirectory.path, 'bookmarks.db');
+    // WHY: Initialize unified database (creates app_data.db if needed)
+    await _appDataService.ensureInitialized();
 
-    _db = await openDatabase(
-      dbPath,
-      version: 3, // Increment version to force recreation
-      onCreate: (db, version) async {
-        // Create new schema with ayah-based columns
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS ${DbConstants.bookmarksTable} (
-            ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbConstants.surahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.ayahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.cachedPageNumberCol} INTEGER,
-            ${DbConstants.createdAtCol} TEXT NOT NULL,
-            ${DbConstants.noteCol} TEXT,
-            UNIQUE(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-          )
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
-          ON ${DbConstants.bookmarksTable}(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
-          ON ${DbConstants.bookmarksTable}(${DbConstants.createdAtCol} DESC)
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_page_number
-          ON ${DbConstants.bookmarksTable}(${DbConstants.cachedPageNumberCol})
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // Recreate table with ayah-based schema for any version < 3
-        if (oldVersion < 3) {
-          await db.execute(
-            'DROP TABLE IF EXISTS ${DbConstants.bookmarksTable}',
-          );
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS ${DbConstants.bookmarksTable} (
-              ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DbConstants.surahNumberCol} INTEGER NOT NULL,
-              ${DbConstants.ayahNumberCol} INTEGER NOT NULL,
-              ${DbConstants.cachedPageNumberCol} INTEGER,
-              ${DbConstants.createdAtCol} TEXT NOT NULL,
-              ${DbConstants.noteCol} TEXT,
-              UNIQUE(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-            )
-          ''');
-          await db.execute('''
-            CREATE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
-            ON ${DbConstants.bookmarksTable}(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-          ''');
-          await db.execute('''
-            CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
-            ON ${DbConstants.bookmarksTable}(${DbConstants.createdAtCol} DESC)
-          ''');
-          await db.execute('''
-            CREATE INDEX IF NOT EXISTS idx_bookmarks_page_number
-            ON ${DbConstants.bookmarksTable}(${DbConstants.cachedPageNumberCol})
-          ''');
-        }
-      },
-    );
-
-    // Check if migration is needed (table might exist with old schema)
-    await _checkAndRunMigration();
+    // WHY: Run migration from old bookmarks.db if needed
+    await _migrationService.migrateIfNeeded();
 
     _initialized = true;
   }
 
-  /// Check if migration is needed and recreate table with correct schema
-  Future<void> _checkAndRunMigration() async {
-    if (_db == null) return;
-
-    try {
-      final tableInfo = await _db!.rawQuery(
-        "PRAGMA table_info(${DbConstants.bookmarksTable})",
-      );
-      final hasSurahNumber = tableInfo.any(
-        (col) => col['name'] == DbConstants.surahNumberCol,
-      );
-      final hasPageNumber = tableInfo.any(
-        (col) => col['name'] == DbConstants.pageNumberCol,
-      );
-
-      // If table has old schema (has page_number but not surah_number), recreate
-      if (hasPageNumber && !hasSurahNumber) {
-        // Drop old table and recreate with new schema
-        await _db!.execute(
-          'DROP TABLE IF EXISTS ${DbConstants.bookmarksTable}',
-        );
-
-        // Create new table with ayah-based schema
-        await _db!.execute('''
-          CREATE TABLE IF NOT EXISTS ${DbConstants.bookmarksTable} (
-            ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbConstants.surahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.ayahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.cachedPageNumberCol} INTEGER,
-            ${DbConstants.createdAtCol} TEXT NOT NULL,
-            ${DbConstants.noteCol} TEXT,
-            UNIQUE(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-          )
-        ''');
-
-        // Create indexes
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
-          ON ${DbConstants.bookmarksTable}(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-        ''');
-
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
-          ON ${DbConstants.bookmarksTable}(${DbConstants.createdAtCol} DESC)
-        ''');
-
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_page_number
-          ON ${DbConstants.bookmarksTable}(${DbConstants.cachedPageNumberCol})
-        ''');
-      }
-    } catch (e) {
-      // Table might not exist yet or error, recreate it
-      try {
-        await _db!.execute(
-          'DROP TABLE IF EXISTS ${DbConstants.bookmarksTable}',
-        );
-        await _db!.execute('''
-          CREATE TABLE IF NOT EXISTS ${DbConstants.bookmarksTable} (
-            ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbConstants.surahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.ayahNumberCol} INTEGER NOT NULL,
-            ${DbConstants.cachedPageNumberCol} INTEGER,
-            ${DbConstants.createdAtCol} TEXT NOT NULL,
-            ${DbConstants.noteCol} TEXT,
-            UNIQUE(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-          )
-        ''');
-
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_surah_ayah
-          ON ${DbConstants.bookmarksTable}(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
-        ''');
-
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
-          ON ${DbConstants.bookmarksTable}(${DbConstants.createdAtCol} DESC)
-        ''');
-
-        await _db!.execute('''
-          CREATE INDEX IF NOT EXISTS idx_bookmarks_page_number
-          ON ${DbConstants.bookmarksTable}(${DbConstants.cachedPageNumberCol})
-        ''');
-      } catch (recreateError) {
-        if (kDebugMode) {
-          print('Error recreating bookmarks table: $recreateError');
-        }
-      }
-    }
-  }
+  /// WHY: Getter for database instance from unified service.
+  Database get _db => _appDataService.database;
 
   @override
   Future<void> addBookmark(int surahNumber, int ayahNumber) async {
@@ -219,7 +67,6 @@ class SqliteBookmarksService implements BookmarksService {
     }
 
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     final now = DateTime.now().toIso8601String();
 
@@ -238,7 +85,7 @@ class SqliteBookmarksService implements BookmarksService {
     }
 
     try {
-      await _db!.insert(DbConstants.bookmarksTable, {
+      await _db.insert(DbConstants.bookmarksTable, {
         DbConstants.surahNumberCol: surahNumber,
         DbConstants.ayahNumberCol: ayahNumber,
         DbConstants.cachedPageNumberCol: cachedPageNumber,
@@ -252,10 +99,9 @@ class SqliteBookmarksService implements BookmarksService {
   @override
   Future<void> removeBookmark(int surahNumber, int ayahNumber) async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      await _db!.delete(
+      await _db.delete(
         DbConstants.bookmarksTable,
         where:
             '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
@@ -269,10 +115,9 @@ class SqliteBookmarksService implements BookmarksService {
   @override
   Future<bool> isBookmarked(int surahNumber, int ayahNumber) async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      final result = await _db!.query(
+      final result = await _db.query(
         DbConstants.bookmarksTable,
         columns: [DbConstants.idCol],
         where:
@@ -290,10 +135,9 @@ class SqliteBookmarksService implements BookmarksService {
   @override
   Future<List<Bookmark>> getAllBookmarks({bool newestFirst = true}) async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      final results = await _db!.query(
+      final results = await _db.query(
         DbConstants.bookmarksTable,
         orderBy: newestFirst
             ? '${DbConstants.createdAtCol} DESC'
@@ -331,10 +175,9 @@ class SqliteBookmarksService implements BookmarksService {
   @override
   Future<Bookmark?> getBookmarkByAyah(int surahNumber, int ayahNumber) async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      final results = await _db!.query(
+      final results = await _db.query(
         DbConstants.bookmarksTable,
         where:
             '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
@@ -366,10 +209,9 @@ class SqliteBookmarksService implements BookmarksService {
   @override
   Future<void> clearAllBookmarks() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      await _db!.delete(DbConstants.bookmarksTable);
+      await _db.delete(DbConstants.bookmarksTable);
     } catch (e) {
       throw Exception('Failed to clear bookmarks: $e');
     }
@@ -380,7 +222,6 @@ class SqliteBookmarksService implements BookmarksService {
     // Migration: Convert page-based bookmark to ayah-based
     // This method is called for old bookmarks that need migration
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
       final firstAyah = await _databaseService.getFirstAyahOnPage(pageNumber);

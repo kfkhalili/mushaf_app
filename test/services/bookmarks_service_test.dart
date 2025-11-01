@@ -2,13 +2,17 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mushaf_app/services/bookmarks_service.dart';
 import 'package:mushaf_app/services/database_service.dart';
+import 'package:mushaf_app/services/app_data_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    // Set up mock SharedPreferences for migration service
+    SharedPreferences.setMockInitialValues({});
     // Initialize sqflite for testing (required for non-device tests)
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -39,15 +43,18 @@ void main() {
   group('BookmarksService Contract Tests', () {
     late SqliteBookmarksService service;
     late DatabaseService dbService;
+    late AppDataService appDataService;
 
     setUp(() async {
+      appDataService = AppDataService();
       dbService = DatabaseService();
       await dbService.init();
-      service = SqliteBookmarksService(dbService);
+      service = SqliteBookmarksService(appDataService, dbService);
     });
 
     tearDown(() async {
       await service.clearAllBookmarks();
+      await appDataService.close();
       await dbService.close();
     });
 

@@ -172,6 +172,23 @@ class DbConstants {
   static const String timestampCol = 'timestamp';
   static const String durationSecondsCol = 'duration_seconds';
 
+  // --- App Data Database Tables (Unified Storage) ---
+  static const String memorizationSessionsTable = 'memorization_sessions';
+  static const String userPreferencesTable = 'user_preferences';
+
+  // --- Memorization Sessions Columns ---
+  static const String firstAyahIndexCol = 'first_ayah_index';
+  static const String lastAyahIndexShownCol = 'last_ayah_index_shown';
+  static const String passCountCol = 'pass_count';
+  static const String windowDataCol = 'window_data';
+  static const String lastUpdatedAtCol = 'last_updated_at';
+  // createdAtCol is already defined in Bookmarks Table section above
+
+  // --- User Preferences Columns ---
+  static const String keyCol = 'key';
+  static const String valueCol = 'value';
+  static const String updatedAtCol = 'updated_at';
+
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
 }

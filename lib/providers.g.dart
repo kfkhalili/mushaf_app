@@ -50,6 +50,47 @@ final class SharedPreferencesProvider
 
 String _$sharedPreferencesHash() => r'50d46e3f8d9f32715d0f3efabdce724e4b2593b4';
 
+@ProviderFor(appDataService)
+const appDataServiceProvider = AppDataServiceProvider._();
+
+final class AppDataServiceProvider
+    extends $FunctionalProvider<AppDataService, AppDataService, AppDataService>
+    with $Provider<AppDataService> {
+  const AppDataServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appDataServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appDataServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppDataService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppDataService create(Ref ref) {
+    return appDataService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppDataService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppDataService>(value),
+    );
+  }
+}
+
+String _$appDataServiceHash() => r'5ed485b1e634417af75265c61fc7154093588d38';
+
 @ProviderFor(CurrentPage)
 const currentPageProvider = CurrentPageProvider._();
 
@@ -894,7 +935,7 @@ final class BookmarksServiceProvider
   }
 }
 
-String _$bookmarksServiceHash() => r'1e6d08f9953d7b36773c13e272e6eb94dde9c323';
+String _$bookmarksServiceHash() => r'aab81efa776dd352190a45c7dbd3404e6a7a6f5f';
 
 @ProviderFor(isAyahBookmarked)
 const isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
@@ -1132,7 +1173,7 @@ final class ReadingProgressServiceProvider
 }
 
 String _$readingProgressServiceHash() =>
-    r'7b7b2083be80eb43cfc22161bc9989d90dcae967';
+    r'0d332c17a63c60884df7e575b4c88ba50150013d';
 
 @ProviderFor(readingStatistics)
 const readingStatisticsProvider = ReadingStatisticsProvider._();
@@ -1331,7 +1372,7 @@ final class MemorizationSessionNotifierProvider
 }
 
 String _$memorizationSessionNotifierHash() =>
-    r'acbea94680fac7a6b84363f7b5b13f6af6dc61bb';
+    r'e0123a73bff395aea168ab0dbabb443423052c25';
 
 abstract class _$MemorizationSessionNotifier
     extends $Notifier<MemorizationSessionState?> {

@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/providers.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('BookmarksNotifier', () {
@@ -10,6 +12,10 @@ void main() {
 
     setUpAll(() {
       TestWidgetsFlutterBinding.ensureInitialized();
+
+      // Set up mock SharedPreferences for migration service
+      SharedPreferences.setMockInitialValues({});
+
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
 
@@ -19,7 +25,7 @@ void main() {
             const MethodChannel('plugins.flutter.io/path_provider'),
             (call) async {
               if (call.method == 'getApplicationDocumentsDirectory') {
-                return '/tmp/test_documents';
+                return Directory.systemTemp.path;
               }
               return null;
             },
@@ -30,7 +36,9 @@ void main() {
       container = ProviderContainer();
     });
 
-    tearDown(() {
+    tearDown(() async {
+      // Wait a bit before disposing to allow async operations to complete
+      await Future.delayed(const Duration(milliseconds: 100));
       container.dispose();
     });
 
@@ -42,16 +50,12 @@ void main() {
           );
     });
 
-    test('initializes with empty list', () async {
-      // This test requires database initialization which may take time
-      // Just verify the provider can be read (even if it fails due to DB)
-      try {
-        final bookmarks = await container.read(bookmarksProvider.future);
-        expect(bookmarks, isA<List>());
-      } catch (e) {
-        // Database might not be initialized in test env, which is expected
-        expect(e, isA<Exception>());
-      }
-    });
+    test('initializes with list', () async {
+      // Wait for the provider to initialize properly
+      // The provider loads bookmarks from the database asynchronously
+      final bookmarks = await container.read(bookmarksProvider.future);
+      expect(bookmarks, isA<List>());
+      // List may be empty or contain migrated data
+    }, timeout: const Timeout(Duration(seconds: 30)));
   });
 }

@@ -9,11 +9,13 @@ import 'services/font_service.dart';
 import 'services/search_service.dart';
 import 'services/bookmarks_service.dart';
 import 'services/reading_progress_service.dart';
+import 'services/app_data_service.dart';
+import 'services/memorization_storage.dart';
+import 'services/memorization_storage_sqlite.dart';
 import 'models.dart';
 import 'constants.dart';
 import 'memorization/models.dart';
 import 'services/memorization_service.dart';
-import 'services/memorization_storage.dart';
 
 // WHY: This directive points to the file that code-gen will create.
 part 'providers.g.dart';
@@ -25,6 +27,13 @@ Future<SharedPreferences> sharedPreferences(Ref ref) async {
 }
 
 // (UI signals moved to utils/ui_signals.dart to avoid codegen dependencies.)
+
+// --- App Data Service Provider (Unified Storage) ---
+// WHY: Provides unified database for all user data (bookmarks, reading progress, memorization)
+@Riverpod(keepAlive: true)
+AppDataService appDataService(Ref ref) {
+  return AppDataService();
+}
 
 // --- Current Page Provider ---
 // WHY: This syntax for a Notifier class is correct.
@@ -277,8 +286,9 @@ class SearchHistory extends _$SearchHistory {
 // --- Bookmarks Service Provider ---
 @Riverpod(keepAlive: true)
 Future<BookmarksService> bookmarksService(Ref ref) async {
+  final appDataService = ref.watch(appDataServiceProvider);
   final dbService = await ref.watch(databaseServiceProvider.future);
-  return SqliteBookmarksService(dbService);
+  return SqliteBookmarksService(appDataService, dbService);
 }
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
@@ -362,7 +372,8 @@ Future<int?> bookmarkPageNumber(
 // --- Reading Progress Service Provider ---
 @Riverpod(keepAlive: true)
 ReadingProgressService readingProgressService(Ref ref) {
-  return SqliteReadingProgressService();
+  final appDataService = ref.watch(appDataServiceProvider);
+  return SqliteReadingProgressService(appDataService);
 }
 
 // --- Reading Statistics Provider ---
@@ -423,8 +434,14 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
   }
 
   final MemorizationService _service = const MemorizationService();
-  late final MemorizationStorage _storage = InMemoryMemorizationStorage();
+  late final MemorizationStorage _storage = _createStorage(ref);
   MemorizationConfig _config = const MemorizationConfig();
+
+  // WHY: Creates SQLite-based memorization storage for persistent sessions
+  MemorizationStorage _createStorage(Ref ref) {
+    final appDataService = ref.watch(appDataServiceProvider);
+    return SqliteMemorizationStorage(appDataService);
+  }
 
   void setConfig(MemorizationConfig config) {
     _config = config;

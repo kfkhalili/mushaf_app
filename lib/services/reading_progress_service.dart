@@ -1,8 +1,8 @@
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
+import 'app_data_service.dart';
+import 'migration_service.dart';
 
 abstract class ReadingProgressService {
   Future<void> recordPageView(int pageNumber);
@@ -15,50 +15,32 @@ abstract class ReadingProgressService {
   Future<void> clearAllData(); // For privacy/reset
 }
 
+/// WHY: Updated to use unified app_data.db instead of separate reading_progress.db.
+/// Migrates data from old database on first use.
 class SqliteReadingProgressService implements ReadingProgressService {
-  Database? _db;
+  final AppDataService _appDataService;
+  final MigrationService _migrationService;
   bool _initialized = false;
   ReadingStatistics? _cachedStatistics;
 
+  SqliteReadingProgressService(this._appDataService)
+    : _migrationService = MigrationService(_appDataService);
+
+  /// WHY: Ensures unified database is initialized and runs migration if needed.
   Future<void> _ensureInitialized() async {
-    if (_initialized && _db != null) return;
+    if (_initialized) return;
 
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(documentsDirectory.path, 'reading_progress.db');
+    // WHY: Initialize unified database (creates app_data.db if needed)
+    await _appDataService.ensureInitialized();
 
-    _db = await openDatabase(
-      dbPath,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS ${DbConstants.readingSessionsTable} (
-            ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbConstants.sessionDateCol} TEXT NOT NULL,
-            ${DbConstants.pageNumberCol} INTEGER NOT NULL,
-            ${DbConstants.timestampCol} TEXT NOT NULL,
-            ${DbConstants.durationSecondsCol} INTEGER
-          )
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_reading_sessions_date
-          ON ${DbConstants.readingSessionsTable}(${DbConstants.sessionDateCol} DESC)
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_reading_sessions_page
-          ON ${DbConstants.readingSessionsTable}(${DbConstants.pageNumberCol})
-        ''');
-
-        await db.execute('''
-          CREATE INDEX IF NOT EXISTS idx_reading_sessions_timestamp
-          ON ${DbConstants.readingSessionsTable}(${DbConstants.timestampCol} DESC)
-        ''');
-      },
-    );
+    // WHY: Run migration from old reading_progress.db if needed
+    await _migrationService.migrateIfNeeded();
 
     _initialized = true;
   }
+
+  /// WHY: Getter for database instance from unified service.
+  Database get _db => _appDataService.database;
 
   @override
   Future<void> recordPageView(int pageNumber) async {
@@ -67,13 +49,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
     }
 
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     final now = DateTime.now();
     final sessionDate = DateTime(now.year, now.month, now.day);
 
     try {
-      await _db!.insert(DbConstants.readingSessionsTable, {
+      await _db.insert(DbConstants.readingSessionsTable, {
         DbConstants.sessionDateCol: sessionDate.toIso8601String().split('T')[0],
         DbConstants.pageNumberCol: pageNumber,
         DbConstants.timestampCol: now.toIso8601String(),
@@ -89,7 +70,6 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<ReadingStatistics> getStatistics() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     // Check cache first
     if (_cachedStatistics != null) return _cachedStatistics!;
@@ -131,9 +111,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getUniquePagesCount() async {
-    if (_db == null) throw StateError('Database not initialized');
-
-    final result = await _db!.rawQuery('''
+    final result = await _db.rawQuery('''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
     ''');
@@ -142,11 +120,9 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesToday() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     final todayDateStr = DateTime.now().toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery(
+    final result = await _db.rawQuery(
       '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
@@ -159,12 +135,10 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesThisWeek() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery(
+    final result = await _db.rawQuery(
       '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
@@ -177,13 +151,11 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesThisMonth() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery(
+    final result = await _db.rawQuery(
       '''
       SELECT COUNT(DISTINCT ${DbConstants.pageNumberCol}) as count
       FROM ${DbConstants.readingSessionsTable}
@@ -196,12 +168,10 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getDaysThisWeek() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery(
+    final result = await _db.rawQuery(
       '''
       SELECT COUNT(DISTINCT ${DbConstants.sessionDateCol}) as count
       FROM ${DbConstants.readingSessionsTable}
@@ -214,13 +184,11 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getDaysThisMonth() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final result = await _db!.rawQuery(
+    final result = await _db.rawQuery(
       '''
       SELECT COUNT(DISTINCT ${DbConstants.sessionDateCol}) as count
       FROM ${DbConstants.readingSessionsTable}
@@ -233,9 +201,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getTotalReadingDays() async {
-    if (_db == null) throw StateError('Database not initialized');
-
-    final result = await _db!.rawQuery('''
+    final result = await _db.rawQuery('''
       SELECT COUNT(DISTINCT ${DbConstants.sessionDateCol}) as count
       FROM ${DbConstants.readingSessionsTable}
     ''');
@@ -246,11 +212,10 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<int> getCurrentStreak() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     // Check today first - must have read today to have a streak
     final todayDateStr = DateTime.now().toIso8601String().split('T')[0];
-    final todayResult = await _db!.query(
+    final todayResult = await _db.query(
       DbConstants.readingSessionsTable,
       columns: [DbConstants.pageNumberCol],
       where: '${DbConstants.sessionDateCol} = ?',
@@ -266,7 +231,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
     while (true) {
       final dateStr = checkDate.toIso8601String().split('T')[0];
-      final result = await _db!.query(
+      final result = await _db.query(
         DbConstants.readingSessionsTable,
         columns: [DbConstants.pageNumberCol],
         where: '${DbConstants.sessionDateCol} = ?',
@@ -287,10 +252,8 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _calculateLongestStreak() async {
-    if (_db == null) throw StateError('Database not initialized');
-
     // Get all distinct dates sorted
-    final dateResults = await _db!.rawQuery('''
+    final dateResults = await _db.rawQuery('''
       SELECT DISTINCT ${DbConstants.sessionDateCol}
       FROM ${DbConstants.readingSessionsTable}
       ORDER BY ${DbConstants.sessionDateCol} ASC
@@ -341,11 +304,10 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<List<int>> getPagesReadByDate(DateTime date) async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     final dateStr = date.toIso8601String().split('T')[0];
 
-    final results = await _db!.query(
+    final results = await _db.query(
       DbConstants.readingSessionsTable,
       columns: [DbConstants.pageNumberCol],
       where: '${DbConstants.sessionDateCol} = ?',
@@ -361,12 +323,11 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<Map<DateTime, int>> getWeeklyProgress() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
     final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
 
-    final results = await _db!.rawQuery(
+    final results = await _db.rawQuery(
       '''
       SELECT
         ${DbConstants.sessionDateCol},
@@ -392,13 +353,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<Map<DateTime, int>> getMonthlyProgress() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
     final monthStartDateStr = monthStart.toIso8601String().split('T')[0];
 
-    final results = await _db!.rawQuery(
+    final results = await _db.rawQuery(
       '''
       SELECT
         ${DbConstants.sessionDateCol},
@@ -424,10 +384,9 @@ class SqliteReadingProgressService implements ReadingProgressService {
   @override
   Future<void> clearAllData() async {
     await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
 
     try {
-      await _db!.delete(DbConstants.readingSessionsTable);
+      await _db.delete(DbConstants.readingSessionsTable);
       _cachedStatistics = null;
     } catch (e) {
       throw Exception('Failed to clear reading progress data: $e');

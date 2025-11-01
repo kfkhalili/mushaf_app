@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:mushaf_app/providers.dart';
 import 'package:mushaf_app/models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('ReadingStatisticsProviders', () {
@@ -11,6 +13,10 @@ void main() {
 
     setUpAll(() {
       TestWidgetsFlutterBinding.ensureInitialized();
+
+      // Set up mock SharedPreferences for migration service
+      SharedPreferences.setMockInitialValues({});
+
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
 
@@ -20,7 +26,7 @@ void main() {
             const MethodChannel('plugins.flutter.io/path_provider'),
             (call) async {
               if (call.method == 'getApplicationDocumentsDirectory') {
-                return '/tmp/test_documents';
+                return Directory.systemTemp.path;
               }
               return null;
             },
