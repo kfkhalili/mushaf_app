@@ -171,6 +171,62 @@ class DatabaseService {
     }
   }
 
+  /// Fetches texts for multiple ayahs in a single query (optimized for bulk operations).
+  /// Returns a map from verse key (format: "surah:ayah") to text.
+  /// WHY: This method eliminates N+1 query problems when fetching multiple ayah texts.
+  Future<Map<String, String>> getAyahTextsBulk(
+    List<({int surahNumber, int ayahNumber})> ayahs,
+  ) async {
+    await init();
+    if (_ayahTextDb == null) {
+      throw Exception("Ayah text database is not initialized.");
+    }
+
+    if (ayahs.isEmpty) {
+      return {};
+    }
+
+    // Build verse keys and prepare query parameters
+    final verseKeys = ayahs
+        .map((ayah) => '${ayah.surahNumber}:${ayah.ayahNumber}')
+        .toList();
+
+    // Create placeholders for IN clause: (?, ?, ?, ...)
+    final placeholders = List.filled(verseKeys.length, '?').join(', ');
+
+    try {
+      final List<Map<String, dynamic>> results = await _ayahTextDb!.query(
+        DbConstants.versesTable,
+        columns: [DbConstants.verseKeyCol, DbConstants.textCol],
+        where: '${DbConstants.verseKeyCol} IN ($placeholders)',
+        whereArgs: verseKeys,
+      );
+
+      // Build map from verse key to text
+      final Map<String, String> ayahTexts = {};
+      for (final row in results) {
+        final verseKey = row[DbConstants.verseKeyCol] as String?;
+        final text = row[DbConstants.textCol] as String?;
+        if (verseKey != null && text != null) {
+          ayahTexts[verseKey] = text;
+        }
+      }
+
+      // Ensure all requested verse keys are in the map (even if empty string)
+      for (final verseKey in verseKeys) {
+        ayahTexts.putIfAbsent(verseKey, () => '');
+      }
+
+      return ayahTexts;
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching bulk ayah texts: $e");
+      }
+      // Return map with empty strings for all keys on error
+      return Map.fromEntries(verseKeys.map((key) => MapEntry(key, '')));
+    }
+  }
+
   /// Search by Surah name to get the surah number
   Future<List<Map<String, dynamic>>> getSurahByName(String surahName) async {
     await init();

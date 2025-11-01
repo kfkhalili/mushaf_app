@@ -144,15 +144,29 @@ class SqliteBookmarksService implements BookmarksService {
             : '${DbConstants.createdAtCol} ASC',
       );
 
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Collect all surah:ayah pairs for bulk fetching
+      final ayahs = results
+          .map(
+            (row) => (
+              surahNumber: row[DbConstants.surahNumberCol] as int,
+              ayahNumber: row[DbConstants.ayahNumberCol] as int,
+            ),
+          )
+          .toList();
+
+      // WHY: Bulk fetch all ayah texts in a single query instead of N queries
+      final ayahTextsMap = await _databaseService.getAyahTextsBulk(ayahs);
+
+      // Build bookmarks with pre-fetched ayah texts
       final bookmarks = <Bookmark>[];
       for (final row in results) {
         final surahNumber = row[DbConstants.surahNumberCol] as int;
         final ayahNumber = row[DbConstants.ayahNumberCol] as int;
-
-        final ayahText = await _databaseService.getAyahText(
-          surahNumber,
-          ayahNumber,
-        );
+        final verseKey = '$surahNumber:$ayahNumber';
 
         bookmarks.add(
           Bookmark(
@@ -162,7 +176,7 @@ class SqliteBookmarksService implements BookmarksService {
             cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
             createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
             note: row[DbConstants.noteCol] as String?,
-            ayahText: ayahText,
+            ayahText: ayahTextsMap[verseKey] ?? '',
           ),
         );
       }
