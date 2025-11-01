@@ -16,14 +16,14 @@ void main() {
       // Mock path_provider
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'),
-        (call) async {
-          if (call.method == 'getApplicationDocumentsDirectory') {
-            return '/tmp/test_documents';
-          }
-          return null;
-        },
-      );
+            const MethodChannel('plugins.flutter.io/path_provider'),
+            (call) async {
+              if (call.method == 'getApplicationDocumentsDirectory') {
+                return '/tmp/test_documents';
+              }
+              return null;
+            },
+          );
     });
 
     setUp(() {
@@ -37,9 +37,9 @@ void main() {
     tearDownAll(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'),
-        null,
-      );
+            const MethodChannel('plugins.flutter.io/path_provider'),
+            null,
+          );
     });
 
     test('returns preview text for valid page', () async {
@@ -86,4 +86,3 @@ void main() {
     });
   });
 }
-

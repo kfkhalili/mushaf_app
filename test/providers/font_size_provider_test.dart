@@ -19,7 +19,10 @@ void main() {
 
       // Get initial font size
       final initialSize = container.read(fontSizeSettingProvider);
-      expect(initialSize, equals(layoutMaxFontSizes[MushafLayout.uthmani15Lines]));
+      expect(
+        initialSize,
+        equals(layoutMaxFontSizes[MushafLayout.uthmani15Lines]),
+      );
 
       // Change layout (use available layout - check which ones exist)
       // Note: Only testing that font size updates when layout changes
@@ -28,7 +31,9 @@ void main() {
         final newLayout = availableLayouts.firstWhere(
           (layout) => layout != MushafLayout.uthmani15Lines,
         );
-        container.read(mushafLayoutSettingProvider.notifier).setLayout(newLayout);
+        container
+            .read(mushafLayoutSettingProvider.notifier)
+            .setLayout(newLayout);
 
         // Font size should update automatically
         final newSize = container.read(fontSizeSettingProvider);
@@ -70,4 +75,3 @@ void main() {
     });
   });
 }
-
