@@ -8,8 +8,9 @@ import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
+import '../utils/initialization_mixin.dart';
 
-class DatabaseService {
+class DatabaseService with InitializationMixin {
   Database? _layoutDb;
   Database? _scriptDb;
   Database? _metadataDb;
@@ -20,21 +21,28 @@ class DatabaseService {
   List<Map<String, dynamic>> _juzCache = const [];
   List<Map<String, dynamic>> _hizbCache = const [];
 
-  bool _isInitialized = false;
+  MushafLayout? _currentLayout;
 
-  // WHY: This Future ensures _doInit is only run once.
-  Future<void>? _initFuture;
-
-  // WHY: This is the new public 'init' method. It acts as a gatekeeper.
+  // WHY: This is the public 'init' method. It uses InitializationMixin for
+  // thread-safe initialization while supporting layout parameterization.
   Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
-    if (_isInitialized) return;
-    _initFuture ??= _doInit(layout);
-    await _initFuture;
+    // If already initialized with the same layout, return early
+    if (isInitialized && _currentLayout == layout) return;
+
+    // If initialized with different layout, reset and reinitialize
+    if (isInitialized && _currentLayout != layout) {
+      await switchLayout(layout);
+      return;
+    }
+
+    // Store layout before initialization
+    _currentLayout = layout;
+    await ensureInitialized();
   }
 
   // WHY: Switch to a different layout after initialization
   Future<void> switchLayout(MushafLayout layout) async {
-    if (!_isInitialized) {
+    if (!isInitialized) {
       await init(layout: layout);
       return;
     }
@@ -42,15 +50,23 @@ class DatabaseService {
     // Close existing databases
     await _closeDatabases();
 
-    // Reset initialization state
-    _isInitialized = false;
-    _initFuture = null;
+    // Reset initialization state (from mixin)
+    resetInitializationState();
 
     // Initialize with new layout
-    await init(layout: layout);
+    _currentLayout = layout;
+    await ensureInitialized();
   }
 
-  Future<void> _doInit(MushafLayout layout) async {
+  @override
+  Future<void> doInit() async {
+    // WHY: _currentLayout is set before calling ensureInitialized()
+    if (_currentLayout == null) {
+      throw StateError(
+        'DatabaseService: Layout must be set before initialization',
+      );
+    }
+    final layout = _currentLayout!;
     final documentsDirectory = await getApplicationDocumentsDirectory();
     const dbAssetPath = 'assets/db';
 
@@ -84,11 +100,13 @@ class DatabaseService {
       );
     }
 
-    _isInitialized = true;
+    markInitialized();
   }
 
   Future<void> close() async {
     await _closeDatabases();
+    resetInitializationState();
+    _currentLayout = null;
   }
 
   Future<void> _closeDatabases() async {

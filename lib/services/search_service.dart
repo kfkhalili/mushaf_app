@@ -9,10 +9,11 @@ import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
+import '../utils/initialization_mixin.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
-class SearchService {
+class SearchService with InitializationMixin {
   final DatabaseService _databaseService;
   Database? _imlaeiDb; // Database with searchable Arabic text
   Database? _imlaeiScriptDb; // Database with ayah-by-ayah script text
@@ -23,21 +24,31 @@ class SearchService {
   final Map<String, int> _verseToPageCache =
       {}; // Cache verse_key -> page_number
 
-  bool _isInitialized = false;
-  Future<void>? _initFuture;
+  MushafLayout? _currentLayout;
 
   SearchService(this._databaseService);
 
   /// Initialize the search service with the current layout
+  /// Uses InitializationMixin for thread-safe initialization while
+  /// supporting layout parameterization.
   Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
-    if (_isInitialized) return;
-    _initFuture ??= _doInit(layout);
-    await _initFuture;
+    // If already initialized with the same layout, return early
+    if (isInitialized && _currentLayout == layout) return;
+
+    // If initialized with different layout, reset and reinitialize
+    if (isInitialized && _currentLayout != layout) {
+      await switchLayout(layout);
+      return;
+    }
+
+    // Store layout before initialization
+    _currentLayout = layout;
+    await ensureInitialized();
   }
 
   /// Switch to a different layout for search
   Future<void> switchLayout(MushafLayout layout) async {
-    if (!_isInitialized) {
+    if (!isInitialized) {
       await init(layout: layout);
       return;
     }
@@ -50,15 +61,24 @@ class SearchService {
     // Close existing databases
     await _closeDatabases();
 
-    // Reset initialization state
-    _isInitialized = false;
-    _initFuture = null;
+    // Reset initialization state (from mixin)
+    resetInitializationState();
 
     // Initialize with new layout
-    await init(layout: layout);
+    _currentLayout = layout;
+    await ensureInitialized();
   }
 
-  Future<void> _doInit(MushafLayout layout) async {
+  @override
+  Future<void> doInit() async {
+    // WHY: _currentLayout is set before calling ensureInitialized()
+    if (_currentLayout == null) {
+      throw StateError(
+        'SearchService: Layout must be set before initialization',
+      );
+    }
+    // Note: layout is stored but not used directly in doInit for SearchService
+    // since it uses the same databases regardless of layout
     try {
       final documentsDirectory = await getApplicationDocumentsDirectory();
       const dbAssetPath = 'assets/db';
@@ -76,7 +96,7 @@ class SearchService {
       _imlaeiDb = databases[0];
       _imlaeiScriptDb = databases[1];
 
-      _isInitialized = true;
+      markInitialized();
     } catch (e) {
       if (kDebugMode) {
         developer.log(
@@ -518,8 +538,8 @@ class SearchService {
     _searchCache.clear();
     _surahNameCache.clear();
     _verseToPageCache.clear();
-    _isInitialized = false;
-    _initFuture = null;
+    resetInitializationState();
+    _currentLayout = null;
   }
 
   int _parseInt(dynamic value) {
