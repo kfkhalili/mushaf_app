@@ -248,7 +248,7 @@ Created `QueryLimits` and `DateCalculations` classes in `constants.dart`:
 
 ---
 
-### 8. **Service Responsibilities Blurring**
+### 8. **Service Responsibilities Blurring** ✅ FIXED ✅ COMPLETED
 
 **Location:** `lib/services/bookmarks_service.dart`
 
@@ -263,6 +263,17 @@ Created `QueryLimits` and `DateCalculations` classes in `constants.dart`:
 - `BookmarksService` should return `Bookmark` with optional `ayahText`
 - Let the UI layer decide if it needs text
 - Or create a `BookmarkRepository` that composes both services
+
+**Fix:**
+
+Added `includeAyahText` parameter to `getAllBookmarks()` (defaults to `false`):
+- When `false`: Only fetches bookmark data (better separation of concerns)
+- When `true`: Explicitly requests ayah text via `DatabaseService` (UI layer decides)
+- Updated `bookmarksProvider` to explicitly request ayah text for UI display
+
+**Files Modified:**
+- `lib/services/bookmarks_service.dart` - Added `includeAyahText` parameter
+- `lib/providers.dart` - Explicitly requests ayah text in `bookmarksProvider`
 
 **Priority:** 🟠 Low
 

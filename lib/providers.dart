@@ -306,7 +306,8 @@ class BookmarksNotifier extends _$BookmarksNotifier {
   @override
   Future<List<Bookmark>> build() async {
     final service = await ref.watch(bookmarksServiceProvider.future);
-    return service.getAllBookmarks();
+    // WHY: Explicitly request ayah text for UI display in BookmarksListView
+    return service.getAllBookmarks(includeAyahText: true);
   }
 
   // Toggle bookmark for specific ayah

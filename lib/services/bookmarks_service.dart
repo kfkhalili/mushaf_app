@@ -19,7 +19,12 @@ abstract class BookmarksService {
   Future<bool> isBookmarked(int surahNumber, int ayahNumber);
 
   // Get all bookmarks (sorted by creation date)
-  Future<List<Bookmark>> getAllBookmarks({bool newestFirst = true});
+  // [includeAyahText] - If true, fetches ayah text (requires DatabaseService).
+  //                    Defaults to false for better separation of concerns.
+  Future<List<Bookmark>> getAllBookmarks({
+    bool newestFirst = true,
+    bool includeAyahText = false,
+  });
 
   // Get bookmark by surah:ayah
   Future<Bookmark?> getBookmarkByAyah(int surahNumber, int ayahNumber);
@@ -146,7 +151,10 @@ class SqliteBookmarksService implements BookmarksService {
   }
 
   @override
-  Future<List<Bookmark>> getAllBookmarks({bool newestFirst = true}) async {
+  Future<List<Bookmark>> getAllBookmarks({
+    bool newestFirst = true,
+    bool includeAyahText = false,
+  }) async {
     await _ensureInitialized();
 
     try {
@@ -161,20 +169,26 @@ class SqliteBookmarksService implements BookmarksService {
         return [];
       }
 
-      // Collect all surah:ayah pairs for bulk fetching
-      final ayahs = results
-          .map(
-            (row) => (
-              surahNumber: row[DbConstants.surahNumberCol] as int,
-              ayahNumber: row[DbConstants.ayahNumberCol] as int,
-            ),
-          )
-          .toList();
+      // WHY: Only fetch ayah text when explicitly requested by UI layer.
+      // This maintains separation of concerns - BookmarksService handles
+      // bookmark data, DatabaseService handles ayah text.
+      final Map<String, String> ayahTextsMap = <String, String>{};
+      if (includeAyahText) {
+        // Collect all surah:ayah pairs for bulk fetching
+        final ayahs = results
+            .map(
+              (row) => (
+                surahNumber: row[DbConstants.surahNumberCol] as int,
+                ayahNumber: row[DbConstants.ayahNumberCol] as int,
+              ),
+            )
+            .toList();
 
-      // WHY: Bulk fetch all ayah texts in a single query instead of N queries
-      final ayahTextsMap = await _databaseService.getAyahTextsBulk(ayahs);
+        // WHY: Bulk fetch all ayah texts in a single query instead of N queries
+        ayahTextsMap.addAll(await _databaseService.getAyahTextsBulk(ayahs));
+      }
 
-      // Build bookmarks with pre-fetched ayah texts
+      // Build bookmarks with optional pre-fetched ayah texts
       final bookmarks = <Bookmark>[];
       for (final row in results) {
         final surahNumber = row[DbConstants.surahNumberCol] as int;
@@ -189,7 +203,7 @@ class SqliteBookmarksService implements BookmarksService {
             cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
             createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
             note: row[DbConstants.noteCol] as String?,
-            ayahText: ayahTextsMap[verseKey] ?? '',
+            ayahText: includeAyahText ? (ayahTextsMap[verseKey] ?? '') : null,
           ),
         );
       }
