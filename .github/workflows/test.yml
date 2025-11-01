@@ -30,10 +30,7 @@ jobs:
         run: flutter analyze
 
       - name: Run unit and widget tests
-        run: flutter test --coverage
-
-      - name: Run golden tests
-        run: flutter test test/golden/ --update-goldens=false
+        run: flutter test --coverage --exclude-tags=golden
 
       - name: Run integration tests
         run: flutter test integration_test/
@@ -59,7 +56,7 @@ jobs:
 
   golden-check:
     name: Verify Golden Tests
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
