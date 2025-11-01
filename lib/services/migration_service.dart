@@ -16,8 +16,8 @@ class MigrationService {
 
   /// WHY: Checks if migration is needed and runs it if necessary.
   /// Uses SharedPreferences flag to prevent duplicate migrations.
-  Future<void> migrateIfNeeded() async {
-    final prefs = await SharedPreferences.getInstance();
+  /// [prefs] - SharedPreferences instance from provider (for dependency injection).
+  Future<void> migrateIfNeeded(SharedPreferences prefs) async {
     final migrated = prefs.getBool('app_data_migrated_v1') ?? false;
 
     if (migrated) return;

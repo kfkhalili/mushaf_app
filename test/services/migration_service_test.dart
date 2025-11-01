@@ -109,7 +109,7 @@ void main() {
       await prefs.setBool('app_data_migrated_v1', true);
 
       await appDataService.ensureInitialized();
-      await migrationService.migrateIfNeeded();
+      await migrationService.migrateIfNeeded(prefs);
 
       // Verify migration flag is still set
       expect(prefs.getBool('app_data_migrated_v1'), isTrue);
@@ -180,7 +180,8 @@ void main() {
       });
 
       // Run migration
-      await migrationService.migrateIfNeeded();
+      final prefs = await SharedPreferences.getInstance();
+      await migrationService.migrateIfNeeded(prefs);
 
       // Verify bookmark was migrated
       final results = await db.query(
@@ -232,7 +233,8 @@ void main() {
 
       // Run migration
       await appDataService.ensureInitialized();
-      await migrationService.migrateIfNeeded();
+      final prefs = await SharedPreferences.getInstance();
+      await migrationService.migrateIfNeeded(prefs);
 
       // Verify reading session was migrated
       final newDb = appDataService.database;
@@ -250,18 +252,18 @@ void main() {
     test('handles missing old databases gracefully', () async {
       // No old databases exist - should not crash
       await appDataService.ensureInitialized();
-      await migrationService.migrateIfNeeded();
+      final prefs = await SharedPreferences.getInstance();
+      await migrationService.migrateIfNeeded(prefs);
 
       // Migration should complete successfully
-      final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('app_data_migrated_v1'), isTrue);
     });
 
     test('sets migration flag after successful migration', () async {
       await appDataService.ensureInitialized();
-      await migrationService.migrateIfNeeded();
-
       final prefs = await SharedPreferences.getInstance();
+      await migrationService.migrateIfNeeded(prefs);
+
       expect(prefs.getBool('app_data_migrated_v1'), isTrue);
     });
   });

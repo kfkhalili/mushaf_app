@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -23,11 +24,18 @@ abstract class ReadingProgressService {
 class SqliteReadingProgressService implements ReadingProgressService {
   final AppDataService _appDataService;
   final MigrationService _migrationService;
+  SharedPreferences? _prefs;
   bool _initialized = false;
   ReadingStatistics? _cachedStatistics;
 
   SqliteReadingProgressService(this._appDataService)
     : _migrationService = MigrationService(_appDataService);
+
+  /// WHY: Sets SharedPreferences for migration (dependency injection).
+  /// Called by provider to inject SharedPreferences from provider.
+  void setSharedPreferences(SharedPreferences prefs) {
+    _prefs = prefs;
+  }
 
   /// WHY: Ensures unified database is initialized and runs migration if needed.
   Future<void> _ensureInitialized() async {
@@ -37,7 +45,15 @@ class SqliteReadingProgressService implements ReadingProgressService {
     await _appDataService.ensureInitialized();
 
     // WHY: Run migration from old reading_progress.db if needed
-    await _migrationService.migrateIfNeeded();
+    // Requires SharedPreferences to be set via setSharedPreferences()
+    if (_prefs != null) {
+      await _migrationService.migrateIfNeeded(_prefs!);
+    } else {
+      // WHY: Fallback to direct access if provider injection hasn't happened yet
+      // This shouldn't happen in normal flow, but provides safety
+      final prefs = await SharedPreferences.getInstance();
+      await _migrationService.migrateIfNeeded(prefs);
+    }
 
     _initialized = true;
   }

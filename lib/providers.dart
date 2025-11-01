@@ -290,7 +290,11 @@ Future<BookmarksService> bookmarksService(Ref ref) async {
   // to avoid unnecessary rebuilds when mixing watch() and watch().future
   final appDataService = ref.watch(appDataServiceProvider);
   final dbService = await ref.watch(databaseServiceProvider.future);
-  return SqliteBookmarksService(appDataService, dbService);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
+  final service = SqliteBookmarksService(appDataService, dbService);
+  // WHY: Inject SharedPreferences from provider for dependency injection pattern
+  service.setSharedPreferences(prefs);
+  return service;
 }
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
@@ -386,29 +390,33 @@ Future<int?> bookmarkPageNumber(
 
 // --- Reading Progress Service Provider ---
 @Riverpod(keepAlive: true)
-ReadingProgressService readingProgressService(Ref ref) {
+Future<ReadingProgressService> readingProgressService(Ref ref) async {
   final appDataService = ref.watch(appDataServiceProvider);
-  return SqliteReadingProgressService(appDataService);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
+  final service = SqliteReadingProgressService(appDataService);
+  // WHY: Inject SharedPreferences from provider for dependency injection pattern
+  service.setSharedPreferences(prefs);
+  return service;
 }
 
 // --- Reading Statistics Provider ---
 @riverpod
 Future<ReadingStatistics> readingStatistics(Ref ref) async {
-  final service = ref.watch(readingProgressServiceProvider);
+  final service = await ref.watch(readingProgressServiceProvider.future);
   return service.getStatistics();
 }
 
 // --- Pages Read Today Provider ---
 @riverpod
 Future<int> pagesReadToday(Ref ref) async {
-  final service = ref.watch(readingProgressServiceProvider);
+  final service = await ref.watch(readingProgressServiceProvider.future);
   return service.getPagesReadToday();
 }
 
 // --- Current Streak Provider ---
 @riverpod
 Future<int> currentStreak(Ref ref) async {
-  final service = ref.watch(readingProgressServiceProvider);
+  final service = await ref.watch(readingProgressServiceProvider.future);
   return service.getCurrentStreak();
 }
 
