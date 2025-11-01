@@ -123,27 +123,110 @@ jobs:
       - name: Generate code
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
-      - name: Boot iOS Simulator
+      - name: Setup iOS Simulator
         run: |
           # List available simulators
-          xcrun simctl list devices available
-          # Boot iPhone 15 (commonly available on GitHub Actions)
-          xcrun simctl boot "iPhone 15" 2>/dev/null || xcrun simctl boot "iPhone 14" 2>/dev/null || xcrun simctl boot "iPhone 13" 2>/dev/null || echo "Simulator may already be booted"
-          # Wait a moment for simulator to be ready
-          sleep 5
+          echo "Available iOS simulators:"
+          xcrun simctl list devices available | grep -i "iphone" || echo "No iPhone simulators found"
+
+          # Get the first available iPhone simulator UUID
+          SIMULATOR_UUID=$(xcrun simctl list devices available | grep -i "iphone" | grep -i "available" | head -1 | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' || echo "")
+
+          if [ -z "$SIMULATOR_UUID" ]; then
+            # Try to get any iPhone device (including already booted ones)
+            SIMULATOR_UUID=$(xcrun simctl list devices | grep -i "iphone" | grep -v "unavailable" | head -1 | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' || echo "")
+          fi
+
+          if [ -z "$SIMULATOR_UUID" ]; then
+            echo "❌ No iOS simulator found!"
+            echo "Listing all devices:"
+            xcrun simctl list devices
+            exit 1
+          fi
+
+          echo "Found iOS simulator: $SIMULATOR_UUID"
+          echo "SIMULATOR_UUID=$SIMULATOR_UUID" >> $GITHUB_ENV
+
+          # Boot the simulator
+          echo "Booting iOS simulator..."
+          xcrun simctl boot "$SIMULATOR_UUID" 2>&1 || echo "Simulator may already be booted"
+
+          # Open Simulator.app so Flutter can detect it
+          echo "Opening Simulator.app..."
+          open -a Simulator || echo "Could not open Simulator.app"
+
+          # Wait for simulator to be ready
+          echo "Waiting for simulator to be ready..."
+          sleep 15
+
+          # Verify simulator is booted
+          if xcrun simctl list devices | grep "$SIMULATOR_UUID" | grep -q "Booted"; then
+            echo "✅ Simulator is booted and ready"
+          else
+            echo "⚠️ Simulator boot status unclear, but continuing..."
+          fi
 
       - name: Run integration tests
         run: |
-          # List available Flutter devices
+          echo "Waiting for Flutter to detect iOS simulator..."
+          sleep 5
+
+          # List all Flutter devices
+          echo "Available Flutter devices:"
           flutter devices
-          # Find first iOS simulator device ID
-          DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk '{print $NF}' | tr -d '()')
+
+          # Extract iOS simulator device ID from Flutter output
+          # Flutter format: "Device Name • device_id • platform info"
+          # We need the device_id (second field after first •)
+
+          # Method 1: Extract device ID from grep output (format: "Device • device_id • ...")
+          DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | sed 's/.*• \([^ ]*\).*/\1/' | awk '{print $1}' || echo "")
+
+          # Method 2: If that doesn't work, try getting the second word after "•"
+          if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk -F'•' '{print $2}' | awk '{print $1}' | tr -d ' ' || echo "")
+          fi
+
+          # Method 3: Use simulator UUID directly
+          if [ -z "$DEVICE_ID" ] && [ -n "$SIMULATOR_UUID" ]; then
+            # Check if Flutter recognizes the UUID
+            if flutter devices | grep -q "$SIMULATOR_UUID"; then
+              DEVICE_ID="$SIMULATOR_UUID"
+            fi
+          fi
+
+          # Method 4: Try parsing by column position
+          if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(flutter devices | grep -i "ios" | grep -i "simulator" | head -1 | awk '{for(i=1;i<=NF;i++) {if($i=="•" && i+1<=NF) {print $(i+1); exit}}}' || echo "")
+          fi
+
+          # Debug: Show what we found
+          echo ""
+          echo "Device detection results:"
+          echo "  SIMULATOR_UUID: $SIMULATOR_UUID"
+          echo "  DEVICE_ID: $DEVICE_ID"
+          echo ""
+
           if [ -n "$DEVICE_ID" ]; then
-            echo "Running tests on iOS simulator: $DEVICE_ID"
+            echo "✅ Found iOS simulator device ID: $DEVICE_ID"
+            echo "Running integration tests on iOS simulator..."
             flutter test integration_test/ -d "$DEVICE_ID"
           else
-            echo "No iOS simulator found, running with auto-detection"
-            flutter test integration_test/
+            echo "⚠️ Could not automatically detect iOS simulator device ID"
+            echo ""
+            echo "Attempting fallback: Using 'ios' device selector..."
+            # Fallback: Let Flutter auto-select iOS device when only one is available
+            flutter test integration_test/ -d ios || {
+              echo "❌ Integration tests failed!"
+              echo ""
+              echo "Debug information:"
+              echo "Available Flutter devices:"
+              flutter devices
+              echo ""
+              echo "Available simulators:"
+              xcrun simctl list devices | grep -i "iphone" | head -5
+              exit 1
+            }
           fi
 
       - name: Upload integration test results
