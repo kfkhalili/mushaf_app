@@ -114,6 +114,11 @@ const double kAppHeaderIconSize = 24.0;
 // WHY: Number of words to show initially when memorization mode starts.
 const int initialWordCount = 15;
 
+// --- FONT CACHE LIMITS ---
+// WHY: Maximum number of fonts to keep in memory cache to prevent memory pressure.
+// With 604 page-specific fonts, we limit cache to prevent loading all fonts.
+const int maxFontCacheSize = 50;
+
 // --- APP CONSTANTS (Newly Added) ---
 
 // WHY: Centralize the total page count for use in PageView builders and ListViews.
