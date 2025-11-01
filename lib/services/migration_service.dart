@@ -26,13 +26,17 @@ class MigrationService {
     final newDb = _appDataService.database;
 
     try {
-      // Migrate bookmarks from bookmarks.db
-      await _migrateBookmarks(newDb);
+      // WHY: Wrap migration in transaction for atomicity
+      // If any part fails, all changes are rolled back
+      await newDb.transaction((txn) async {
+        // Migrate bookmarks from bookmarks.db
+        await _migrateBookmarksWithTxn(txn);
 
-      // Migrate reading sessions from reading_progress.db
-      await _migrateReadingSessions(newDb);
+        // Migrate reading sessions from reading_progress.db
+        await _migrateReadingSessionsWithTxn(txn);
+      });
 
-      // Mark migration as complete
+      // WHY: Mark migration as complete only after successful transaction
       await prefs.setBool('app_data_migrated_v1', true);
     } catch (e) {
       // WHY: If migration fails, log error but don't prevent app from running
@@ -43,21 +47,20 @@ class MigrationService {
     }
   }
 
-  /// WHY: Migrates bookmarks from bookmarks.db to app_data.db.
-  /// Checks if old database exists before attempting migration.
-  Future<void> _migrateBookmarks(Database newDb) async {
+  /// WHY: Migrates bookmarks within a transaction.
+  /// Used by migration transaction to ensure atomicity.
+  Future<void> _migrateBookmarksWithTxn(Transaction txn) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final oldDbPath = p.join(documentsDirectory.path, 'bookmarks.db');
 
-    // WHY: Check if old database exists
     try {
       final oldDb = await openDatabase(oldDbPath, readOnly: true);
 
       try {
         final bookmarks = await oldDb.query(DbConstants.bookmarksTable);
 
-        // WHY: Use batch insert for efficiency if multiple bookmarks exist
-        final batch = newDb.batch();
+        // WHY: Use batch insert within transaction for efficiency
+        final batch = txn.batch();
         for (final bookmark in bookmarks) {
           batch.insert(
             DbConstants.bookmarksTable,
@@ -80,21 +83,20 @@ class MigrationService {
     }
   }
 
-  /// WHY: Migrates reading sessions from reading_progress.db to app_data.db.
-  /// Checks if old database exists before attempting migration.
-  Future<void> _migrateReadingSessions(Database newDb) async {
+  /// WHY: Migrates reading sessions within a transaction.
+  /// Used by migration transaction to ensure atomicity.
+  Future<void> _migrateReadingSessionsWithTxn(Transaction txn) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final oldDbPath = p.join(documentsDirectory.path, 'reading_progress.db');
 
-    // WHY: Check if old database exists
     try {
       final oldDb = await openDatabase(oldDbPath, readOnly: true);
 
       try {
         final sessions = await oldDb.query(DbConstants.readingSessionsTable);
 
-        // WHY: Use batch insert for efficiency if multiple sessions exist
-        final batch = newDb.batch();
+        // WHY: Use batch insert within transaction for efficiency
+        final batch = txn.batch();
         for (final session in sessions) {
           batch.insert(
             DbConstants.readingSessionsTable,

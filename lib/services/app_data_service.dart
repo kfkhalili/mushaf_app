@@ -29,6 +29,7 @@ class AppDataService {
       singleInstance: true, // WHY: Ensures only one database connection exists
       // This prevents concurrent access issues and database locking
       onCreate: (db, version) async {
+        // WHY: onCreate is already executed in a transaction by sqflite
         // Create all tables for unified storage
         await _createMemorizationSessionsTable(db);
         await _createBookmarksTable(db);
@@ -164,5 +165,22 @@ class AppDataService {
     }
     _initialized = false;
     _initFuture = null;
+  }
+
+  /// WHY: Executes a function within a database transaction.
+  /// Provides automatic rollback on error and better performance for multi-step operations.
+  /// Returns the result of the transaction function.
+  Future<T> transaction<T>(Future<T> Function(Transaction txn) action) async {
+    await ensureInitialized();
+    return _db!.transaction(action);
+  }
+
+  /// WHY: Executes multiple database operations in a batch.
+  /// More efficient than individual operations when doing multiple inserts/updates.
+  Future<void> batch(void Function(Batch batch) operations) async {
+    await ensureInitialized();
+    final batch = _db!.batch();
+    operations(batch);
+    await batch.commit();
   }
 }

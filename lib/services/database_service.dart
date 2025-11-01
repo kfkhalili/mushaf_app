@@ -111,7 +111,19 @@ class DatabaseService {
     final dbPath = p.join(docsDir.path, fileName);
     // WHY: Ensure the database file exists in the documents directory before opening.
     await _copyDbFromAssets(assetFileName: fileName, destinationPath: dbPath);
-    return openDatabase(dbPath, readOnly: true);
+
+    // WHY: Configure database with timeout for concurrent access handling
+    // Even read-only databases can experience locks during concurrent access
+    final db = await openDatabase(
+      dbPath,
+      readOnly: true,
+      singleInstance: true, // WHY: Reuse connection for better performance
+    );
+
+    // WHY: Set busy timeout for read-only databases to handle concurrent access
+    await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
+
+    return db;
   }
 
   Future<void> _copyDbFromAssets({
