@@ -21,7 +21,8 @@ class MushafScreen extends ConsumerStatefulWidget {
   ConsumerState<MushafScreen> createState() => _MushafScreenState();
 }
 
-class _MushafScreenState extends ConsumerState<MushafScreen> {
+class _MushafScreenState extends ConsumerState<MushafScreen>
+    with WidgetsBindingObserver {
   late final PageController _pageController;
 
   int _currentSurahNumber = 0;
@@ -52,12 +53,30 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
     Future.microtask(
       () => ref.read(currentPageProvider.notifier).setPage(widget.initialPage),
     );
+
+    // WHY: Register lifecycle observer to handle app backgrounding/foregrounding.
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    // WHY: Remove lifecycle observer when widget is disposed.
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // WHY: Save current page when app goes to background to prevent data loss.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      // Save current page when app goes to background
+      final currentPage = ref.read(currentPageProvider);
+      _savePageToPrefs(currentPage);
+    }
   }
 
   // Deprecated helper removed (no longer used)
@@ -231,6 +250,10 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
                       // WHY: Use the named constant for total page count.
                       itemCount: totalPages,
                       reverse: true,
+                      // WHY: Memory management for PageView:
+                      // - Flutter's PageView automatically keeps only a few pages in memory
+                      // - Font loading is managed by LRU cache (maxFontCacheSize = 50)
+                      // - Pages are automatically disposed when out of viewport
                       physics: (enableMemorizationBeta && isBetaMemorizing)
                           ? const NeverScrollableScrollPhysics()
                           : const BouncingScrollPhysics(),
