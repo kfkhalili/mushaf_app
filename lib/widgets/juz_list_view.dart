@@ -4,6 +4,7 @@ import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
+import '../screens/mushaf_screen.dart';
 import 'shared/async_list_view.dart'; // WHY: Import the new reusable widget
 import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
@@ -72,11 +73,13 @@ class JuzListItem extends StatelessWidget {
       ),
       onTap: () {
         if (juzInfo.startingPage > 0) {
-          // WHY: Use the centralized navigation helper.
-          // Capture Navigator and mounted state before async gap
-          final navigator = Navigator.of(context);
-          final isMounted = context.mounted;
-          navigateToMushafPage(navigator, isMounted, juzInfo.startingPage);
+          // WHY: For StatelessWidget, navigate directly without clearing last_page
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  MushafScreen(initialPage: juzInfo.startingPage),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

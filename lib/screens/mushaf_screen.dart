@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// legacy riverpod import removed
-import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/mushaf_page.dart';
 import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
@@ -11,7 +9,6 @@ import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
 import 'dart:collection';
-import '../providers/memorization_provider.dart';
 import '../widgets/countdown_circle.dart';
 // duplicate import removed
 
@@ -35,12 +32,14 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
 
   // WHY: This function is only responsible for persistence.
   Future<void> _savePageToPrefs(int pageNumber) async {
-    final prefs = await SharedPreferences.getInstance();
+    // WHY: Use sharedPreferencesProvider instead of direct SharedPreferences.getInstance()
+    final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setInt('last_page', pageNumber);
   }
 
   Future<void> _clearLastPage() async {
-    final prefs = await SharedPreferences.getInstance();
+    // WHY: Use sharedPreferencesProvider instead of direct SharedPreferences.getInstance()
+    final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.remove('last_page');
   }
 

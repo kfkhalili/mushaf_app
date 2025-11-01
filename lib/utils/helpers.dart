@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/mushaf_screen.dart';
 import '../models.dart';
+import '../providers.dart';
 
 /// Converts Western Arabic numerals (1, 2, 3) to Eastern Arabic numerals (١, ٢, ٣).
 String convertToEasternArabicNumerals(String input) {
@@ -31,8 +32,10 @@ Future<void> navigateToMushafPage(
   NavigatorState navigator,
   bool isMounted,
   int pageNumber,
+  WidgetRef ref,
 ) async {
-  final prefs = await SharedPreferences.getInstance();
+  // WHY: Use sharedPreferencesProvider instead of direct SharedPreferences.getInstance()
+  final prefs = await ref.read(sharedPreferencesProvider.future);
   await prefs.remove('last_page');
 
   // WHY: Check mounted state *after* the async gap.

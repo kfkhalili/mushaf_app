@@ -81,7 +81,7 @@ class PageListItem extends ConsumerWidget {
         // Capture Navigator and mounted state before async gap
         final navigator = Navigator.of(context);
         final isMounted = context.mounted;
-        navigateToMushafPage(navigator, isMounted, pageNumber);
+        navigateToMushafPage(navigator, isMounted, pageNumber, ref);
       },
     );
   }

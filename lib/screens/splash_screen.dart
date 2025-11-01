@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'selection_screen.dart';
 import 'mushaf_screen.dart';
+import '../providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -19,7 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkLastPage() async {
-    final prefs = await SharedPreferences.getInstance();
+    // WHY: Use sharedPreferencesProvider instead of direct SharedPreferences.getInstance()
+    final prefs = await ref.read(sharedPreferencesProvider.future);
     // A short delay prevents a jarring flash if the check is too fast.
     await Future.delayed(const Duration(milliseconds: 500));
 

@@ -11,6 +11,9 @@ import 'services/bookmarks_service.dart';
 import 'services/reading_progress_service.dart';
 import 'models.dart';
 import 'constants.dart';
+import 'memorization/models.dart';
+import 'services/memorization_service.dart';
+import 'services/memorization_storage.dart';
 
 // WHY: This directive points to the file that code-gen will create.
 part 'providers.g.dart';
@@ -381,4 +384,102 @@ Future<int> pagesReadToday(Ref ref) async {
 Future<int> currentStreak(Ref ref) async {
   final service = ref.watch(readingProgressServiceProvider);
   return service.getCurrentStreak();
+}
+
+// --- Theme Mode Enum ---
+// WHY: Defined here for centralized provider management
+enum AppThemeMode { light, dark, sepia, system }
+
+// --- Theme Provider ---
+// WHY: Migrated from legacy StateNotifier to codegen @riverpod pattern
+@Riverpod(keepAlive: true)
+class ThemeNotifier extends _$ThemeNotifier {
+  @override
+  AppThemeMode build() {
+    // Default state - initial value will be loaded synchronously from SharedPreferences
+    // For now, return system as default (main.dart will override with actual value)
+    return AppThemeMode.system;
+  }
+
+  Future<void> setTheme(AppThemeMode mode) async {
+    state = mode;
+    // Save to SharedPreferences using provider
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setString('theme_mode', mode.name);
+    } catch (e) {
+      // Handle potential errors, e.g., if storage is unavailable
+    }
+  }
+}
+
+// --- Memorization Session Provider ---
+// WHY: Migrated from legacy StateNotifier to codegen @riverpod pattern
+@Riverpod(keepAlive: true)
+class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
+  @override
+  MemorizationSessionState? build() {
+    return null;
+  }
+
+  final MemorizationService _service = const MemorizationService();
+  late final MemorizationStorage _storage = InMemoryMemorizationStorage();
+  MemorizationConfig _config = const MemorizationConfig();
+
+  void setConfig(MemorizationConfig config) {
+    _config = config;
+  }
+
+  Future<void> resumeIfExists(int pageNumber) async {
+    final loaded = await _storage.loadSession(pageNumber);
+    if (loaded != null) {
+      state = loaded;
+    }
+  }
+
+  Future<void> startSession({
+    required int pageNumber,
+    required int firstAyahIndex,
+  }) async {
+    state = MemorizationSessionState(
+      pageNumber: pageNumber,
+      window: AyahWindowState(
+        ayahIndices: [firstAyahIndex],
+        opacities: const [1.0],
+        tapsSinceReveal: const [0],
+      ),
+      lastAyahIndexShown: firstAyahIndex,
+      lastUpdatedAt: DateTime.now(),
+      passCount: 0,
+    );
+    await _maybePersist();
+  }
+
+  bool get isActive => state != null;
+
+  Future<void> endSession() async {
+    final page = state?.pageNumber;
+    state = null;
+    if (page != null) {
+      await _storage.clearSession(page);
+    }
+  }
+
+  Future<void> onTap({required int totalAyatOnPage}) async {
+    if (state == null) return;
+
+    final next = _service.applyTap(
+      state: state!,
+      config: _config,
+      totalAyatOnPage: totalAyatOnPage,
+    );
+
+    state = next;
+    await _maybePersist();
+  }
+
+  Future<void> _maybePersist() async {
+    if (state == null) return;
+    await _storage.saveSession(state!);
+  }
 }

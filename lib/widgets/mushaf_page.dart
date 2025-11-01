@@ -6,7 +6,6 @@ import '../utils/responsive.dart';
 import '../utils/selectors.dart';
 import 'mushaf_line.dart';
 import '../constants.dart'; // Import constants
-import '../providers/memorization_provider.dart';
 import 'ayah_context_menu.dart';
 
 class MushafPage extends ConsumerStatefulWidget {

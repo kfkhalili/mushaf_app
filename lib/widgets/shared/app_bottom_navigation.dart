@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/memorization_provider.dart';
-// providers.dart not needed here
+import '../../providers.dart';
 import '../../utils/ui_signals.dart';
 import '../../constants.dart';
 import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';

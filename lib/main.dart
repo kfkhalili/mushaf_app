@@ -3,7 +3,7 @@ import 'package:flutter/services.dart'; // Import for orientation services
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/splash_screen.dart';
-import 'providers/theme_provider.dart';
+import 'providers.dart';
 import 'themes.dart';
 
 Future<void> main() async {
@@ -19,6 +19,7 @@ Future<void> main() async {
   ]);
 
   // Read the saved theme from storage before the app starts.
+  // WHY: Use SharedPreferences directly here since ProviderScope isn't available yet
   final prefs = await SharedPreferences.getInstance();
   final String savedTheme = prefs.getString('theme_mode') ?? 'system';
   final AppThemeMode initialTheme = AppThemeMode.values.firstWhere(
@@ -29,7 +30,9 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
-        themeProvider.overrideWith((ref) => ThemeNotifier(initialTheme)),
+        // WHY: Override with initial theme loaded from SharedPreferences
+        // Use overrideWithValue to set initial value directly
+        themeProvider.overrideWithValue(initialTheme),
       ],
       child: const MushafApp(),
     ),

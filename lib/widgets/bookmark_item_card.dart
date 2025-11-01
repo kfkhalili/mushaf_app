@@ -58,7 +58,7 @@ class BookmarkItemCard extends ConsumerWidget {
           "BookmarkItemCard: Navigating to page $pageNumber",
           name: "BOOKMARK_TAP",
         );
-        navigateToMushafPage(navigator, isMounted, pageNumber);
+        navigateToMushafPage(navigator, isMounted, pageNumber, ref);
       } else {
         dev.log(
           "BookmarkItemCard: Page number is null, showing error.",

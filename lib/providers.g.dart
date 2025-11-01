@@ -1240,3 +1240,116 @@ final class CurrentStreakProvider
 }
 
 String _$currentStreakHash() => r'255b02ef08a067f91b1334c30fb7b4acb1964538';
+
+@ProviderFor(ThemeNotifier)
+const themeProvider = ThemeNotifierProvider._();
+
+final class ThemeNotifierProvider
+    extends $NotifierProvider<ThemeNotifier, AppThemeMode> {
+  const ThemeNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'themeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$themeNotifierHash();
+
+  @$internal
+  @override
+  ThemeNotifier create() => ThemeNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppThemeMode value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppThemeMode>(value),
+    );
+  }
+}
+
+String _$themeNotifierHash() => r'4c5ab14580e972a046014454465e054fa66936eb';
+
+abstract class _$ThemeNotifier extends $Notifier<AppThemeMode> {
+  AppThemeMode build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AppThemeMode, AppThemeMode>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AppThemeMode, AppThemeMode>,
+              AppThemeMode,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(MemorizationSessionNotifier)
+const memorizationSessionProvider = MemorizationSessionNotifierProvider._();
+
+final class MemorizationSessionNotifierProvider
+    extends
+        $NotifierProvider<
+          MemorizationSessionNotifier,
+          MemorizationSessionState?
+        > {
+  const MemorizationSessionNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memorizationSessionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$memorizationSessionNotifierHash();
+
+  @$internal
+  @override
+  MemorizationSessionNotifier create() => MemorizationSessionNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MemorizationSessionState? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MemorizationSessionState?>(value),
+    );
+  }
+}
+
+String _$memorizationSessionNotifierHash() =>
+    r'acbea94680fac7a6b84363f7b5b13f6af6dc61bb';
+
+abstract class _$MemorizationSessionNotifier
+    extends $Notifier<MemorizationSessionState?> {
+  MemorizationSessionState? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref =
+        this.ref as $Ref<MemorizationSessionState?, MemorizationSessionState?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<MemorizationSessionState?, MemorizationSessionState?>,
+              MemorizationSessionState?,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
