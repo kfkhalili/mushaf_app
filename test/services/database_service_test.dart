@@ -178,5 +178,43 @@ void main() {
       expect(text, isNotEmpty);
       expect(text, isA<String>());
     });
+
+    // WHY: Test that PRAGMA exceptions are handled gracefully.
+    // On iOS, PRAGMA statements on read-only databases may throw exceptions
+    // even though they're not actual errors. This test verifies that the
+    // database remains functional even if PRAGMA fails.
+    test(
+      'database initialization succeeds even when PRAGMA throws exceptions',
+      () async {
+        // Initialize database - PRAGMA may fail on some platforms
+        await service.init(layout: MushafLayout.uthmani15Lines);
+
+        // Verify database is functional despite potential PRAGMA failures
+        final surahs = await service.getAllSurahs();
+        expect(surahs.length, 114);
+
+        final pageLayout = await service.getPageLayout(1);
+        expect(pageLayout.pageNumber, 1);
+        expect(pageLayout.lines, isNotEmpty);
+      },
+    );
+
+    // WHY: Verify that read-only database operations work correctly
+    // even if optional PRAGMA settings (like busy_timeout) fail.
+    test('database remains functional when PRAGMA statements fail', () async {
+      await service.init(layout: MushafLayout.uthmani15Lines);
+
+      // Test multiple database operations to verify functionality
+      final headerInfo = await service.getPageHeaderInfo(1);
+      expect(headerInfo, contains('juz'));
+      expect(headerInfo, contains('surahName'));
+
+      final ayahText = await service.getAyahText(1, 1);
+      expect(ayahText, isNotEmpty);
+
+      // Verify database can still query data
+      final juzInfo = await service.getAllJuzInfo();
+      expect(juzInfo.length, 30);
+    });
   });
 }

@@ -121,13 +121,25 @@ class DatabaseService {
     );
 
     // WHY: Set busy timeout for read-only databases to handle concurrent access.
-    // Wrap in try-catch because on iOS (SqfliteDarwinDatabase), PRAGMA statements
-    // on read-only databases may throw exceptions even though they're not errors.
+    //
+    // PLATFORM-SPECIFIC BEHAVIOR:
+    // On iOS (SqfliteDarwinDatabase), executing PRAGMA statements on read-only
+    // databases throws exceptions even though they're not actual errors (error
+    // message explicitly says "not an error"). This is a platform-specific quirk.
+    //
+    // The FFI implementation used in tests allows PRAGMA on read-only databases,
+    // but the native iOS implementation does not. This difference is why we must
+    // wrap PRAGMA in try-catch to handle platform differences gracefully.
+    //
+    // The database is fully functional without the busy_timeout setting, so it's
+    // safe to ignore these exceptions. The setting is "nice to have" but not
+    // critical for functionality.
     try {
       await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
     } catch (e) {
-      // Ignore exceptions from PRAGMA on read-only databases on iOS
-      // The database is still functional without this setting
+      // Ignore exceptions from PRAGMA on read-only databases.
+      // This happens on iOS (SqfliteDarwinDatabase) but not on FFI (tests).
+      // The database remains fully functional without this setting.
     }
 
     return db;

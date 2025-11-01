@@ -42,16 +42,26 @@ class AppDataService with InitializationMixin {
     );
 
     // WHY: Configure database with timeout and WAL mode for better concurrency.
-    // Wrap in try-catch because PRAGMA statements may throw exceptions on some platforms
-    // even when they're not errors (particularly on iOS read-only databases).
+    //
+    // PLATFORM-SPECIFIC BEHAVIOR:
+    // PRAGMA statements may throw exceptions on some platforms even when they're
+    // not actual errors. While this writable database should normally accept
+    // PRAGMA statements, we wrap them in try-catch as a defensive measure to
+    // handle any platform-specific quirks gracefully.
+    //
+    // Both WAL mode and busy_timeout are performance optimizations, not critical
+    // for functionality. The database remains fully operational without them.
+    //
+    // See database_service.dart for more details on iOS-specific PRAGMA behavior
+    // with read-only databases.
     try {
       await _db!.execute('PRAGMA journal_mode=WAL'); // Enable WAL mode
       await _db!.execute(
         'PRAGMA busy_timeout=5000',
       ); // 5 second timeout for locks
     } catch (e) {
-      // Ignore exceptions from PRAGMA statements on some platforms.
-      // The database is still functional without these settings.
+      // Ignore exceptions from PRAGMA statements.
+      // The database is fully functional without these optional settings.
     }
 
     markInitialized();

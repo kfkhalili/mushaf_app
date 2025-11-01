@@ -163,11 +163,18 @@ jobs:
         run: flutter test test/golden/
 
   integration-test:
-    name: Integration Tests (E2E)
+    name: Integration Tests (E2E) - iOS Simulator
     runs-on: macos-latest
     timeout-minutes: 20  # WHY: Reduced from 30 to save minutes on hanging tests
     # WHY: Only run expensive integration tests on main branch merges
     # Saves ~100-300 minutes per run - only run when code is actually merged
+    # 
+    # PLATFORM-SPECIFIC TESTING:
+    # These integration tests run on iOS simulator using native iOS SQLite
+    # (SqfliteDarwinDatabase), not FFI. This helps catch platform-specific issues
+    # like PRAGMA exceptions on read-only databases that don't appear in FFI-based
+    # unit tests. The integration tests verify that database operations work
+    # correctly in the actual iOS environment.
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.draft == false)
