@@ -8,8 +8,22 @@ echo "[pre-commit] Static analysis (treat infos as fatal)..."
 dart analyze --fatal-infos
 
 echo "[pre-commit] Running tests..."
-flutter test -r expanded
+flutter test --coverage
 
-echo "[pre-commit] OK"
+echo "[pre-commit] Checking golden files..."
+# Check if golden files changed (but allow if intentionally updating)
+if [ -n "$(git diff --name-only test/golden/ 2>/dev/null)" ]; then
+  echo "⚠️  WARNING: Golden files changed!"
+  echo "If this is intentional (UI update), run: flutter test --update-goldens"
+  echo "If not intentional, review the changes carefully."
+  read -p "Continue anyway? (y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "❌ Commit aborted. Review golden file changes."
+    exit 1
+  fi
+fi
+
+echo "[pre-commit] ✅ All checks passed"
 
 

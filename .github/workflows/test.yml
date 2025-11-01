@@ -1,0 +1,111 @@
+name: Test & Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Run unit and widget tests
+        run: flutter test --coverage
+
+      - name: Run golden tests
+        run: flutter test test/golden/ --update-goldens=false
+
+      - name: Run integration tests
+        run: flutter test integration_test/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Check coverage threshold
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            coverage=$(lcov --summary coverage/lcov.info 2>&1 | grep -oP 'lines\.*: \K[0-9.]*')
+            echo "Current coverage: ${coverage}%"
+            if (( $(echo "$coverage < 70" | bc -l) )); then
+              echo "Coverage is below 70% threshold"
+              exit 1
+            fi
+          fi
+
+  golden-check:
+    name: Verify Golden Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Run golden tests (strict mode)
+        run: flutter test test/golden/ --update-goldens=false
+        continue-on-error: false
+
+  integration-test:
+    name: Integration Tests (E2E)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Run integration tests
+        run: flutter test integration_test/
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: test_driver/
+
