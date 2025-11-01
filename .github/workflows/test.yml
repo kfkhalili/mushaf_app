@@ -3,13 +3,39 @@ name: Test & Quality Checks
 on:
   push:
     branches: [ main, develop ]
+    # WHY: Skip CI if only documentation, config, or non-code files changed
+    # This saves significant CI minutes by avoiding unnecessary runs
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'docs/**'
+      - '.github/workflows/*.md'
   pull_request:
     branches: [ main, develop ]
+    types: [opened, synchronize, reopened, ready_for_review]
+    # WHY: Skip CI on draft PRs - wait until PR is ready for review
+    # This prevents wasting minutes on incomplete work
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'docs/**'
+      - '.github/workflows/*.md'
+
+# WHY: Only run expensive jobs on certain conditions to save CI minutes
+# - Unit tests: Always run (cheap, ubuntu)
+# - Golden tests: Only on main branch and non-draft PRs
+# - Integration tests: Only on main branch merges (very expensive)
+# - iOS build: Only on main branch merges
 
 jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # WHY: Prevent hanging tests from wasting minutes
 
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +45,18 @@ jobs:
         with:
           flutter-version: '3.x'
           channel: 'stable'
+          cache: true  # WHY: Cache Flutter SDK to reduce setup time
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            **/.packages
+            **/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -30,6 +68,7 @@ jobs:
         run: flutter analyze
 
       - name: Run unit and widget tests
+        timeout-minutes: 10  # WHY: Limit test execution time
         run: flutter test --coverage --exclude-tags=golden --concurrency=1
 
       - name: Upload coverage to Codecov
@@ -84,6 +123,13 @@ jobs:
   golden-check:
     name: Verify Golden Tests
     runs-on: macos-latest
+    timeout-minutes: 15  # WHY: Limit expensive macOS job time
+    # WHY: Only run golden tests on main branch or when PR is ready (not draft)
+    # This saves ~30-50 minutes per run on macOS
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    needs: test  # WHY: Only run if unit tests pass
 
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +139,18 @@ jobs:
         with:
           flutter-version: '3.x'
           channel: 'stable'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            **/.packages
+            **/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -101,13 +159,19 @@ jobs:
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
       - name: Run golden tests (strict mode)
+        timeout-minutes: 10  # WHY: Limit test execution time
         run: flutter test test/golden/
-        continue-on-error: false
 
   integration-test:
     name: Integration Tests (E2E)
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 20  # WHY: Reduced from 30 to save minutes on hanging tests
+    # WHY: Only run expensive integration tests on main branch merges
+    # Saves ~100-300 minutes per run - only run when code is actually merged
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.draft == false)
+    needs: test  # WHY: Only run if unit tests pass
 
     steps:
       - uses: actions/checkout@v4
@@ -117,6 +181,18 @@ jobs:
         with:
           flutter-version: '3.x'
           channel: 'stable'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            **/.packages
+            **/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -156,9 +232,9 @@ jobs:
           echo "Opening Simulator.app..."
           open -a Simulator || echo "Could not open Simulator.app"
 
-          # Wait for simulator to be ready
+          # Wait for simulator to be ready (reduced from 15s to 10s)
           echo "Waiting for simulator to be ready..."
-          sleep 15
+          sleep 10
 
           # Verify simulator is booted
           if xcrun simctl list devices | grep "$SIMULATOR_UUID" | grep -q "Booted"; then
@@ -168,7 +244,7 @@ jobs:
           fi
 
       - name: Run integration tests
-        timeout-minutes: 30
+        timeout-minutes: 15  # WHY: Reduced timeout to save minutes
         run: |
           echo "Waiting for Flutter to detect iOS simulator..."
           sleep 5
@@ -185,31 +261,35 @@ jobs:
             echo "Note: First build can take 2-3 minutes, tests typically take 5-10 minutes total"
             echo "There are 17 integration tests across 3 files"
             echo ""
-            # Run tests with increased timeout and progress output
-            # Increase timeout to 20 minutes per test (default is 12 minutes)
-            # Run tests individually to avoid cascading failures from simulator cleanup
+            # WHY: Run only critical integration test to save time
+            # Run critical user journeys first - most important test
             echo ""
-            echo "Running integration tests individually to avoid cascading failures..."
+            echo "Running critical user journeys test..."
             echo ""
 
             TEST_FAILED=0
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "Test 1/3: critical_user_journeys_test.dart"
+            echo "Test: critical_user_journeys_test.dart"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            flutter test integration_test/critical_user_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=20m || TEST_FAILED=1
+            flutter test integration_test/critical_user_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=15m || TEST_FAILED=1
 
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "Test 2/3: smoke_journeys_test.dart"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            flutter test integration_test/smoke_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=20m || TEST_FAILED=1
+            # WHY: Run other tests only on main branch push to save minutes
+            # By default, only run critical test to save CI minutes
+            # Check if this is a push to main branch
+            if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo ""
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "Test: smoke_journeys_test.dart"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              flutter test integration_test/smoke_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=15m || TEST_FAILED=1
 
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "Test 3/3: user_journeys_test.dart"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            flutter test integration_test/user_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=20m || TEST_FAILED=1
+              echo ""
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "Test: user_journeys_test.dart"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              flutter test integration_test/user_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=15m || TEST_FAILED=1
+            fi
 
             if [ "$TEST_FAILED" = "1" ]; then
               echo ""
@@ -240,6 +320,15 @@ jobs:
   ios-build:
     name: iOS Build Check
     runs-on: macos-latest
+    timeout-minutes: 20  # WHY: Limit build time
+    # WHY: Only run iOS build on main branch merges
+    # Saves ~50-100 minutes per run
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+       github.ref == 'refs/heads/main' &&
+       github.event.pull_request.draft == false)
+    needs: test  # WHY: Only run if unit tests pass
 
     steps:
       - uses: actions/checkout@v4
@@ -249,6 +338,18 @@ jobs:
         with:
           flutter-version: '3.x'
           channel: 'stable'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            **/.packages
+            **/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -260,12 +361,21 @@ jobs:
         run: flutter analyze
 
       - name: Run unit/widget tests
+        timeout-minutes: 10
         run: flutter test --no-pub
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       - name: Install iOS pods
         working-directory: ios
         run: pod install --repo-update
 
       - name: Build iOS (no codesign)
+        timeout-minutes: 15  # WHY: Limit build time
         run: flutter build ios --no-codesign
-
