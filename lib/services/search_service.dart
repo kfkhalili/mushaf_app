@@ -11,6 +11,7 @@ import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/lru_cache.dart';
+import '../utils/parsing_helpers.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -348,8 +349,8 @@ class SearchService with InitializationMixin {
       if (verseData == null) continue; // Skip if not found in either database
 
       final String verseText = verseData['text'] as String;
-      final int surahNumber = _parseInt(verseData['surah']);
-      final int ayahNumber = _parseInt(verseData['ayah']);
+      final int surahNumber = parseInt(verseData['surah']);
+      final int ayahNumber = parseInt(verseData['ayah']);
 
       // Debug: Check if text contains diacritics
       if (kDebugMode && ayahNumber <= 3) {
@@ -397,8 +398,8 @@ class SearchService with InitializationMixin {
     final parts = verseKey.split(':');
     if (parts.length != 2) return 1;
 
-    final int surahNumber = _parseInt(parts[0]);
-    final int ayahNumber = _parseInt(parts[1]);
+    final int surahNumber = parseInt(parts[0]);
+    final int ayahNumber = parseInt(parts[1]);
 
     try {
       // Use the existing DatabaseService method for accurate page mapping
@@ -494,7 +495,7 @@ class SearchService with InitializationMixin {
 
     if (surahResults.isEmpty) return [];
 
-    final int surahNumber = _parseInt(surahResults.first[DbConstants.idCol]);
+    final int surahNumber = parseInt(surahResults.first[DbConstants.idCol]);
 
     // Get first ayah of the surah from imlaei-simple.db
     final List<Map<String, dynamic>> firstAyah = await _imlaeiDb!.query(
@@ -535,8 +536,8 @@ class SearchService with InitializationMixin {
     final List<SearchResult> results = [];
 
     for (final verse in verseResults) {
-      final int surahNumber = _parseInt(verse['surah']);
-      final int ayahNumber = _parseInt(verse['ayah']);
+      final int surahNumber = parseInt(verse['surah']);
+      final int ayahNumber = parseInt(verse['ayah']);
       final String verseText = verse['text'] as String;
       final String verseKey = verse['verse_key'] as String;
 
@@ -577,10 +578,6 @@ class SearchService with InitializationMixin {
     _currentLayout = null;
   }
 
-  int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
-  }
+  // WHY: Use shared parsing utility instead of duplicate method
+  // Removed parseInt() - use parseInt() from parsing_helpers.dart
 }

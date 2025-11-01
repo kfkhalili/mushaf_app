@@ -165,11 +165,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
 
     final asyncPageData = ref.watch(pageDataProvider(currentPageNumber));
 
-    // Keep surah state synced
-    asyncPageData.whenData(_maybeResetSurahProgress);
-
-    // Capture memorization start page + base ayah if just enabled
+    // WHY: Combine both whenData callbacks into single callback for better performance.
+    // Single callback registration reduces rebuilds and improves code clarity.
     asyncPageData.whenData((pageData) {
+      // Keep surah state synced
+      _maybeResetSurahProgress(pageData);
+
+      // Capture memorization start page + base ayah if just enabled
       if (_memorizationStartPage == null && isBetaMemorizing) {
         _memorizationStartPage = currentPageNumber;
       }

@@ -169,6 +169,19 @@ class PreviewLimits {
   const PreviewLimits._();
 }
 
+// --- SEARCH HISTORY CONSTANTS ---
+// WHY: Centralizes search history-related constants.
+class SearchHistoryConstants {
+  // WHY: SharedPreferences key for storing search history.
+  static const String preferencesKey = 'search_history';
+
+  // WHY: Maximum number of history items to store and display.
+  static const int maxHistoryItems = 20;
+
+  // WHY: Private constructor to prevent instantiation.
+  const SearchHistoryConstants._();
+}
+
 // --- DATE CALCULATIONS ---
 // WHY: Centralizes date calculation constants to avoid magic numbers.
 class DateCalculations {

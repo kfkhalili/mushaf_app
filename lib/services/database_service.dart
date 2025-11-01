@@ -9,6 +9,7 @@ import '../models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
+import '../utils/parsing_helpers.dart';
 
 class DatabaseService with InitializationMixin {
   Database? _layoutDb;
@@ -328,8 +329,8 @@ class DatabaseService with InitializationMixin {
     final Map<int, int> pageMap = Map.fromEntries(
       surahStartPages.map(
         (row) => MapEntry(
-          _parseInt(row[DbConstants.surahNumberCol]),
-          _parseInt(row[DbConstants.startPageAlias]),
+          parseInt(row[DbConstants.surahNumberCol]),
+          parseInt(row[DbConstants.startPageAlias]),
         ),
       ),
     );
@@ -338,7 +339,7 @@ class DatabaseService with InitializationMixin {
 
     // 4. Combine the data into a list of SurahInfo objects.
     return chapters.map((chapter) {
-      final int surahNum = _parseInt(chapter[DbConstants.idCol]);
+      final int surahNum = parseInt(chapter[DbConstants.idCol]);
       return SurahInfo(
         surahNumber: surahNum,
         nameArabic: chapter[DbConstants.nameArabicCol] as String,
@@ -374,11 +375,8 @@ class DatabaseService with InitializationMixin {
     }
   }
 
-  /// Safely parses an integer from a dynamic value.
-  int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    return int.tryParse(value.toString()) ?? 0;
-  }
+  // WHY: Use shared parsing utility instead of duplicate method
+  // Removed parseInt() - use parseInt() from parsing_helpers.dart
 
   /// Determines the first Surah and Ayah number that appears on a given page.
   /// Public method for use by bookmarks service migration.
@@ -413,7 +411,7 @@ class DatabaseService with InitializationMixin {
     for (final line in lines) {
       if (line[DbConstants.lineTypeCol] == 'ayah' &&
           line[DbConstants.firstWordIdCol] != null) {
-        final firstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
+        final firstWordId = parseInt(line[DbConstants.firstWordIdCol]);
         if (firstWordId == 0) continue; // Skip if ID is invalid
 
         // Query the script DB to get the Surah/Ayah for this word ID.
@@ -425,8 +423,8 @@ class DatabaseService with InitializationMixin {
           limit: QueryLimits.singleResult,
         );
         if (words.isNotEmpty) {
-          final int surah = _parseInt(words.first[DbConstants.surahCol]);
-          final int ayah = _parseInt(words.first[DbConstants.ayahNumberCol]);
+          final int surah = parseInt(words.first[DbConstants.surahCol]);
+          final int ayah = parseInt(words.first[DbConstants.ayahNumberCol]);
           if (surah > 0 && ayah > 0) {
             return {'surah': surah, 'ayah': ayah}; // Found it
           }
@@ -437,7 +435,7 @@ class DatabaseService with InitializationMixin {
     for (final line in lines) {
       if (line[DbConstants.lineTypeCol] == 'surah_name' &&
           line[DbConstants.surahNumberCol] != null) {
-        final int surahNum = _parseInt(line[DbConstants.surahNumberCol]);
+        final int surahNum = parseInt(line[DbConstants.surahNumberCol]);
         if (surahNum > 0) {
           return {'surah': surahNum, 'ayah': 1}; // Assume Ayah 1
         }
@@ -475,8 +473,8 @@ class DatabaseService with InitializationMixin {
     // 2. Collect all word IDs from all lines on the page.
     final wordIds = <int>{};
     for (final line in lines) {
-      final firstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
-      final lastWordId = _parseInt(line[DbConstants.lastWordIdCol]);
+      final firstWordId = parseInt(line[DbConstants.firstWordIdCol]);
+      final lastWordId = parseInt(line[DbConstants.lastWordIdCol]);
 
       if (firstWordId > 0 && lastWordId > 0) {
         for (var i = firstWordId; i <= lastWordId; i++) {
@@ -503,8 +501,8 @@ class DatabaseService with InitializationMixin {
     return words
         .map(
           (word) => {
-            'surah': _parseInt(word[DbConstants.surahCol]),
-            'ayah': _parseInt(word[DbConstants.ayahNumberCol]),
+            'surah': parseInt(word[DbConstants.surahCol]),
+            'ayah': parseInt(word[DbConstants.ayahNumberCol]),
           },
         )
         .where((ayah) => ayah['surah']! > 0 && ayah['ayah']! > 0)
@@ -537,13 +535,13 @@ class DatabaseService with InitializationMixin {
 
       try {
         // Parse the start and end Surah:Ayah keys.
-        final sFirst = _parseInt(firstKey.split(':').first);
-        final aFirst = _parseInt(firstKey.split(':').last);
-        final sLast = _parseInt(lastKey.split(':').first);
-        final aLast = _parseInt(lastKey.split(':').last);
+        final sFirst = parseInt(firstKey.split(':').first);
+        final aFirst = parseInt(firstKey.split(':').last);
+        final sLast = parseInt(lastKey.split(':').first);
+        final aLast = parseInt(lastKey.split(':').last);
         // Check if the target ayah falls within this Juz' range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return _parseInt(row[DbConstants.juzNumberCol]); // Found it
+          return parseInt(row[DbConstants.juzNumberCol]); // Found it
         }
       } catch (_) {
         continue; // Ignore errors parsing keys
@@ -563,13 +561,13 @@ class DatabaseService with InitializationMixin {
 
       try {
         // Parse the start and end Surah:Ayah keys.
-        final sFirst = _parseInt(firstKey.split(':').first);
-        final aFirst = _parseInt(firstKey.split(':').last);
-        final sLast = _parseInt(lastKey.split(':').first);
-        final aLast = _parseInt(lastKey.split(':').last);
+        final sFirst = parseInt(firstKey.split(':').first);
+        final aFirst = parseInt(firstKey.split(':').last);
+        final sLast = parseInt(lastKey.split(':').first);
+        final aLast = parseInt(lastKey.split(':').last);
         // Check if the target ayah falls within this Hizb range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return _parseInt(row[DbConstants.hizbNumberCol]); // Found it
+          return parseInt(row[DbConstants.hizbNumberCol]); // Found it
         }
       } catch (_) {
         continue; // Ignore errors parsing keys
@@ -634,11 +632,11 @@ class DatabaseService with InitializationMixin {
       final lineType = lineData[DbConstants.lineTypeCol] as String;
       List<Word> words = [];
       String? surahName;
-      final int surahNum = _parseInt(lineData[DbConstants.surahNumberCol]);
+      final int surahNum = parseInt(lineData[DbConstants.surahNumberCol]);
 
       if (lineType == 'ayah') {
-        final firstWordId = _parseInt(lineData[DbConstants.firstWordIdCol]);
-        final lastWordId = _parseInt(lineData[DbConstants.lastWordIdCol]);
+        final firstWordId = parseInt(lineData[DbConstants.firstWordIdCol]);
+        final lastWordId = parseInt(lineData[DbConstants.lastWordIdCol]);
 
         // Fetch words within the ID range for this line.
         if (firstWordId > 0 && lastWordId >= firstWordId) {
@@ -657,8 +655,8 @@ class DatabaseService with InitializationMixin {
           words = wordsData.map((wordMap) {
             return Word(
               text: wordMap[DbConstants.textCol] as String,
-              surahNumber: _parseInt(wordMap[DbConstants.surahCol]),
-              ayahNumber: _parseInt(wordMap[DbConstants.ayahNumberCol]),
+              surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+              ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
           }).toList();
         }
@@ -679,8 +677,8 @@ class DatabaseService with InitializationMixin {
           words = wordsData.map((wordMap) {
             return Word(
               text: wordMap[DbConstants.textCol] as String,
-              surahNumber: _parseInt(wordMap[DbConstants.surahCol]),
-              ayahNumber: _parseInt(wordMap[DbConstants.ayahNumberCol]),
+              surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+              ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
           }).toList();
         }
@@ -694,8 +692,8 @@ class DatabaseService with InitializationMixin {
       // Add the processed line info to the list.
       lines.add(
         LineInfo(
-          lineNumber: _parseInt(lineData[DbConstants.lineNumberCol]),
-          isCentered: _parseInt(lineData[DbConstants.isCenteredCol]) == 1,
+          lineNumber: parseInt(lineData[DbConstants.lineNumberCol]),
+          isCentered: parseInt(lineData[DbConstants.isCenteredCol]) == 1,
           lineType: lineType,
           surahNumber: surahNum,
           words: words,
@@ -735,7 +733,7 @@ class DatabaseService with InitializationMixin {
         "Word not found for Surah $surahNumber, Ayah $ayahNumber",
       );
     }
-    final int firstWordId = _parseInt(words.first[DbConstants.idCol]);
+    final int firstWordId = parseInt(words.first[DbConstants.idCol]);
 
     // 2. Find the page layout entry containing this word ID.
     // Check if the word ID falls within the first_word_id and last_word_id range.
@@ -751,7 +749,7 @@ class DatabaseService with InitializationMixin {
     );
 
     if (pages.isNotEmpty) {
-      return _parseInt(pages.first[DbConstants.pageNumberCol]);
+      return parseInt(pages.first[DbConstants.pageNumberCol]);
     }
 
     // Fallback: Check if it's the very first word on a line (last_word_id might be 0 or equal)
@@ -767,7 +765,7 @@ class DatabaseService with InitializationMixin {
     );
 
     if (firstWordPages.isNotEmpty) {
-      return _parseInt(firstWordPages.first[DbConstants.pageNumberCol]);
+      return parseInt(firstWordPages.first[DbConstants.pageNumberCol]);
     }
 
     // Final fallback specifically for Surah starts (like Surah 1 page 1)
@@ -804,7 +802,7 @@ class DatabaseService with InitializationMixin {
     );
 
     if (result.isNotEmpty && result.first[DbConstants.startPageAlias] != null) {
-      return _parseInt(result.first[DbConstants.startPageAlias]);
+      return parseInt(result.first[DbConstants.startPageAlias]);
     }
     // Broader fallback if surah_name line isn't found (look for any line with that surah_number).
     final List<Map<String, dynamic>> broaderResult = await _layoutDb!.query(
@@ -818,7 +816,7 @@ class DatabaseService with InitializationMixin {
     );
     if (broaderResult.isNotEmpty &&
         broaderResult.first[DbConstants.startPageAlias] != null) {
-      return _parseInt(broaderResult.first[DbConstants.startPageAlias]);
+      return parseInt(broaderResult.first[DbConstants.startPageAlias]);
     }
 
     throw DatabaseNotFoundException(
@@ -838,7 +836,7 @@ class DatabaseService with InitializationMixin {
     List<JuzInfo> juzList = [];
     // Process each Juz' entry from the cache.
     for (final juzData in _juzCache) {
-      final int juzNum = _parseInt(juzData[DbConstants.juzNumberCol]);
+      final int juzNum = parseInt(juzData[DbConstants.juzNumberCol]);
       final String? firstVerseKey =
           juzData[DbConstants.firstVerseKeyCol] as String?;
 
@@ -847,8 +845,8 @@ class DatabaseService with InitializationMixin {
           // Parse Surah:Ayah from the key.
           final parts = firstVerseKey.split(':');
           if (parts.length == 2) {
-            final int surah = _parseInt(parts[0]);
-            final int ayah = _parseInt(parts[1]);
+            final int surah = parseInt(parts[0]);
+            final int ayah = parseInt(parts[1]);
             if (surah > 0 && ayah > 0) {
               // Find the page number for the starting ayah of this Juz'.
               final int startPage = await getPageForAyah(surah, ayah);
@@ -900,7 +898,7 @@ class DatabaseService with InitializationMixin {
     int firstWordId = 0;
     // Find the first line in the results that actually has a word id > 0
     for (var line in lines) {
-      int currentFirstWordId = _parseInt(line[DbConstants.firstWordIdCol]);
+      int currentFirstWordId = parseInt(line[DbConstants.firstWordIdCol]);
       if (currentFirstWordId > 0) {
         // Check if this word is part of Basmallah (often ayah 0)
         final List<Map<String, dynamic>> checkWord = await _scriptDb!.query(
@@ -911,7 +909,7 @@ class DatabaseService with InitializationMixin {
           limit: QueryLimits.singleResult,
         );
         if (checkWord.isNotEmpty &&
-            _parseInt(checkWord.first[DbConstants.ayahNumberCol]) > 0) {
+            parseInt(checkWord.first[DbConstants.ayahNumberCol]) > 0) {
           firstWordId = currentFirstWordId;
           break; // Found the first non-Basmallah word
         } else if (firstWordId == 0) {

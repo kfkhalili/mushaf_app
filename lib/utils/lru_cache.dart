@@ -14,16 +14,17 @@ class LRUCache<K, V> {
 
   /// WHY: Gets value from cache, moving it to end (most recently used).
   /// Returns null if key doesn't exist.
+  ///
+  /// Optimization: Directly calls remove() which returns null if key doesn't exist,
+  /// eliminating redundant containsKey() check.
   V? get(K key) {
-    if (!_cache.containsKey(key)) {
-      return null;
-    }
     // Move to end (most recently used) by removing and re-inserting
     final value = _cache.remove(key);
     if (value != null) {
       _cache[key] = value;
+      return value;
     }
-    return value;
+    return null; // Key doesn't exist
   }
 
   /// WHY: Puts value in cache, evicting least recently used if at capacity.

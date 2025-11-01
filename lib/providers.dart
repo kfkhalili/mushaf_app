@@ -248,14 +248,12 @@ Future<List<SearchResult>> searchResults(Ref ref, String query) async {
 // --- Search History Provider ---
 @Riverpod(keepAlive: true)
 class SearchHistory extends _$SearchHistory {
-  static const String _searchHistoryKey = 'search_history';
-  static const int _maxHistoryItems = 20;
-
   @override
   List<String> build() {
     final prefs = ref.read(sharedPreferencesProvider).value;
-    final historyJson = prefs?.getStringList(_searchHistoryKey) ?? [];
-    return historyJson.take(_maxHistoryItems).toList();
+    final historyJson =
+        prefs?.getStringList(SearchHistoryConstants.preferencesKey) ?? [];
+    return historyJson.take(SearchHistoryConstants.maxHistoryItems).toList();
   }
 
   void addToHistory(String query) {
@@ -271,21 +269,24 @@ class SearchHistory extends _$SearchHistory {
     currentHistory.insert(0, trimmedQuery);
 
     // Limit to max items
-    if (currentHistory.length > _maxHistoryItems) {
-      currentHistory.removeRange(_maxHistoryItems, currentHistory.length);
+    if (currentHistory.length > SearchHistoryConstants.maxHistoryItems) {
+      currentHistory.removeRange(
+        SearchHistoryConstants.maxHistoryItems,
+        currentHistory.length,
+      );
     }
 
     state = currentHistory;
 
     // Save to preferences
     final prefs = ref.read(sharedPreferencesProvider).value;
-    prefs?.setStringList(_searchHistoryKey, currentHistory);
+    prefs?.setStringList(SearchHistoryConstants.preferencesKey, currentHistory);
   }
 
   void clearHistory() {
     state = [];
     final prefs = ref.read(sharedPreferencesProvider).value;
-    prefs?.remove(_searchHistoryKey);
+    prefs?.remove(SearchHistoryConstants.preferencesKey);
   }
 
   void removeFromHistory(String query) {
@@ -294,7 +295,7 @@ class SearchHistory extends _$SearchHistory {
     state = currentHistory;
 
     final prefs = ref.read(sharedPreferencesProvider).value;
-    prefs?.setStringList(_searchHistoryKey, currentHistory);
+    prefs?.setStringList(SearchHistoryConstants.preferencesKey, currentHistory);
   }
 }
 
