@@ -1033,7 +1033,7 @@ final class BookmarksNotifierProvider
   BookmarksNotifier create() => BookmarksNotifier();
 }
 
-String _$bookmarksNotifierHash() => r'13f8187c9180ebebb4a86d94aeedfed3ccc05391';
+String _$bookmarksNotifierHash() => r'bbb92117e4464d2e8a49e9cf9308d36bb7511dd7';
 
 abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
   FutureOr<List<Bookmark>> build();
@@ -1052,6 +1052,84 @@ abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
             >;
     element.handleValue(ref, created);
   }
+}
+
+@ProviderFor(pageDataWithBookmarks)
+const pageDataWithBookmarksProvider = PageDataWithBookmarksFamily._();
+
+final class PageDataWithBookmarksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<(PageData, List<Bookmark>)>,
+          (PageData, List<Bookmark>),
+          FutureOr<(PageData, List<Bookmark>)>
+        >
+    with
+        $FutureModifier<(PageData, List<Bookmark>)>,
+        $FutureProvider<(PageData, List<Bookmark>)> {
+  const PageDataWithBookmarksProvider._({
+    required PageDataWithBookmarksFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'pageDataWithBookmarksProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pageDataWithBookmarksHash();
+
+  @override
+  String toString() {
+    return r'pageDataWithBookmarksProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<(PageData, List<Bookmark>)> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<(PageData, List<Bookmark>)> create(Ref ref) {
+    final argument = this.argument as int;
+    return pageDataWithBookmarks(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PageDataWithBookmarksProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pageDataWithBookmarksHash() =>
+    r'b85f3f2925541048c81a62e81ada20f0ad1becfc';
+
+final class PageDataWithBookmarksFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<(PageData, List<Bookmark>)>, int> {
+  const PageDataWithBookmarksFamily._()
+    : super(
+        retry: null,
+        name: r'pageDataWithBookmarksProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PageDataWithBookmarksProvider call(int pageNumber) =>
+      PageDataWithBookmarksProvider._(argument: pageNumber, from: this);
+
+  @override
+  String toString() => r'pageDataWithBookmarksProvider';
 }
 
 @ProviderFor(bookmarkPageNumber)
