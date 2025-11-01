@@ -120,8 +120,15 @@ class DatabaseService {
       singleInstance: true, // WHY: Reuse connection for better performance
     );
 
-    // WHY: Set busy timeout for read-only databases to handle concurrent access
-    await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
+    // WHY: Set busy timeout for read-only databases to handle concurrent access.
+    // Wrap in try-catch because on iOS (SqfliteDarwinDatabase), PRAGMA statements
+    // on read-only databases may throw exceptions even though they're not errors.
+    try {
+      await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
+    } catch (e) {
+      // Ignore exceptions from PRAGMA on read-only databases on iOS
+      // The database is still functional without this setting
+    }
 
     return db;
   }
