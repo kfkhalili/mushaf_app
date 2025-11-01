@@ -85,7 +85,7 @@ class AppHeader extends StatelessWidget {
                 color: iconColor,
               ),
             ),
-          // Optional trailing widget (e.g., BookmarkIconButton for Mushaf Screen)
+          // Optional trailing widget
           if (trailing != null) trailing!,
           // Back button (if enabled) - comes after title for RTL
           if (showBackButton)

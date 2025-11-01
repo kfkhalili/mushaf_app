@@ -896,75 +896,6 @@ final class BookmarksServiceProvider
 
 String _$bookmarksServiceHash() => r'1e6d08f9953d7b36773c13e272e6eb94dde9c323';
 
-@ProviderFor(isPageBookmarked)
-const isPageBookmarkedProvider = IsPageBookmarkedFamily._();
-
-final class IsPageBookmarkedProvider
-    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
-    with $FutureModifier<bool>, $FutureProvider<bool> {
-  const IsPageBookmarkedProvider._({
-    required IsPageBookmarkedFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'isPageBookmarkedProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$isPageBookmarkedHash();
-
-  @override
-  String toString() {
-    return r'isPageBookmarkedProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<bool> create(Ref ref) {
-    final argument = this.argument as int;
-    return isPageBookmarked(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is IsPageBookmarkedProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$isPageBookmarkedHash() => r'1c97e24927c2b1f16c7f4df7393ae3127f58ca46';
-
-final class IsPageBookmarkedFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<bool>, int> {
-  const IsPageBookmarkedFamily._()
-    : super(
-        retry: null,
-        name: r'isPageBookmarkedProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  IsPageBookmarkedProvider call(int pageNumber) =>
-      IsPageBookmarkedProvider._(argument: pageNumber, from: this);
-
-  @override
-  String toString() => r'isPageBookmarkedProvider';
-}
-
 @ProviderFor(isAyahBookmarked)
 const isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
 
@@ -1061,7 +992,7 @@ final class BookmarksNotifierProvider
   BookmarksNotifier create() => BookmarksNotifier();
 }
 
-String _$bookmarksNotifierHash() => r'd4ac7c9fb22235ee8695a96f09ee346be200af52';
+String _$bookmarksNotifierHash() => r'b34092550866cbaa2aefe6a911bea45898527069';
 
 abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
   FutureOr<List<Bookmark>> build();

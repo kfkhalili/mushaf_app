@@ -280,13 +280,6 @@ Future<BookmarksService> bookmarksService(Ref ref) async {
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
 
-// --- Is Page Bookmarked Provider --- (Helper for UI status checking)
-@riverpod
-Future<bool> isPageBookmarked(Ref ref, int pageNumber) async {
-  final service = await ref.watch(bookmarksServiceProvider.future);
-  return service.isPageBookmarked(pageNumber);
-}
-
 // --- Is Ayah Bookmarked Provider ---
 @riverpod
 Future<bool> isAyahBookmarked(Ref ref, int surahNumber, int ayahNumber) async {
@@ -306,7 +299,6 @@ class BookmarksNotifier extends _$BookmarksNotifier {
   // Toggle bookmark for specific ayah
   Future<void> toggleAyahBookmark(int surahNumber, int ayahNumber) async {
     final service = await ref.read(bookmarksServiceProvider.future);
-    final dbService = await ref.read(databaseServiceProvider.future);
     final isBookmarked = await service.isBookmarked(surahNumber, ayahNumber);
 
     if (isBookmarked) {
@@ -315,20 +307,9 @@ class BookmarksNotifier extends _$BookmarksNotifier {
       await service.addBookmark(surahNumber, ayahNumber);
     }
 
-    int? pageNumber;
-    try {
-      pageNumber = await dbService.getPageForAyah(surahNumber, ayahNumber);
-    } catch (e) {
-      // Silently fail if page number can't be found, but invalidation of
-      // other providers should still proceed.
-    }
-
     // Invalidate to refresh list
     ref.invalidateSelf();
     ref.invalidate(isAyahBookmarkedProvider(surahNumber, ayahNumber));
-    if (pageNumber != null) {
-      ref.invalidate(isPageBookmarkedProvider(pageNumber));
-    }
   }
 
   // Remove bookmark by surah:ayah

@@ -23,9 +23,6 @@ abstract class BookmarksService {
   // Get bookmark by surah:ayah
   Future<Bookmark?> getBookmarkByAyah(int surahNumber, int ayahNumber);
 
-  // Helper: Check if any ayah on a page is bookmarked (for UI status)
-  Future<bool> isPageBookmarked(int pageNumber);
-
   // Clear all bookmarks
   Future<void> clearAllBookmarks();
 
@@ -363,40 +360,6 @@ class SqliteBookmarksService implements BookmarksService {
       );
     } catch (e) {
       throw Exception('Failed to get bookmark by ayah: $e');
-    }
-  }
-
-  @override
-  Future<bool> isPageBookmarked(int pageNumber) async {
-    await _ensureInitialized();
-    if (_db == null) throw StateError('Database not initialized');
-
-    try {
-      final ayahsOnPage = await _databaseService.getAyahsOnPage(pageNumber);
-      if (ayahsOnPage.isEmpty) return false;
-
-      // Create a list of placeholders for the query, e.g., "(?, ?), (?, ?)"
-      final placeholders = ayahsOnPage.map((_) => '(?, ?)').join(', ');
-      // Flatten the list of maps into a list of [surah, ayah, surah, ayah, ...]
-      final args = ayahsOnPage
-          .expand((ayah) => [ayah['surah'], ayah['ayah']])
-          .toList();
-
-      final result = await _db!.query(
-        DbConstants.bookmarksTable,
-        columns: [DbConstants.idCol],
-        where:
-            '(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol}) IN ($placeholders)',
-        whereArgs: args,
-        limit: 1,
-      );
-
-      return result.isNotEmpty;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error checking if page is bookmarked: $e');
-      }
-      return false;
     }
   }
 
