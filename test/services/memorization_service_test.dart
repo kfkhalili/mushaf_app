@@ -68,7 +68,9 @@ void main() {
         window: AyahWindowState(
           ayahIndices: [0],
           opacities: [1.0],
-          tapsSinceReveal: [config.tapsPerReveal - 1], // One less than needed, will be incremented
+          tapsSinceReveal: [
+            config.tapsPerReveal - 1,
+          ], // One less than needed, will be incremented
         ),
         lastAyahIndexShown: 0,
         lastUpdatedAt: DateTime.now(),
@@ -189,4 +191,3 @@ void main() {
     });
   });
 }
-
