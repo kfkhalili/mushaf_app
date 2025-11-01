@@ -53,9 +53,19 @@ void main() {
     });
 
     tearDown(() async {
-      await service.clearAllBookmarks();
+      // WHY: Ensure proper cleanup order - clear data first, then close connections
+      try {
+        await service.clearAllBookmarks();
+      } catch (e) {
+        // Ignore cleanup errors if database is already closed
+      }
+
+      // WHY: Close connections in reverse order of initialization
       await appDataService.close();
       await dbService.close();
+
+      // WHY: Small delay to ensure connections are fully closed before next test
+      await Future.delayed(const Duration(milliseconds: 10));
     });
 
     test('addBookmark creates bookmark successfully', () async {

@@ -1,0 +1,6 @@
+# WHY: Configure test execution for database-dependent tests
+# Ensures tests run sequentially to prevent database locking conflicts
+# when multiple test files use the same database service (AppDataService)
+
+concurrency: 1  # WHY: Run tests sequentially to prevent concurrent database access
+timeout: 5m     # WHY: Allow sufficient time for database operations and migrations

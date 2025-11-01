@@ -26,6 +26,8 @@ class AppDataService {
     _db = await openDatabase(
       dbPath,
       version: 1,
+      singleInstance: true, // WHY: Ensures only one database connection exists
+      // This prevents concurrent access issues and database locking
       onCreate: (db, version) async {
         // Create all tables for unified storage
         await _createMemorizationSessionsTable(db);
@@ -37,6 +39,12 @@ class AppDataService {
         await _createIndexes(db);
       },
     );
+
+    // WHY: Configure database with timeout and WAL mode for better concurrency
+    await _db!.execute('PRAGMA journal_mode=WAL'); // Enable WAL mode
+    await _db!.execute(
+      'PRAGMA busy_timeout=5000',
+    ); // 5 second timeout for locks
 
     _initialized = true;
   }
@@ -147,8 +155,13 @@ class AppDataService {
   }
 
   /// WHY: Closes database connection. Used for cleanup.
+  /// Ensures all pending operations complete before closing.
   Future<void> close() async {
-    await _db?.close();
+    if (_db != null) {
+      // WHY: Ensure all pending transactions are committed before closing
+      await _db!.close();
+      _db = null;
+    }
     _initialized = false;
     _initFuture = null;
   }

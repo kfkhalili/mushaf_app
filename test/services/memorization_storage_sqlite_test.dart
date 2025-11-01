@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/services/memorization_storage_sqlite.dart';
 import 'package:mushaf_app/memorization/models.dart';
+import 'package:mushaf_app/constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,18 @@ void main() {
     });
 
     tearDown(() async {
+      // WHY: Clean up all test data before closing connection
+      // Use transaction for atomic cleanup operation
+      try {
+        final db = appDataService.database;
+        await db.transaction((txn) async {
+          // WHY: Delete all sessions created during tests in one atomic operation
+          await txn.delete(DbConstants.memorizationSessionsTable);
+        });
+      } catch (e) {
+        // Ignore cleanup errors if database is already closed or table doesn't exist
+      }
+
       await appDataService.close();
     });
 

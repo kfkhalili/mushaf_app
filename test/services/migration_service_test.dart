@@ -56,19 +56,52 @@ void main() {
     });
 
     tearDown(() async {
-      // Clean up database tables
+      // WHY: Clean up database tables before closing connection
+      // Use transactions for atomic cleanup operations
       try {
         final db = appDataService.database;
-        await db.delete(DbConstants.bookmarksTable);
-        await db.delete(DbConstants.readingSessionsTable);
-        await db.delete(DbConstants.memorizationSessionsTable);
+
+        // WHY: Wrap cleanup in transaction for atomicity and better error handling
+        await db.transaction((txn) async {
+          // WHY: Use TRUNCATE-equivalent behavior by deleting all rows
+          // Check if tables exist before attempting cleanup
+          final tables = await txn.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?, ?, ?)",
+            [
+              DbConstants.bookmarksTable,
+              DbConstants.readingSessionsTable,
+              DbConstants.memorizationSessionsTable,
+            ],
+          );
+
+          final tableNames = tables
+              .map((row) => row['name'] as String)
+              .toList();
+
+          // WHY: Only delete from tables that exist to avoid errors
+          if (tableNames.contains(DbConstants.bookmarksTable)) {
+            await txn.delete(DbConstants.bookmarksTable);
+          }
+          if (tableNames.contains(DbConstants.readingSessionsTable)) {
+            await txn.delete(DbConstants.readingSessionsTable);
+          }
+          if (tableNames.contains(DbConstants.memorizationSessionsTable)) {
+            await txn.delete(DbConstants.memorizationSessionsTable);
+          }
+        });
       } catch (e) {
-        // Ignore errors if database is already closed
+        // Ignore errors if database is already closed or tables don't exist
       }
 
+      // WHY: Close connection before clearing preferences
       await appDataService.close();
+
+      // WHY: Clear migration flag for next test
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('app_data_migrated_v1');
+
+      // WHY: Small delay to ensure connection is fully closed before next test
+      await Future.delayed(const Duration(milliseconds: 10));
     });
 
     test('does not migrate if already migrated', () async {
@@ -109,25 +142,42 @@ void main() {
       const testSurah = 2;
       const testAyah = 2;
 
-      // Insert test bookmark
-      await oldDb.insert(DbConstants.bookmarksTable, {
-        DbConstants.surahNumberCol: testSurah,
-        DbConstants.ayahNumberCol: testAyah,
-        DbConstants.cachedPageNumberCol: 2,
-        DbConstants.createdAtCol: DateTime.now().toIso8601String(),
-        DbConstants.noteCol: 'Test note',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      // WHY: Use transaction to ensure atomic insert operation
+      await oldDb.transaction((txn) async {
+        // Insert test bookmark with conflict handling
+        await txn.insert(DbConstants.bookmarksTable, {
+          DbConstants.surahNumberCol: testSurah,
+          DbConstants.ayahNumberCol: testAyah,
+          DbConstants.cachedPageNumberCol: 2,
+          DbConstants.createdAtCol: DateTime.now().toIso8601String(),
+          DbConstants.noteCol: 'Test note',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      });
 
       await oldDb.close();
 
-      // Clear any existing data in new DB first
+      // WHY: Clear any existing data in new DB first using transaction
       final db = appDataService.database;
-      await db.delete(
-        DbConstants.bookmarksTable,
-        where:
-            '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
-        whereArgs: [testSurah, testAyah],
-      );
+      await db.transaction((txn) async {
+        // WHY: Check if record exists before deleting to avoid unnecessary operations
+        final existing = await txn.query(
+          DbConstants.bookmarksTable,
+          columns: [DbConstants.idCol],
+          where:
+              '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
+          whereArgs: [testSurah, testAyah],
+          limit: 1,
+        );
+
+        if (existing.isNotEmpty) {
+          await txn.delete(
+            DbConstants.bookmarksTable,
+            where:
+                '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
+            whereArgs: [testSurah, testAyah],
+          );
+        }
+      });
 
       // Run migration
       await migrationService.migrateIfNeeded();
@@ -167,12 +217,15 @@ void main() {
         },
       );
 
+      // WHY: Use transaction for atomic insert operation
       final now = DateTime.now();
-      await oldDb.insert(DbConstants.readingSessionsTable, {
-        DbConstants.sessionDateCol: now.toIso8601String().split('T')[0],
-        DbConstants.pageNumberCol: 5,
-        DbConstants.timestampCol: now.toIso8601String(),
-        DbConstants.durationSecondsCol: 120,
+      await oldDb.transaction((txn) async {
+        await txn.insert(DbConstants.readingSessionsTable, {
+          DbConstants.sessionDateCol: now.toIso8601String().split('T')[0],
+          DbConstants.pageNumberCol: 5,
+          DbConstants.timestampCol: now.toIso8601String(),
+          DbConstants.durationSecondsCol: 120,
+        });
       });
 
       await oldDb.close();
