@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/date_helpers.dart';
+import '../utils/date_query_helpers.dart';
 import '../exceptions/database_exceptions.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
@@ -130,7 +131,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesToday() async {
-    final todayDateStr = DateHelpers.formatDateForDb(DateTime.now());
+    final todayDateStr = DateQueryHelpers.today();
 
     final result = await _db.rawQuery(
       '''
@@ -145,8 +146,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesThisWeek() async {
-    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
-    final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
+    final weekAgoDateStr = DateQueryHelpers.lastWeekStart();
 
     final result = await _db.rawQuery(
       '''
@@ -161,9 +161,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesThisMonth() async {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthStartDateStr = DateHelpers.formatDateForDb(monthStart);
+    final monthStartDateStr = DateQueryHelpers.thisMonthStart();
 
     final result = await _db.rawQuery(
       '''
@@ -178,8 +176,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getDaysThisWeek() async {
-    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
-    final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
+    final weekAgoDateStr = DateQueryHelpers.lastWeekStart();
 
     final result = await _db.rawQuery(
       '''
@@ -194,9 +191,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getDaysThisMonth() async {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthStartDateStr = DateHelpers.formatDateForDb(monthStart);
+    final monthStartDateStr = DateQueryHelpers.thisMonthStart();
 
     final result = await _db.rawQuery(
       '''
@@ -224,7 +219,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
     await _ensureInitialized();
 
     // Check today first - must have read today to have a streak
-    final todayDateStr = DateHelpers.formatDateForDb(DateTime.now());
+    final todayDateStr = DateQueryHelpers.today();
     final todayResult = await _db.query(
       DbConstants.readingSessionsTable,
       columns: [DbConstants.pageNumberCol],
@@ -334,8 +329,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   Future<Map<DateTime, int>> getWeeklyProgress() async {
     await _ensureInitialized();
 
-    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
-    final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
+    final weekAgoDateStr = DateQueryHelpers.lastWeekStart();
 
     final results = await _db.rawQuery(
       '''
@@ -364,9 +358,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   Future<Map<DateTime, int>> getMonthlyProgress() async {
     await _ensureInitialized();
 
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthStartDateStr = DateHelpers.formatDateForDb(monthStart);
+    final monthStartDateStr = DateQueryHelpers.thisMonthStart();
 
     final results = await _db.rawQuery(
       '''

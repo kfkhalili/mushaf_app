@@ -2,24 +2,24 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../constants.dart';
+import '../utils/initialization_mixin.dart';
 
 /// WHY: Unified database service for all user-generated data.
 /// Consolidates bookmarks, reading progress, memorization sessions, and preferences
 /// into a single SQLite database for easier maintenance and backup.
-class AppDataService {
+class AppDataService with InitializationMixin {
   Database? _db;
-  bool _initialized = false;
-  Future<void>? _initFuture;
 
-  /// WHY: Ensures database is initialized. Uses _initFuture pattern to prevent
+  /// WHY: Ensures database is initialized. Uses mixin pattern to prevent
   /// concurrent initialization attempts.
+  @override
   Future<void> ensureInitialized() async {
-    if (_initialized && _db != null) return;
-    _initFuture ??= _doInit();
-    await _initFuture;
+    if (isInitialized && _db != null) return;
+    await super.ensureInitialized();
   }
 
-  Future<void> _doInit() async {
+  @override
+  Future<void> doInit() async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final dbPath = p.join(documentsDirectory.path, 'app_data.db');
 
@@ -47,7 +47,7 @@ class AppDataService {
       'PRAGMA busy_timeout=5000',
     ); // 5 second timeout for locks
 
-    _initialized = true;
+    markInitialized();
   }
 
   /// WHY: Creates memorization_sessions table for persistent storage
@@ -163,8 +163,7 @@ class AppDataService {
       await _db!.close();
       _db = null;
     }
-    _initialized = false;
-    _initFuture = null;
+    resetInitializationState();
   }
 
   /// WHY: Executes a function within a database transaction.

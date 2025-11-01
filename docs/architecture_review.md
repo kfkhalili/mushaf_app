@@ -231,12 +231,14 @@ try {
 **Fix:**
 
 Created `QueryLimits` and `DateCalculations` classes in `constants.dart`:
+
 - `QueryLimits.singleResult` - Replaced all 20+ occurrences of `limit: 1`
 - `QueryLimits.maxStreakDays` - Replaced hardcoded `365` in streak calculation
 - `DateCalculations.weekDuration` - Replaced all 3 occurrences of `Duration(days: 7)`
 - `DateCalculations.monthDuration` - Available for future use
 
 **Files Modified:**
+
 - `lib/constants.dart` - Added `QueryLimits` and `DateCalculations` classes
 - `lib/services/reading_progress_service.dart` - Replaced all magic numbers
 - `lib/services/bookmarks_service.dart` - Replaced `limit: 1`
@@ -267,11 +269,13 @@ Created `QueryLimits` and `DateCalculations` classes in `constants.dart`:
 **Fix:**
 
 Added `includeAyahText` parameter to `getAllBookmarks()` (defaults to `false`):
+
 - When `false`: Only fetches bookmark data (better separation of concerns)
 - When `true`: Explicitly requests ayah text via `DatabaseService` (UI layer decides)
 - Updated `bookmarksProvider` to explicitly request ayah text for UI display
 
 **Files Modified:**
+
 - `lib/services/bookmarks_service.dart` - Added `includeAyahText` parameter
 - `lib/providers.dart` - Explicitly requests ayah text in `bookmarksProvider`
 
@@ -279,36 +283,22 @@ Added `includeAyahText` parameter to `getAllBookmarks()` (defaults to `false`):
 
 ---
 
-### 9. **Provider Dependency Chain**
+### 9. **Provider Dependency Chain** ✅ FIXED ✅ COMPLETED
 
 **Location:** `lib/providers.dart`
 
 **Issue:**
-
-```dart
-@Riverpod(keepAlive: true)
-Future<BookmarksService> bookmarksService(Ref ref) async {
-  final appDataService = ref.watch(appDataServiceProvider);
-  final dbService = await ref.watch(databaseServiceProvider.future);  // ⚠️
-  return SqliteBookmarksService(appDataService, dbService);
-}
-```
-
-**Problems:**
 
 - Mixing `watch()` and `watch().future` can cause unnecessary rebuilds
 - Services initialized before their dependencies are ready
 
 **Fix:**
 
-- Use consistent async pattern:
-  ```dart
-  Future<BookmarksService> bookmarksService(Ref ref) async {
-    final appDataService = ref.watch(appDataServiceProvider);
-    final dbService = await ref.watch(databaseServiceProvider.future);
-    return SqliteBookmarksService(appDataService, dbService);
-  }
-  ```
+- Added comment explaining the pattern is intentional (sync vs async dependencies)
+- The current pattern is correct: `ref.watch()` for sync providers and `await ref.watch().future` for async providers
+
+**Files Modified:**
+- `lib/providers.dart` - Added documentation comment
 
 **Priority:** 🟠 Low
 
@@ -316,71 +306,47 @@ Future<BookmarksService> bookmarksService(Ref ref) async {
 
 ## 🟢 DRY Violations
 
-### 10. **Database Initialization Pattern Duplication**
+### 10. **Database Initialization Pattern Duplication** ✅ FIXED ✅ COMPLETED
 
 **Location:** `DatabaseService`, `AppDataService`, `SearchService`
 
 **Pattern repeated:**
 
-```dart
-bool _initialized = false;
-Future<void>? _initFuture;
+- `bool _initialized` and `Future<void>? _initFuture` pattern repeated across services
 
-Future<void> ensureInitialized() async {
-  if (_initialized) return;
-  _initFuture ??= _doInit();
-  await _initFuture;
-}
-```
+**Fix:**
 
-**Fix:** Create a mixin:
+- Created `InitializationMixin` in `lib/utils/initialization_mixin.dart`
+- Provides common pattern for lazy initialization with thread-safe, idempotent initialization
+- Applied to `AppDataService` (other services have layout parameters making them different)
 
-```dart
-mixin InitializationMixin<T> {
-  bool _initialized = false;
-  Future<T>? _initFuture;
-
-  Future<void> ensureInitialized() async {
-    if (_initialized) return;
-    _initFuture ??= _doInit();
-    await _initFuture;
-  }
-
-  Future<void> _doInit();
-}
-```
+**Files Modified:**
+- `lib/utils/initialization_mixin.dart` - Created new mixin
+- `lib/services/app_data_service.dart` - Uses `InitializationMixin`
 
 **Priority:** 🟢 Low
 
 ---
 
-### 11. **Date Query Patterns**
+### 11. **Date Query Patterns** ✅ FIXED ✅ COMPLETED
 
 **Location:** `lib/services/reading_progress_service.dart`
 
 **Repeated pattern:**
 
-```dart
-final weekAgo = DateTime.now().subtract(const Duration(days: 7));
-final weekAgoDateStr = weekAgo.toIso8601String().split('T')[0];
-// ... then query with WHERE session_date >= ?
-```
+- `final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration); final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);` repeated 3 times
+- `final now = DateTime.now(); final monthStart = DateTime(now.year, now.month, 1); final monthStartDateStr = DateHelpers.formatDateForDb(monthStart);` repeated 2 times
+- `final todayDateStr = DateHelpers.formatDateForDb(DateTime.now());` repeated 2 times
 
-**Fix:** Create query builder:
+**Fix:**
 
-```dart
-class DateRangeQuery {
-  static String lastWeek() {
-    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
-    return formatDateForDb(weekAgo);
-  }
+- Created `DateQueryHelpers` class in `lib/utils/date_query_helpers.dart`
+- Provides reusable date query patterns: `lastWeekStart()`, `thisMonthStart()`, `thisYearStart()`, `today()`
+- Replaced all 7 occurrences in `ReadingProgressService`
 
-  static String thisMonth() {
-    final now = DateTime.now();
-    return formatDateForDb(DateTime(now.year, now.month, 1));
-  }
-}
-```
+**Files Modified:**
+- `lib/utils/date_query_helpers.dart` - Created new helper class
+- `lib/services/reading_progress_service.dart` - Replaced all date query patterns
 
 **Priority:** 🟢 Low
 

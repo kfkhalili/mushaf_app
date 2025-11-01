@@ -286,6 +286,8 @@ class SearchHistory extends _$SearchHistory {
 // --- Bookmarks Service Provider ---
 @Riverpod(keepAlive: true)
 Future<BookmarksService> bookmarksService(Ref ref) async {
+  // WHY: Use consistent async pattern - await both async dependencies
+  // to avoid unnecessary rebuilds when mixing watch() and watch().future
   final appDataService = ref.watch(appDataServiceProvider);
   final dbService = await ref.watch(databaseServiceProvider.future);
   return SqliteBookmarksService(appDataService, dbService);
