@@ -893,7 +893,8 @@ class DatabaseService with InitializationMixin {
           '${DbConstants.pageNumberCol} = ? AND ${DbConstants.lineTypeCol} = ? AND ${DbConstants.firstWordIdCol} > 0',
       whereArgs: [pageNumber.toString(), 'ayah'],
       orderBy: '${DbConstants.lineNumberCol} ASC',
-      limit: 5, // Fetch a few lines in case the very first is empty/basmallah
+      limit: PreviewLimits
+          .maxPreviewLines, // WHY: Fetch a few lines in case the very first is empty/basmallah
     );
 
     int firstWordId = 0;

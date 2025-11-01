@@ -10,6 +10,7 @@ import '../models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
+import '../utils/lru_cache.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -18,11 +19,18 @@ class SearchService with InitializationMixin {
   Database? _imlaeiDb; // Database with searchable Arabic text
   Database? _imlaeiScriptDb; // Database with ayah-by-ayah script text
 
-  // Cache for search results to improve performance
-  final Map<String, List<SearchResult>> _searchCache = {};
-  final Map<int, String> _surahNameCache = {};
-  final Map<String, int> _verseToPageCache =
-      {}; // Cache verse_key -> page_number
+  // WHY: Use LRU caches to limit memory usage and prevent unbounded growth.
+  // Evicts least recently used items when cache is full.
+  final LRUCache<String, List<SearchResult>> _searchCache =
+      LRUCache<String, List<SearchResult>>(
+        SearchCacheLimits.maxSearchCacheSize,
+      );
+  final LRUCache<int, String> _surahNameCache = LRUCache<int, String>(
+    SearchCacheLimits.maxSurahNameCacheSize,
+  );
+  final LRUCache<String, int> _verseToPageCache = LRUCache<String, int>(
+    SearchCacheLimits.maxVerseToPageCacheSize,
+  ); // Cache verse_key -> page_number
 
   MushafLayout? _currentLayout;
 
@@ -199,8 +207,9 @@ class SearchService with InitializationMixin {
 
     // Check cache first
     final cacheKey = query.trim().toLowerCase();
-    if (_searchCache.containsKey(cacheKey)) {
-      return _searchCache[cacheKey]!;
+    final cachedResults = _searchCache.get(cacheKey);
+    if (cachedResults != null) {
+      return cachedResults;
     }
 
     if (_imlaeiDb == null || _imlaeiScriptDb == null) {
@@ -214,7 +223,7 @@ class SearchService with InitializationMixin {
       List<SearchResult> results = await _searchInBothDatabases(query);
 
       // Cache results
-      _searchCache[cacheKey] = results;
+      _searchCache.put(cacheKey, results);
 
       return results;
     } catch (e) {
@@ -237,7 +246,7 @@ class SearchService with InitializationMixin {
       where: 'text LIKE ? OR text LIKE ?',
       whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
       orderBy: 'surah ASC, ayah ASC',
-      limit: 100,
+      limit: SearchLimits.maxSearchResults,
     );
 
     final List<Map<String, dynamic>> scriptResults = await _imlaeiScriptDb!
@@ -247,7 +256,7 @@ class SearchService with InitializationMixin {
           where: 'text LIKE ? OR text LIKE ?',
           whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
           orderBy: 'surah ASC, ayah ASC',
-          limit: 100,
+          limit: SearchLimits.maxSearchResults,
         );
 
     // Step 2: Filter results by stripping diacritics and checking if stripped query matches
@@ -276,47 +285,71 @@ class SearchService with InitializationMixin {
 
     if (allFoundVerseKeys.isEmpty) return [];
 
-    // Step 4: Retrieve results from script database with diacritics
-    final List<SearchResult> results = [];
+    // Step 4: Retrieve results from script database with diacritics using bulk query
+    // WHY: Use bulk query with IN clause to avoid N+1 query pattern.
+    // This reduces from O(N) queries to O(1) query regardless of result count.
+    final List<String> verseKeysList = allFoundVerseKeys.toList();
+    final placeholders = List.filled(verseKeysList.length, '?').join(', ');
 
-    for (final verseKey in allFoundVerseKeys) {
-      // Try to get the original diacritical text from script database
-      final List<Map<String, dynamic>> scriptVerse = await _imlaeiScriptDb!
-          .query(
-            'verses',
-            columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
-            where: 'verse_key = ?',
-            whereArgs: [verseKey],
-            limit: QueryLimits.singleResult,
-          );
-
-      String verseText;
-      int surahNumber;
-      int ayahNumber;
-
-      if (scriptVerse.isNotEmpty) {
-        // Use script database text (with diacritics)
-        final verseData = scriptVerse.first;
-        verseText = verseData['text'] as String;
-        surahNumber = _parseInt(verseData['surah']);
-        ayahNumber = _parseInt(verseData['ayah']);
-      } else {
-        // Fallback to simple database if not found in script database
-        final List<Map<String, dynamic>> simpleVerse = await _imlaeiDb!.query(
+    // Bulk query from script database (preferred - has diacritics)
+    final List<Map<String, dynamic>> scriptVerses = await _imlaeiScriptDb!
+        .query(
           'verses',
           columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
-          where: 'verse_key = ?',
-          whereArgs: [verseKey],
-          limit: QueryLimits.singleResult,
+          where: 'verse_key IN ($placeholders)',
+          whereArgs: verseKeysList,
+          orderBy: 'surah ASC, ayah ASC',
         );
 
-        if (simpleVerse.isEmpty) continue;
-
-        final verseData = simpleVerse.first;
-        verseText = verseData['text'] as String;
-        surahNumber = _parseInt(verseData['surah']);
-        ayahNumber = _parseInt(verseData['ayah']);
+    // Build map from verse_key to verse data for O(1) lookup
+    final Map<String, Map<String, dynamic>> verseMap = {};
+    final Set<String> foundInScript = {};
+    for (final verse in scriptVerses) {
+      final verseKey = verse['verse_key'] as String?;
+      if (verseKey != null) {
+        verseMap[verseKey] = verse;
+        foundInScript.add(verseKey);
       }
+    }
+
+    // Find verse keys not found in script database (need fallback)
+    final List<String> missingFromScript = verseKeysList
+        .where((key) => !foundInScript.contains(key))
+        .toList();
+
+    // Bulk query from simple database for missing verses (fallback)
+    Map<String, Map<String, dynamic>> simpleVerseMap = {};
+    if (missingFromScript.isNotEmpty) {
+      final fallbackPlaceholders = List.filled(
+        missingFromScript.length,
+        '?',
+      ).join(', ');
+      final List<Map<String, dynamic>> simpleVerses = await _imlaeiDb!.query(
+        'verses',
+        columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
+        where: 'verse_key IN ($fallbackPlaceholders)',
+        whereArgs: missingFromScript,
+        orderBy: 'surah ASC, ayah ASC',
+      );
+
+      for (final verse in simpleVerses) {
+        final verseKey = verse['verse_key'] as String?;
+        if (verseKey != null) {
+          simpleVerseMap[verseKey] = verse;
+        }
+      }
+    }
+
+    // Build results using map lookups (O(1) instead of O(N) queries)
+    final List<SearchResult> results = [];
+    for (final verseKey in allFoundVerseKeys) {
+      // Prefer script database (has diacritics), fallback to simple database
+      final verseData = verseMap[verseKey] ?? simpleVerseMap[verseKey];
+      if (verseData == null) continue; // Skip if not found in either database
+
+      final String verseText = verseData['text'] as String;
+      final int surahNumber = _parseInt(verseData['surah']);
+      final int ayahNumber = _parseInt(verseData['ayah']);
 
       // Debug: Check if text contains diacritics
       if (kDebugMode && ayahNumber <= 3) {
@@ -355,8 +388,9 @@ class SearchService with InitializationMixin {
   /// Get page number for a specific verse using verse_key
   Future<int> _getPageNumberForVerse(String verseKey) async {
     // Check cache first
-    if (_verseToPageCache.containsKey(verseKey)) {
-      return _verseToPageCache[verseKey]!;
+    final cachedPage = _verseToPageCache.get(verseKey);
+    if (cachedPage != null) {
+      return cachedPage;
     }
 
     // Parse verse key (format: "1:1")
@@ -372,7 +406,7 @@ class SearchService with InitializationMixin {
         surahNumber,
         ayahNumber,
       );
-      _verseToPageCache[verseKey] = pageNumber;
+      _verseToPageCache.put(verseKey, pageNumber);
       return pageNumber;
     } catch (e) {
       if (kDebugMode) {
@@ -383,7 +417,7 @@ class SearchService with InitializationMixin {
         );
       }
       // Fallback: return page 1
-      _verseToPageCache[verseKey] = 1;
+      _verseToPageCache.put(verseKey, 1);
       return 1;
     }
   }
@@ -438,13 +472,14 @@ class SearchService with InitializationMixin {
 
   /// Get Surah name with caching
   Future<String> _getSurahName(int surahNumber) async {
-    if (_surahNameCache.containsKey(surahNumber)) {
-      return _surahNameCache[surahNumber]!;
+    final cachedName = _surahNameCache.get(surahNumber);
+    if (cachedName != null) {
+      return cachedName;
     }
 
     final String surahName = await _databaseService.getSurahName(surahNumber);
 
-    _surahNameCache[surahNumber] = surahName;
+    _surahNameCache.put(surahNumber, surahName);
     return surahName;
   }
 

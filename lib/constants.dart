@@ -119,6 +119,22 @@ const int initialWordCount = 15;
 // With 604 page-specific fonts, we limit cache to prevent loading all fonts.
 const int maxFontCacheSize = 50;
 
+// --- SEARCH CACHE LIMITS ---
+// WHY: Maximum cache sizes for SearchService to prevent unbounded memory growth.
+class SearchCacheLimits {
+  // WHY: Maximum number of search queries to cache (recent searches).
+  static const int maxSearchCacheSize = 50;
+
+  // WHY: Maximum number of Surah name lookups to cache (covers all 114 Surahs).
+  static const int maxSurahNameCacheSize = 114;
+
+  // WHY: Maximum number of verse-to-page lookups to cache (recent lookups).
+  static const int maxVerseToPageCacheSize = 200;
+
+  // WHY: Private constructor to prevent instantiation.
+  const SearchCacheLimits._();
+}
+
 // --- QUERY LIMITS ---
 // WHY: Centralizes query limit values to avoid magic numbers throughout codebase.
 class QueryLimits {
@@ -130,6 +146,27 @@ class QueryLimits {
 
   // WHY: Private constructor to prevent instantiation.
   const QueryLimits._();
+}
+
+// --- SEARCH LIMITS ---
+// WHY: Centralizes search-related query limits.
+class SearchLimits {
+  // WHY: Maximum number of search results to return per query.
+  static const int maxSearchResults = 100;
+
+  // WHY: Private constructor to prevent instantiation.
+  const SearchLimits._();
+}
+
+// --- PREVIEW LIMITS ---
+// WHY: Centralizes preview-related query limits.
+class PreviewLimits {
+  // WHY: Maximum number of lines to fetch for page preview.
+  // Fetches a few lines in case the first line is empty or basmallah.
+  static const int maxPreviewLines = 5;
+
+  // WHY: Private constructor to prevent instantiation.
+  const PreviewLimits._();
 }
 
 // --- DATE CALCULATIONS ---

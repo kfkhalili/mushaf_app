@@ -1,47 +1,13 @@
+import 'dart:collection'; // For HashMap
 import 'package:flutter/services.dart';
-import 'dart:collection'; // For LinkedHashMap
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
-
-/// WHY: LRU cache implementation using LinkedHashMap.
-/// LinkedHashMap maintains insertion order, allowing O(1) operations.
-class _LRUCache<K, V> {
-  final LinkedHashMap<K, V> _cache = LinkedHashMap<K, V>();
-  final int maxSize;
-
-  _LRUCache(this.maxSize);
-
-  V? get(K key) {
-    if (!_cache.containsKey(key)) {
-      return null;
-    }
-    // Move to end (most recently used) by removing and re-inserting
-    final value = _cache.remove(key);
-    if (value != null) {
-      _cache[key] = value;
-    }
-    return value;
-  }
-
-  void put(K key, V value) {
-    // If key exists, update and move to end
-    if (_cache.containsKey(key)) {
-      _cache.remove(key);
-    } else if (_cache.length >= maxSize) {
-      // Remove least recently used (first item)
-      final firstKey = _cache.keys.first;
-      _cache.remove(firstKey);
-    }
-    _cache[key] = value;
-  }
-
-  bool containsKey(K key) => _cache.containsKey(key);
-}
+import '../utils/lru_cache.dart';
 
 class FontService {
   // WHY: Use LRU cache to limit memory usage (max 50 fonts cached).
   // Evicts least recently used fonts when cache is full.
-  final _LRUCache<String, String> _loadedFonts = _LRUCache<String, String>(
+  final LRUCache<String, String> _loadedFonts = LRUCache<String, String>(
     maxFontCacheSize,
   );
 

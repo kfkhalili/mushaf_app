@@ -168,7 +168,7 @@ final class DatabaseServiceNotifierProvider
 }
 
 String _$databaseServiceNotifierHash() =>
-    r'b9e65e1c82f97af7523daf27cfdf3ec9165d0bf2';
+    r'718c2d39e7a766bbdb0febc9bd808395641b8754';
 
 abstract class _$DatabaseServiceNotifier
     extends $AsyncNotifier<DatabaseService> {
@@ -1258,7 +1258,7 @@ final class BookmarkPageNumberProvider
 }
 
 String _$bookmarkPageNumberHash() =>
-    r'382e781e5848dfa6599003410bc911d02f277265';
+    r'9d0f18f6fe5bae0b8b3b66c80ff6426bd311274d';
 
 final class BookmarkPageNumberFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<int?>, (int, int)> {
