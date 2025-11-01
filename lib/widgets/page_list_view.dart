@@ -36,8 +36,9 @@ class PageListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final pagePreviewAsync = ref.watch(pagePreviewProvider(pageNumber));
-    final pageFontFamilyAsync = ref.watch(pageFontFamilyProvider(pageNumber));
+    final pagePreviewWithFontAsync = ref.watch(
+      pagePreviewWithFontProvider(pageNumber),
+    );
 
     final loadingWidget = const SizedBox(
       width: 60,
@@ -53,24 +54,19 @@ class PageListItem extends ConsumerWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       leading: LeadingNumberText(number: pageNumber),
-      trailing: pagePreviewAsync.when(
-        data: (previewText) {
-          return pageFontFamilyAsync.when(
-            data: (fontFamilyName) {
-              return Text(
-                previewText.isEmpty ? '…' : previewText,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontFamily: fontFamilyName,
-                  fontSize: 22,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              );
-            },
-            loading: () => loadingWidget,
-            error: (err, stack) => errorWidget,
+      trailing: pagePreviewWithFontAsync.when(
+        data: (combined) {
+          final (previewText, fontFamilyName) = combined;
+          return Text(
+            previewText.isEmpty ? '…' : previewText,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: fontFamilyName,
+              fontSize: 22,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           );
         },
         loading: () => loadingWidget,

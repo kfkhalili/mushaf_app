@@ -150,6 +150,16 @@ Future<String> pageFontFamily(Ref ref, int pageNumber) async {
   return fontService.loadFontForPage(pageNumber, layout: layout);
 }
 
+// --- Page Preview with Font Provider ---
+// WHY: Combines pagePreview and pageFontFamily to avoid nested AsyncValue.when() calls
+// in PageListView widget. This reduces unnecessary rebuilds and simplifies the widget tree.
+@riverpod
+Future<(String, String)> pagePreviewWithFont(Ref ref, int pageNumber) async {
+  final preview = await ref.watch(pagePreviewProvider(pageNumber).future);
+  final font = await ref.watch(pageFontFamilyProvider(pageNumber).future);
+  return (preview, font);
+}
+
 // --- Navigation Provider ---
 // WHY: This is a keepAlive provider for managing selection screen tab state.
 @Riverpod(keepAlive: true)
