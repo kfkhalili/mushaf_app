@@ -168,7 +168,7 @@ class DatabaseService {
         columns: [DbConstants.textCol],
         where: '${DbConstants.verseKeyCol} = ?',
         whereArgs: [verseKey],
-        limit: 1,
+        limit: QueryLimits.singleResult,
       );
 
       if (result.isNotEmpty && result.first[DbConstants.textCol] != null) {
@@ -312,7 +312,7 @@ class DatabaseService {
         columns: [DbConstants.nameArabicCol],
         where: '${DbConstants.idCol} = ?',
         whereArgs: [surahId.toString()],
-        limit: 1,
+        limit: QueryLimits.singleResult,
       );
       if (result.isNotEmpty &&
           result.first[DbConstants.nameArabicCol] != null) {
@@ -370,7 +370,7 @@ class DatabaseService {
           columns: [DbConstants.surahCol, DbConstants.ayahNumberCol],
           where: '${DbConstants.idCol} = ?',
           whereArgs: [firstWordId.toString()],
-          limit: 1,
+          limit: QueryLimits.singleResult,
         );
         if (words.isNotEmpty) {
           final int surah = _parseInt(words.first[DbConstants.surahCol]);
@@ -618,7 +618,7 @@ class DatabaseService {
             ],
             where: '${DbConstants.idCol} = ?',
             whereArgs: [firstWordId.toString()],
-            limit: 1,
+            limit: QueryLimits.singleResult,
           );
           words = wordsData.map((wordMap) {
             return Word(
@@ -665,7 +665,7 @@ class DatabaseService {
       where: '${DbConstants.surahCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
       whereArgs: [surahNumber.toString(), ayahNumber.toString()],
       orderBy: '${DbConstants.idCol} ASC',
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (words.isEmpty) {
@@ -689,7 +689,7 @@ class DatabaseService {
       whereArgs: [firstWordId.toString(), firstWordId.toString(), 'ayah'],
       orderBy:
           '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC', // Ensure the earliest occurrence
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (pages.isNotEmpty) {
@@ -705,7 +705,7 @@ class DatabaseService {
       whereArgs: [firstWordId.toString(), 'ayah'],
       orderBy:
           '${DbConstants.pageNumberCol} ASC, ${DbConstants.lineNumberCol} ASC',
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (firstWordPages.isNotEmpty) {
@@ -740,7 +740,7 @@ class DatabaseService {
       where:
           '${DbConstants.surahNumberCol} = ? AND ${DbConstants.lineTypeCol} = ?',
       whereArgs: [surahNumber.toString(), 'surah_name'],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (result.isNotEmpty && result.first[DbConstants.startPageAlias] != null) {
@@ -754,7 +754,7 @@ class DatabaseService {
       ],
       where: '${DbConstants.surahNumberCol} = ?',
       whereArgs: [surahNumber.toString()],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
     if (broaderResult.isNotEmpty &&
         broaderResult.first[DbConstants.startPageAlias] != null) {
@@ -841,7 +841,7 @@ class DatabaseService {
           columns: [DbConstants.ayahNumberCol],
           where: '${DbConstants.idCol} = ?',
           whereArgs: [currentFirstWordId.toString()],
-          limit: 1,
+          limit: QueryLimits.singleResult,
         );
         if (checkWord.isNotEmpty &&
             _parseInt(checkWord.first[DbConstants.ayahNumberCol]) > 0) {

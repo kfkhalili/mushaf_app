@@ -51,7 +51,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
       DbConstants.memorizationSessionsTable,
       where: '${DbConstants.pageNumberCol} = ?',
       whereArgs: [pageNumber],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (results.isEmpty) return null;

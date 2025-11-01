@@ -166,6 +166,7 @@ return asyncPageData.when(
 - ✅ Common fonts remain unlimited (only 2 layouts, safe for unlimited cache)
 
 **Benefits:**
+
 - **Memory:** Prevents loading all 604 fonts into memory
 - **Performance:** Maintains fast O(1) lookups with LinkedHashMap
 - **Flexibility:** Cache size limit configurable via constant
@@ -205,6 +206,7 @@ try {
 - ✅ Preserves original error and stack trace for debugging
 
 **Benefits:**
+
 - **Type Safety:** Different exception types for different error scenarios
 - **Error Context:** Preserves original error and stack trace
 - **UI Handling:** Allows UI to differentiate between error types
@@ -216,7 +218,7 @@ try {
 
 ---
 
-### 7. **Magic Numbers and Constants**
+### 7. **Magic Numbers and Constants** ✅ FIXED ✅ COMPLETED
 
 **Location:** Throughout codebase
 
@@ -228,15 +230,19 @@ try {
 
 **Fix:**
 
-```dart
-// lib/constants.dart
-class QueryLimits {
-  static const int singleResult = 1;
-  static const int maxStreakDays = 365;
-  static const int previewWordCount = 3;
-  static const int maxHistoryItems = 20;  // Already exists
-}
-```
+Created `QueryLimits` and `DateCalculations` classes in `constants.dart`:
+- `QueryLimits.singleResult` - Replaced all 20+ occurrences of `limit: 1`
+- `QueryLimits.maxStreakDays` - Replaced hardcoded `365` in streak calculation
+- `DateCalculations.weekDuration` - Replaced all 3 occurrences of `Duration(days: 7)`
+- `DateCalculations.monthDuration` - Available for future use
+
+**Files Modified:**
+- `lib/constants.dart` - Added `QueryLimits` and `DateCalculations` classes
+- `lib/services/reading_progress_service.dart` - Replaced all magic numbers
+- `lib/services/bookmarks_service.dart` - Replaced `limit: 1`
+- `lib/services/database_service.dart` - Replaced all `limit: 1` occurrences
+- `lib/services/search_service.dart` - Replaced all `limit: 1` occurrences
+- `lib/services/memorization_storage_sqlite.dart` - Replaced `limit: 1`
 
 **Priority:** 🟠 Low
 

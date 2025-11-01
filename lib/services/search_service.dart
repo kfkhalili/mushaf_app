@@ -231,7 +231,7 @@ class SearchService {
             columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
             where: 'verse_key = ?',
             whereArgs: [verseKey],
-            limit: 1,
+            limit: QueryLimits.singleResult,
           );
 
       String verseText;
@@ -251,7 +251,7 @@ class SearchService {
           columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
           where: 'verse_key = ?',
           whereArgs: [verseKey],
-          limit: 1,
+          limit: QueryLimits.singleResult,
         );
 
         if (simpleVerse.isEmpty) continue;
@@ -411,7 +411,7 @@ class SearchService {
       columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
       where: 'surah = ? AND ayah = 1',
       whereArgs: [surahNumber.toString()],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (firstAyah.isEmpty) return [];
@@ -431,7 +431,7 @@ class SearchService {
       columns: ['id', 'verse_key', 'surah', 'ayah', 'text'],
       where: 'surah = ? AND ayah = ?',
       whereArgs: [surahNumber.toString(), ayahNumber.toString()],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     return await _buildSearchResultsFromVerses(ayahResults);

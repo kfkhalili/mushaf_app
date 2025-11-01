@@ -119,6 +119,32 @@ const int initialWordCount = 15;
 // With 604 page-specific fonts, we limit cache to prevent loading all fonts.
 const int maxFontCacheSize = 50;
 
+// --- QUERY LIMITS ---
+// WHY: Centralizes query limit values to avoid magic numbers throughout codebase.
+class QueryLimits {
+  // WHY: Common limit for single result queries (used 20+ times).
+  static const int singleResult = 1;
+
+  // WHY: Maximum number of days for streak calculation safety limit.
+  static const int maxStreakDays = 365;
+
+  // WHY: Private constructor to prevent instantiation.
+  const QueryLimits._();
+}
+
+// --- DATE CALCULATIONS ---
+// WHY: Centralizes date calculation constants to avoid magic numbers.
+class DateCalculations {
+  // WHY: Standard week duration for "this week" calculations.
+  static const Duration weekDuration = Duration(days: 7);
+
+  // WHY: Standard month duration (approximate).
+  static const Duration monthDuration = Duration(days: 30);
+
+  // WHY: Private constructor to prevent instantiation.
+  const DateCalculations._();
+}
+
 // --- APP CONSTANTS (Newly Added) ---
 
 // WHY: Centralize the total page count for use in PageView builders and ListViews.

@@ -145,7 +145,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getPagesThisWeek() async {
-    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
     final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
 
     final result = await _db.rawQuery(
@@ -178,7 +178,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   }
 
   Future<int> _getDaysThisWeek() async {
-    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
     final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
 
     final result = await _db.rawQuery(
@@ -230,7 +230,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
       columns: [DbConstants.pageNumberCol],
       where: '${DbConstants.sessionDateCol} = ?',
       whereArgs: [todayDateStr],
-      limit: 1,
+      limit: QueryLimits.singleResult,
     );
 
     if (todayResult.isEmpty) return 0; // No reading today = no streak
@@ -246,7 +246,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
         columns: [DbConstants.pageNumberCol],
         where: '${DbConstants.sessionDateCol} = ?',
         whereArgs: [dateStr],
-        limit: 1,
+        limit: QueryLimits.singleResult,
       );
 
       if (result.isEmpty) break; // Found a day with no reading
@@ -255,7 +255,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
       checkDate = checkDate.subtract(const Duration(days: 1));
 
       // Safety limit (prevent infinite loop)
-      if (streak > 365) break;
+      if (streak > QueryLimits.maxStreakDays) break;
     }
 
     return streak;
@@ -334,7 +334,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
   Future<Map<DateTime, int>> getWeeklyProgress() async {
     await _ensureInitialized();
 
-    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+    final weekAgo = DateTime.now().subtract(DateCalculations.weekDuration);
     final weekAgoDateStr = DateHelpers.formatDateForDb(weekAgo);
 
     final results = await _db.rawQuery(

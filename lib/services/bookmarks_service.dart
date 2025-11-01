@@ -132,7 +132,7 @@ class SqliteBookmarksService implements BookmarksService {
         where:
             '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
         whereArgs: [surahNumber, ayahNumber],
-        limit: 1,
+        limit: QueryLimits.singleResult,
       );
 
       return result.isNotEmpty;
@@ -213,7 +213,7 @@ class SqliteBookmarksService implements BookmarksService {
         where:
             '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
         whereArgs: [surahNumber, ayahNumber],
-        limit: 1,
+        limit: QueryLimits.singleResult,
       );
 
       if (results.isEmpty) return null;
