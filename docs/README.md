@@ -6,10 +6,9 @@ This directory contains all project documentation organized into **active** (cur
 
 ## 📋 Quick Navigation
 
-### Current Documents
+### Active Documentation
 
-**Architecture Reviews:**
-- [`architecture_review_v5.md`](./architecture_review_v5.md) - Latest architecture review (v5)
+**Note:** The latest architecture review is v5, which has been completed and archived. See `archived/architecture_reviews/` for all historical reviews.
 
 **Active Documentation:**
 - [`active/testing-guide.md`](./active/testing-guide.md) - Testing guide and best practices
@@ -29,8 +28,7 @@ Historical architecture reviews documenting code quality improvements over time:
 - [`archived/architecture_reviews/architecture_review_v2.md`](./archived/architecture_reviews/architecture_review_v2.md) - v2 (All issues ✅ COMPLETED)
 - [`archived/architecture_reviews/architecture_review_v3.md`](./archived/architecture_reviews/architecture_review_v3.md) - v3 (All issues ✅ COMPLETED)
 - [`archived/architecture_reviews/architecture_review_v4.md`](./archived/architecture_reviews/architecture_review_v4.md) - v4 (All issues ✅ COMPLETED)
-
-**Note:** The current architecture review (v5) references these historical reviews for context.
+- [`archived/architecture_reviews/architecture_review_v5.md`](./archived/architecture_reviews/architecture_review_v5.md) - v5 (4 issues ✅ FIXED, 2 ⏸️ DEFERRED) - **Latest review**
 
 ---
 
@@ -47,6 +45,7 @@ Feature specifications for implemented features:
 Completed planning and design documents:
 
 - [`archived/planning/storage_consolidation_plan.md`](./archived/planning/storage_consolidation_plan.md) - ✅ Completed (unified `app_data.db` implemented)
+- [`archived/planning/DOCUMENTATION_ORGANIZATION_PROPOSAL.md`](./archived/planning/DOCUMENTATION_ORGANIZATION_PROPOSAL.md) - ✅ Completed (documentation reorganization implemented)
 
 ---
 
@@ -83,10 +82,10 @@ docs/
 
 ## 🔍 Finding Documentation
 
-- **Current architecture review:** [`architecture_review_v5.md`](./architecture_review_v5.md)
+- **Latest architecture review:** [`archived/architecture_reviews/architecture_review_v5.md`](./archived/architecture_reviews/architecture_review_v5.md) - v5 (completed)
 - **Testing guide:** [`active/testing-guide.md`](./active/testing-guide.md)
 - **Feature specifications:** See `active/` for active features, `archived/feature_specs/` for completed
-- **Historical reviews:** See `archived/architecture_reviews/` for v1-v4
+- **All architecture reviews:** See `archived/architecture_reviews/` for v1-v5
 
 ---
 
@@ -102,16 +101,17 @@ docs/
 
 ## 🆕 Adding New Documentation
 
-- **Active documentation:** Add to `active/` subdirectory or root if it's a current reference doc
-- **Architecture reviews:** New reviews go in root with next version number (v6, v7, etc.)
+- **Active documentation:** Add to `active/` subdirectory
+- **Architecture reviews:** New reviews go in `archived/architecture_reviews/` with next version number (v6, v7, etc.). Once completed, they remain archived.
 - **Feature specs:** Add to `active/` until feature is complete, then move to `archived/feature_specs/`
 - **Testing docs:** Add to `active/` if current, `archived/testing/` if historical
+- **Planning docs:** Add to `active/` until plan is completed, then move to `archived/planning/`
 
 ---
 
 ## 📚 Related Documentation
 
-- **Architecture:** Current review in root, historical in `archived/architecture_reviews/`
+- **Architecture:** All reviews in `archived/architecture_reviews/` (v1-v5)
 - **Testing:** Active in `active/`, historical in `archived/testing/`
 - **Features:** Active in `active/`, completed in `archived/feature_specs/`
 - **Planning:** Active in `active/`, completed in `archived/planning/`
