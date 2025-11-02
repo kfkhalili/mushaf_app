@@ -18,6 +18,8 @@ part 'providers.g.dart';
 
 ### Stateful Notifier Pattern
 
+For simple state that doesn't need async initialization:
+
 ```dart
 @Riverpod(keepAlive: true)
 class CurrentPage extends _$CurrentPage {
@@ -32,26 +34,43 @@ class CurrentPage extends _$CurrentPage {
 }
 ```
 
-### Service Notifier Pattern (current)
+### Service Notifier Pattern (Async)
 
-Prefer a notifier for services that need initialization and switching (e.g., layout):
+For services that need async initialization, use `Future<Service>`:
 
 ```dart
 @Riverpod(keepAlive: true)
 class DatabaseServiceNotifier extends _$DatabaseServiceNotifier {
-  @override
-  DatabaseService build() {
-    final layout = ref.watch(mushafLayoutSettingProvider);
-    final service = DatabaseService();
-    service.init(layout: layout);
-    return service;
-  }
+  DatabaseService? _service;
 
-  Future<void> switchLayout(MushafLayout layout) async {
-    await state.switchLayout(layout);
-    ref.invalidateSelf();
+  @override
+  Future<DatabaseService> build() async {
+    // Close previous service if exists (layout change scenario)
+    final previousService = _service;
+    if (previousService != null) {
+      await previousService.close();
+    }
+
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    _service = DatabaseService();
+    await _service!.init(layout: layout);
+
+    // Ensure cleanup on dispose
+    ref.onDispose(() async {
+      final serviceToClose = _service;
+      _service = null;
+      await serviceToClose?.close();
+    });
+
+    return _service!;
   }
 }
+```
+
+**When consuming async service providers**, always use `.future`:
+
+```dart
+final dbService = await ref.watch(databaseServiceProvider.future);
 ```
 
 ### Async Provider Pattern
@@ -73,7 +92,7 @@ Future<PageData> pageData(Ref ref, int pageNumber) async {
 
 ## Code Generation
 
-All generated code is based on [providers.dart](mdc:lib/providers.dart). Domain facades under `lib/providers/` re-export providers for organization but do not contain codegen annotations.
+All generated code is based on [providers.dart](mdc:lib/providers.dart). Providers are centralized in a single file for code generation compatibility.
 
 After modifying [providers.dart](mdc:lib/providers.dart), regenerate with:
 

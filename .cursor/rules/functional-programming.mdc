@@ -46,7 +46,7 @@ String formatUserName(String firstName, String lastName) {
 
 // Avoid - Side effects
 String formatUserName(String firstName, String lastName) {
-  print('Formatting user name'); // Side effect!
+  debugPrint('Formatting user name'); // Side effect!
   return '$firstName $lastName'.trim();
 }
 ```

@@ -39,9 +39,9 @@ Database service patterns and SQLite conventions specific to this app's multi-da
 **Key Topics:**
 
 - Multiple database files and their purposes
-- Initialization patterns with guards
+- `InitializationMixin` pattern for thread-safe initialization
 - `DbConstants` usage for type-safe queries
-- Safe parsing and error handling
+- Shared `parseInt()` utility for safe parsing
 - Caching patterns for performance
 - Query patterns and best practices
 

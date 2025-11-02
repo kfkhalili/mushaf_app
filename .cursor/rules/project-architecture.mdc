@@ -43,9 +43,7 @@ Business logic and data access:
 
 ### `/lib/providers/`
 
-Additional state management:
-
-- `theme_provider.dart` - Theme mode persistence and switching
+**Note**: Providers are centralized in [providers.dart](mdc:lib/providers.dart). There is no separate `providers/` directory.
 
 ### `/lib/utils/`
 

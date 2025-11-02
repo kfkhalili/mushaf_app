@@ -1,17 +1,25 @@
-# Avoid `print()` in Production Code
+# Use `debugPrint()` for Debug Logging
 
-Directly using `print()` for debugging or logging is discouraged in this project as it can lead to leaking sensitive information and cluttering logs in production builds.
+Directly using `print()` for debugging or logging is **forbidden** in this project. Use `debugPrint()` instead, which automatically handles debug/release mode and prevents leaking sensitive information.
 
-## Preferred Alternative: `kDebugMode`
+## Preferred Method: `debugPrint()`
 
-For temporary debugging, always wrap `print()` calls in a `kDebugMode` check. This ensures that the output is only visible during development and is stripped from release builds.
+`debugPrint()` is Flutter's built-in debug logging function that:
+- Only outputs in debug builds (stripped from release builds)
+- Automatically throttles output to prevent log flooding
+- Handles long messages appropriately
 
 ```dart
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart'; // For debugPrint and kDebugMode
 
-// Good: This will only print in debug builds
+// Good: debugPrint is automatically debug-only
+debugPrint('This is a debug message: $variable');
+
+// For conditional logging or additional context
 if (kDebugMode) {
-  print('This is a debug message: $variable');
+  debugPrint('Detailed debug info: $variable');
+  // TODO: Include stackTrace when implementing crash analytics
+  // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
 }
 ```
 
@@ -23,8 +31,16 @@ For more permanent or structured logging, consider using a dedicated logging fra
 
 The project's `analysis_options.yaml` is configured to flag `print()` calls, reminding developers to follow these best practices. Any new code should not introduce `print()` statements outside of a `kDebugMode` block.
 
-## Why this is important
+## Why `debugPrint()` over `print()`
 
-- **Security**: Avoids accidentally leaking sensitive data in production logs.
-- **Performance**: `print()` can have a minor performance impact, especially if used frequently.
-- **Cleanliness**: Keeps production logs clean and focused on important information.
+- **Security**: `debugPrint()` is automatically stripped from release builds, preventing accidental data leaks
+- **Performance**: `debugPrint()` is optimized and throttled to prevent log flooding
+- **Cleanliness**: Keeps production logs clean automatically without manual `kDebugMode` checks
+- **Consistency**: Ensures all debug output follows the same pattern across the codebase
+
+## When to use `kDebugMode` with `debugPrint()`
+
+Use `if (kDebugMode)` guards when:
+- The logging operation itself might have side effects
+- You want to conditionally include additional debug context
+- You need to prepare data for logging that's expensive to compute

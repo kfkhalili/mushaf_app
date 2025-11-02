@@ -40,7 +40,7 @@ final sepiaTheme = ThemeData(
 
 ## Theme State Management
 
-Theme selection is managed by `ThemeNotifier` in [providers/theme_provider.dart](mdc:lib/providers/theme_provider.dart).
+Theme selection is managed by `ThemeNotifier` in [providers.dart](mdc:lib/providers.dart).
 
 ### Theme Mode Enum
 
@@ -125,6 +125,6 @@ textTheme: const TextTheme(
 ## Adding New Themes
 
 1. Define `ThemeData` in [themes.dart](mdc:lib/themes.dart)
-2. Add to `AppThemeMode` enum in [providers/theme_provider.dart](mdc:lib/providers/theme_provider.dart)
+2. Add to `AppThemeMode` enum in [providers.dart](mdc:lib/providers.dart)
 3. Update theme application logic in [main.dart](mdc:lib/main.dart)
 4. Handle special cases in MaterialApp builder if needed

@@ -20,19 +20,33 @@ See [database_service.dart](mdc:lib/services/database_service.dart)
 
 ### Initialization
 
-```dart
-// Single initialization guard pattern
-Future<void>? _initFuture;
-bool _isInitialized = false;
+Services use `InitializationMixin` for thread-safe, lazy initialization:
 
-Future<void> init() async {
-  if (_isInitialized) return;
-  _initFuture ??= _doInit();
-  await _initFuture;
+```dart
+import '../utils/initialization_mixin.dart';
+
+class DatabaseService with InitializationMixin {
+  MushafLayout? _currentLayout;
+
+  Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
+    if (isInitialized && _currentLayout == layout) return;
+    if (isInitialized && _currentLayout != layout) {
+      await switchLayout(layout);
+      return;
+    }
+    _currentLayout = layout;
+    await ensureInitialized();
+  }
+
+  @override
+  Future<void> doInit() async {
+    // Actual initialization logic here
+    markInitialized();
+  }
 }
 ```
 
-**ALWAYS** call `await init()` at the start of every public method.
+**ALWAYS** call `await ensureInitialized()` or `await init()` at the start of every public method.
 
 ### Database Constants
 
@@ -51,36 +65,45 @@ await db.query('pages', where: 'page_number = ?');
 
 ### Safe Parsing
 
-Always use the `_parseInt` helper for dynamic values:
+Always use the shared `parseInt` utility from [parsing_helpers.dart](mdc:lib/utils/parsing_helpers.dart) for dynamic values:
 
 ```dart
-int _parseInt(dynamic value) {
-  if (value == null) return 0;
-  return int.tryParse(value.toString()) ?? 0;
-}
+import '../utils/parsing_helpers.dart';
+
+// Use shared utility
+final int pageNumber = parseInt(row[DbConstants.pageNumberCol]);
 ```
+
+**NEVER** create local `_parseInt` methods. Use the shared utility to ensure consistency across all services.
 
 ### Caching Pattern
 
-Load static data once during initialization:
+Load static data once during initialization in `doInit()`:
 
 ```dart
-List<Map<String, dynamic>> _juzCache = [];
+List<Map<String, dynamic>> _juzCache = const [];
 
-// In _doInit():
-if (_juzCache.isEmpty && _juzDb != null) {
-  _juzCache = await _juzDb!.query(
-    DbConstants.juzTable,
-    orderBy: '${DbConstants.juzNumberCol} ASC',
-  );
+@override
+Future<void> doInit() async {
+  // ... database initialization ...
+
+  // Load Juz and Hizb data into cache
+  if (_juzCache.isEmpty && _juzDb != null) {
+    _juzCache = await _juzDb!.query(
+      DbConstants.juzTable,
+      orderBy: '${DbConstants.juzNumberCol} ASC',
+    );
+  }
+  
+  markInitialized();
 }
 ```
 
 ### Error Handling
 
 - Return sensible defaults on errors (e.g., empty string, 0)
-- Use `kDebugMode` for debug logging
-- Throw exceptions for critical failures with descriptive messages
+- Use `debugPrint()` with `kDebugMode` for debug logging (never use `print()`)
+- Throw custom exceptions for critical failures (see [database_exceptions.dart](mdc:lib/exceptions/database_exceptions.dart))
 
 ### Query Patterns
 
