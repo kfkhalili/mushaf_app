@@ -953,7 +953,7 @@ final class SearchHistoryProvider
   }
 }
 
-String _$searchHistoryHash() => r'c7980f60480a959d302188e674c25bcc87df4695';
+String _$searchHistoryHash() => r'31190bc895c9f5dbb4c7466d9fd3f0a07e73057c';
 
 abstract class _$SearchHistory extends $Notifier<List<String>> {
   List<String> build();
