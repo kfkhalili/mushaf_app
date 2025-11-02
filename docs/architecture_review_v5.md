@@ -4,10 +4,10 @@
 **Reviewer:** AI Software Architect (iOS/Dart/Flutter Specialist)
 **Previous Reviews:**
 
-- [architecture_review.md](./architecture_review.md) - All issues #1-14 ✅ COMPLETED
-- [architecture_review_v2.md](./architecture_review_v2.md) - Issues #1-6 ✅ COMPLETED, #5 ❌ CANCELLED, #7 ⏸️ DEFERRED
-- [architecture_review_v3.md](./architecture_review_v3.md) - All issues #1-8 ✅ COMPLETED
-- [architecture_review_v4.md](./architecture_review_v4.md) - All issues #1-5 ✅ COMPLETED
+- [architecture_review.md](./archived/architecture_reviews/architecture_review.md) - All issues #1-14 ✅ COMPLETED
+- [architecture_review_v2.md](./archived/architecture_reviews/architecture_review_v2.md) - Issues #1-6 ✅ COMPLETED, #5 ❌ CANCELLED, #7 ⏸️ DEFERRED
+- [architecture_review_v3.md](./archived/architecture_reviews/architecture_review_v3.md) - All issues #1-8 ✅ COMPLETED
+- [architecture_review_v4.md](./archived/architecture_reviews/architecture_review_v4.md) - All issues #1-5 ✅ COMPLETED
 
 ## Executive Summary
 
@@ -83,6 +83,7 @@ import '../utils/parsing_helpers.dart';
 - Shared utility can use optimal implementation
 
 **Files Affected:**
+
 - `lib/utils/parsing_helpers.dart` - Create new utility
 - `lib/services/database_service.dart` - Remove `_parseInt`, use shared utility (30+ occurrences)
 - `lib/services/search_service.dart` - Remove `_parseInt`, use shared utility (5 occurrences)
@@ -151,6 +152,7 @@ asyncPageData.whenData((pageData) {
 - **Code Clarity:** All side effects from page data in one place
 
 **Files Affected:**
+
 - `lib/screens/mushaf_screen.dart` - Combine `whenData` calls
 
 **Priority:** 🟡 **Medium** - Performance optimization
@@ -209,6 +211,7 @@ class SearchHistory extends _$SearchHistory {
 ```
 
 **Files Affected:**
+
 - `lib/constants.dart` - Add `SearchHistoryConstants` class
 - `lib/providers.dart` - Use constants instead of hardcoded values (4 occurrences)
 
@@ -269,6 +272,7 @@ V? get(K key) {
 **Note:** This is a micro-optimization and may not provide noticeable performance gains, but it's a cleaner pattern.
 
 **Files Affected:**
+
 - `lib/utils/lru_cache.dart` - Optimize `get()` method
 
 **Priority:** 🟢 **Low** - Minor optimization
@@ -340,6 +344,7 @@ final List<Map<String, dynamic>> filteredScriptResults = scriptResults
 **Note:** This is a minor optimization. The bulk query fix from v4 review provides much larger performance gains (~100x). This optimization is optional and may not be worth the added complexity.
 
 **Files Affected:**
+
 - `lib/services/search_service.dart` - Optional optimization to `_searchInBothDatabases`
 
 **Priority:** 🟢 **Low** - Minor optimization (optional)
@@ -393,14 +398,14 @@ Future<List<String>> build() async {
 
 ## 📊 Summary of Issues
 
-| Issue                               | Priority  | Impact             | Effort | Files   |
-| ----------------------------------- | --------- | ------------------ | ------ | ------- |
-| #1: Duplicate Integer Parsing      | 🟡 Medium | Code consistency   | Medium | 3 files |
-| #2: Multiple whenData Calls          | 🟡 Medium | Performance        | Low    | 1 file  |
-| #3: Hardcoded Values in Provider    | 🟡 Medium | Code consistency   | Low    | 2 files |
-| #4: LRU Cache Redundancy             | 🟢 Low    | Minor optimization | Low    | 1 file  |
-| #5: Repeated String Operations     | 🟢 Low    | Minor optimization | Low    | 1 file  |
-| #6: Null Safety Pattern              | 🟢 Low    | Code consistency   | Low    | 1 file  |
+| Issue                            | Priority  | Impact             | Effort | Files   |
+| -------------------------------- | --------- | ------------------ | ------ | ------- |
+| #1: Duplicate Integer Parsing    | 🟡 Medium | Code consistency   | Medium | 3 files |
+| #2: Multiple whenData Calls      | 🟡 Medium | Performance        | Low    | 1 file  |
+| #3: Hardcoded Values in Provider | 🟡 Medium | Code consistency   | Low    | 2 files |
+| #4: LRU Cache Redundancy         | 🟢 Low    | Minor optimization | Low    | 1 file  |
+| #5: Repeated String Operations   | 🟢 Low    | Minor optimization | Low    | 1 file  |
+| #6: Null Safety Pattern          | 🟢 Low    | Code consistency   | Low    | 1 file  |
 
 ---
 
@@ -449,3 +454,105 @@ Future<List<String>> build() async {
 
 The codebase demonstrates **professional-grade quality** with only minor refinement opportunities remaining.
 
+---
+
+## ✅ Fix Status
+
+### Phase 1 (Code Consistency) - ✅ COMPLETED
+
+**#1: Duplicate Integer Parsing** ✅ FIXED
+
+**Fix Applied:**
+
+- Created `lib/utils/parsing_helpers.dart` with shared `parseInt()` utility function
+- Updated `DatabaseService` to use `parseInt()` instead of `_parseInt()` (30+ occurrences)
+- Updated `SearchService` to use `parseInt()` instead of `_parseInt()` (5 occurrences)
+- Removed duplicate `_parseInt()` methods from both services
+
+**Files Modified:**
+
+- `lib/utils/parsing_helpers.dart` - Created new utility file
+- `lib/services/database_service.dart` - Replaced all `_parseInt()` calls with `parseInt()`
+- `lib/services/search_service.dart` - Replaced all `_parseInt()` calls with `parseInt()`
+
+**Status:** ✅ **COMPLETED**
+
+---
+
+**#3: Hardcoded Values in SearchHistory Provider** ✅ FIXED
+
+**Fix Applied:**
+
+- Added `SearchHistoryConstants` class to `constants.dart`:
+  - `preferencesKey = 'search_history'`
+  - `maxHistoryItems = 20`
+- Updated `SearchHistory` provider to use constants (4 occurrences)
+
+**Files Modified:**
+
+- `lib/constants.dart` - Added `SearchHistoryConstants` class
+- `lib/providers.dart` - Replaced hardcoded values with constants
+
+**Status:** ✅ **COMPLETED**
+
+---
+
+### Phase 2 (Performance) - ✅ COMPLETED
+
+**#2: Multiple whenData Calls** ✅ FIXED
+
+**Fix Applied:**
+
+- Combined two separate `whenData` callbacks in `MushafScreen` into single callback
+- Both `_maybeResetSurahProgress()` and memorization start page logic now in one callback
+
+**Files Modified:**
+
+- `lib/screens/mushaf_screen.dart` - Combined `whenData` callbacks
+
+**Status:** ✅ **COMPLETED**
+
+---
+
+**#4: LRU Cache Redundancy** ✅ FIXED
+
+**Fix Applied:**
+
+- Optimized `LRUCache.get()` method to remove redundant `containsKey()` check
+- Now directly calls `remove()` which returns null if key doesn't exist
+- Eliminates one hash lookup per get() operation
+
+**Files Modified:**
+
+- `lib/utils/lru_cache.dart` - Optimized `get()` method
+
+**Status:** ✅ **COMPLETED**
+
+---
+
+### Phase 3 (Optional Optimizations) - ⏸️ DEFERRED
+
+**#5: Repeated String Operations** - ⏸️ DEFERRED
+
+**Status:** ⏸️ **DEFERRED** - Optional optimization. Bulk query fix from v4 provides much larger performance gains (~100x). This optimization may not be worth added complexity.
+
+---
+
+**#6: Null Safety Pattern** - ⏸️ DEFERRED
+
+**Status:** ⏸️ **DEFERRED** - Optional consistency improvement. Current implementation is safe and functional. Changing to async provider might cause unnecessary rebuilds.
+
+---
+
+## 📊 Summary
+
+| Issue                            | Status      | Files Modified |
+| -------------------------------- | ----------- | -------------- |
+| #1: Duplicate Integer Parsing    | ✅ FIXED    | 3 files        |
+| #2: Multiple whenData Calls      | ✅ FIXED    | 1 file         |
+| #3: Hardcoded Values in Provider | ✅ FIXED    | 2 files        |
+| #4: LRU Cache Redundancy         | ✅ FIXED    | 1 file         |
+| #5: Repeated String Operations   | ⏸️ DEFERRED | -              |
+| #6: Null Safety Pattern          | ⏸️ DEFERRED | -              |
+
+**Total:** 4 issues fixed, 2 deferred (optional optimizations)
