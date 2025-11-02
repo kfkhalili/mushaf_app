@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for orientation services
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/splash_screen.dart';
 import 'providers.dart';
 import 'themes.dart';
@@ -18,25 +17,7 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Read the saved theme from storage before the app starts.
-  // WHY: Use SharedPreferences directly here since ProviderScope isn't available yet
-  final prefs = await SharedPreferences.getInstance();
-  final String savedTheme = prefs.getString('theme_mode') ?? 'system';
-  final AppThemeMode initialTheme = AppThemeMode.values.firstWhere(
-    (e) => e.name == savedTheme,
-    orElse: () => AppThemeMode.system,
-  );
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        // WHY: Override with initial theme loaded from SharedPreferences
-        // Use overrideWithValue to set initial value directly
-        themeProvider.overrideWithValue(initialTheme),
-      ],
-      child: const MushafApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MushafApp()));
 }
 
 class MushafApp extends ConsumerWidget {

@@ -455,8 +455,20 @@ enum AppThemeMode { light, dark, sepia, system }
 class ThemeNotifier extends _$ThemeNotifier {
   @override
   AppThemeMode build() {
-    // Default state - initial value will be loaded synchronously from SharedPreferences
-    // For now, return system as default (main.dart will override with actual value)
+    // WHY: Try to read initial value from SharedPreferences synchronously
+    // Similar pattern to SearchHistory provider (line 253)
+    final prefsAsync = ref.read(sharedPreferencesProvider);
+    if (prefsAsync.hasValue) {
+      final savedTheme = prefsAsync.value!.getString('theme_mode');
+      if (savedTheme != null) {
+        try {
+          return AppThemeMode.values.firstWhere((e) => e.name == savedTheme);
+        } catch (e) {
+          // Invalid value, fall back to system
+        }
+      }
+    }
+    // Default to system if SharedPreferences not loaded or no saved value
     return AppThemeMode.system;
   }
 
@@ -468,6 +480,9 @@ class ThemeNotifier extends _$ThemeNotifier {
       await prefs.setString('theme_mode', mode.name);
     } catch (e) {
       // Handle potential errors, e.g., if storage is unavailable
+      if (kDebugMode) {
+        debugPrint('Failed to save theme mode: $e');
+      }
     }
   }
 }
