@@ -94,7 +94,7 @@ Future<void> doInit() async {
       orderBy: '${DbConstants.juzNumberCol} ASC',
     );
   }
-  
+
   markInitialized();
 }
 ```

@@ -153,5 +153,5 @@ const double footerLeftPadding = 24.0;
    Database? _layoutDb;
    void _privateMethod() { }
    ```
-   
+
    **Note**: For parsing integers from database results, use the shared `parseInt()` utility from [parsing_helpers.dart](mdc:lib/utils/parsing_helpers.dart). Do not create local parsing methods.
