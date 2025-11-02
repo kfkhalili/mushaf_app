@@ -122,7 +122,7 @@ final class CurrentPageProvider extends $NotifierProvider<CurrentPage, int> {
   }
 }
 
-String _$currentPageHash() => r'76d9bacfeae048ee36d304f550c4df9593672cfb';
+String _$currentPageHash() => r'63033d1ee10caf58175182a9ebcbb345cb93e275';
 
 abstract class _$CurrentPage extends $Notifier<int> {
   int build();
@@ -2277,7 +2277,7 @@ final class AudioStateNotifierProvider
 }
 
 String _$audioStateNotifierHash() =>
-    r'16f8cfa660abbe916efc0476c501c0494780fa65';
+    r'e8c3a5214b2064d861372a59de9fcb3dfc3f8f00';
 
 abstract class _$AudioStateNotifier extends $Notifier<AudioState> {
   AudioState build();

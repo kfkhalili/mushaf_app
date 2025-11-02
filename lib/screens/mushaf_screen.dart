@@ -172,9 +172,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
       }
       if (currentIndex != targetIndex && targetIndex >= 0) {
         _isAnimating = true;
-        if (kDebugMode) {
-          debugPrint('MushafScreen: Animating to page $pageNumber');
-        }
         _pageController
             .animateToPage(
               targetIndex,
@@ -185,11 +182,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
               if (mounted) {
                 _isAnimating = false;
                 _externalPageUpdate = null; // Clear after animation
-                if (kDebugMode) {
-                  debugPrint(
-                    'MushafScreen: Animation complete to page $pageNumber',
-                  );
-                }
               }
             })
             .catchError((error) {
@@ -204,11 +196,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
       } else {
         _isAnimating = false;
         _externalPageUpdate = null;
-        if (kDebugMode) {
-          debugPrint(
-            'MushafScreen: Already at target page, skipping animation',
-          );
-        }
       }
     }
   }
@@ -230,12 +217,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
 
       // Handle page changes - always navigate when page changes from external source
       if (isPageChange && !_isAnimating && mounted) {
-        if (kDebugMode) {
-          debugPrint(
-            'MushafScreen: Page change detected: $previous -> $next (initialPage: ${widget.initialPage})',
-          );
-        }
-
         // Skip if this matches the initial page AND PageController is already there
         // This prevents animations when screen is first created with initialPage
         if (_pageController.hasClients) {
@@ -243,22 +224,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
           final initialIndex = widget.initialPage - 1;
           final targetIndex = next - 1;
 
-          if (kDebugMode) {
-            debugPrint(
-              'MushafScreen: currentIndex=$currentIndex, initialIndex=$initialIndex, targetIndex=$targetIndex',
-            );
-          }
-
           // If target is initial page AND controller is already at initial page AND previous was also initial, skip
           // This is normal navigation (new screen created)
           if (next == widget.initialPage &&
               currentIndex == initialIndex &&
               previous == widget.initialPage) {
-            if (kDebugMode) {
-              debugPrint(
-                'MushafScreen: Skipping - matches initial page and controller position (normal navigation)',
-              );
-            }
             return;
           }
 
@@ -270,27 +240,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
               (currentIndex == targetIndex && previous != next);
 
           if (shouldNavigate) {
-            if (kDebugMode) {
-              debugPrint(
-                'MushafScreen: Navigating to page $next (external update, alreadyAtTarget: ${currentIndex == targetIndex}, previous: $previous)',
-              );
-            }
             // Mark as external update to prevent conflicts
             _externalPageUpdate = next;
             _navigateToPage(next);
-          } else {
-            if (kDebugMode) {
-              debugPrint(
-                'MushafScreen: Skipping - PageController already at target',
-              );
-            }
           }
         } else {
-          if (kDebugMode) {
-            debugPrint(
-              'MushafScreen: PageController not ready yet, marking for later',
-            );
-          }
           // Mark for later when controller is ready
           _externalPageUpdate = next;
         }

@@ -829,11 +829,6 @@ class AudioStateNotifier extends _$AudioStateNotifier {
         if (state.endAyahNumber != null &&
             currentAyah.ayahNumber >= state.endAyahNumber!) {
           // Reached end of range - pause and stop
-          if (kDebugMode) {
-            debugPrint(
-              'Range playback: Reached end ayah ${state.endAyahNumber}, pausing',
-            );
-          }
           try {
             await audioService.pause();
             _updateState(audioService);
@@ -849,11 +844,6 @@ class AudioStateNotifier extends _$AudioStateNotifier {
         if (state.endAyahNumber != null &&
             currentAyah.ayahNumber < state.endAyahNumber!) {
           // Continue to next ayah in range - use transition for smooth playback
-          if (kDebugMode) {
-            debugPrint(
-              'Range playback: Continuing from ayah ${currentAyah.ayahNumber} to next (end: ${state.endAyahNumber})',
-            );
-          }
           _isRepeating = true;
           try {
             // Cancel the position subscription before moving to next
@@ -869,11 +859,6 @@ class AudioStateNotifier extends _$AudioStateNotifier {
           }
         } else {
           // No range or reached end - pause and stop when ayah finishes
-          if (kDebugMode) {
-            debugPrint(
-              'Playback: Pausing at ayah ${currentAyah.ayahNumber} (end: ${state.endAyahNumber})',
-            );
-          }
           try {
             await audioService.pause();
             _updateState(audioService);

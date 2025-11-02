@@ -232,11 +232,6 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
         _selectedSurah!,
         _selectedStartAyah!,
       );
-      if (kDebugMode) {
-        debugPrint(
-          'AudioConfig: Found page $pageNumber for surah $_selectedSurah, ayah $_selectedStartAyah',
-        );
-      }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error getting page for ayah: $e');
@@ -287,10 +282,6 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
           });
     }
 
-    if (kDebugMode) {
-      debugPrint('AudioConfig: Started playback (async)');
-    }
-
     // Pop immediately - don't wait for playback
     if (!mounted) return;
 
@@ -298,34 +289,14 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
     final currentPage = ref.read(currentPageProvider);
     final needsNavigation = pageNumber != null && pageNumber != currentPage;
 
-    if (kDebugMode) {
-      debugPrint(
-        'AudioConfig: Popping screen immediately (needsNavigation: $needsNavigation)',
-      );
-    }
-
     Navigator.of(context).pop();
 
     // If we need to navigate to a different page, do it AFTER pop
     if (needsNavigation) {
-      if (kDebugMode) {
-        debugPrint(
-          'AudioConfig: Will navigate to page $pageNumber (current: $currentPage)',
-        );
-      }
       // Use a microtask to ensure pop completes, then update page
       Future.microtask(() {
         ref.read(currentPageProvider.notifier).setPage(pageNumber!);
-        if (kDebugMode) {
-          debugPrint('AudioConfig: Updated page provider to $pageNumber');
-        }
       });
-    } else {
-      if (kDebugMode) {
-        debugPrint(
-          'AudioConfig: Already on target page ($pageNumber), no navigation needed',
-        );
-      }
     }
   }
 
