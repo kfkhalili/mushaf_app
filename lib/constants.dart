@@ -207,7 +207,7 @@ class PrimaryColorConstants {
     ColorPreset(name: 'وردي', color: 0xFFE91E63), // Pink
     ColorPreset(name: 'أزرق داكن', color: 0xFF1976D2), // Dark Blue
     ColorPreset(name: 'أخضر داكن', color: 0xFF388E3C), // Dark Green
-    ColorPreset(name: 'بني', color: 0xFF795548), // Brown
+    ColorPreset(name: 'نيلي', color: 0xFF3F51B5), // Indigo
   ];
 
   // WHY: Private constructor to prevent instantiation.

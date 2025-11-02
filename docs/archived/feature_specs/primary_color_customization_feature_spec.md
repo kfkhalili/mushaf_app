@@ -30,17 +30,17 @@ The color customization feature is integrated into the Settings screen (`lib/scr
 
 - **Location**: Settings screen, under "اللون الأساسي" (Primary Color) section
 - **Layout**: 5-column grid of circular color swatches
-- **Presets**: 10 predefined colors:
-  - شرشير (Teal) - `0xFF009688`
-  - أزرق (Blue) - `0xFF2196F3`
-  - بنفسجي (Purple) - `0xFF9C27B0`
-  - أخضر (Green) - `0xFF4CAF50`
-  - برتقالي (Orange) - `0xFFFF9800`
-  - أحمر (Red) - `0xFFF44336`
-  - وردي (Pink) - `0xFFE91E63`
-  - أزرق داكن (Dark Blue) - `0xFF1976D2`
-  - أخضر داكن (Dark Green) - `0xFF388E3C`
-  - بني (Brown) - `0xFF795548`
+  - **Presets**: 10 predefined colors:
+    - شرشير (Teal) - `0xFF009688`
+    - أزرق (Blue) - `0xFF2196F3`
+    - بنفسجي (Purple) - `0xFF9C27B0`
+    - أخضر (Green) - `0xFF4CAF50`
+    - برتقالي (Orange) - `0xFFFF9800`
+    - أحمر (Red) - `0xFFF44336`
+    - وردي (Pink) - `0xFFE91E63`
+    - أزرق داكن (Dark Blue) - `0xFF1976D2`
+    - أخضر داكن (Dark Green) - `0xFF388E3C`
+    - نيلي (Indigo) - `0xFF3F51B5`
 - **Selection Indicator**: Selected preset shows:
   - Thicker border (3px vs 1px)
   - Check icon
