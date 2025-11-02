@@ -9,6 +9,7 @@ class AppHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onSearchPressed;
   final VoidCallback? onBookmarkPressed;
+  final VoidCallback? onExplorePressed;
   final bool showBackButton;
   final Widget? trailing;
 
@@ -17,6 +18,7 @@ class AppHeader extends StatelessWidget {
     required this.title,
     this.onSearchPressed,
     this.onBookmarkPressed,
+    this.onExplorePressed,
     this.showBackButton = false,
     this.trailing,
   });
@@ -74,6 +76,17 @@ class AppHeader extends StatelessWidget {
           ),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
+          // Explore icon (before bookmark icon in RTL)
+          if (onExplorePressed != null && trailing == null)
+            IconButton(
+              tooltip: 'استكشاف المواضيع',
+              onPressed: onExplorePressed,
+              icon: Icon(
+                Icons.explore_outlined,
+                size: kAppHeaderIconSize,
+                color: iconColor,
+              ),
+            ),
           // Bookmark icon for Selection Screen (right side, separated from Settings/Search)
           if (onBookmarkPressed != null && trailing == null)
             IconButton(
@@ -88,15 +101,18 @@ class AppHeader extends StatelessWidget {
           // Optional trailing widget
           if (trailing != null) trailing!,
           // Back button (if enabled) - comes after title for RTL
-          if (showBackButton)
+          // WHY: In RTL, back button should point right (chevron_right)
+          if (showBackButton) ...[
+            const SizedBox(width: 8), // Add spacing between title and arrow
             IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: Icon(
-                Icons.arrow_forward_ios,
+                Icons.chevron_right,
                 size: kAppHeaderIconSize,
                 color: iconColor,
               ),
             ),
+          ],
         ],
       ),
     );
@@ -156,9 +172,11 @@ class AppHeader extends StatelessWidget {
     }
 
     // For single-font content, use the original approach
+    // WHY: RTL titles should always align right, especially when back button is shown
     return Text(
       title,
-      textAlign: showBackButton ? TextAlign.right : TextAlign.left,
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
       style: TextStyle(
         fontSize: kAppHeaderTitleFontSize,
         fontWeight: FontWeight.w600,
@@ -212,8 +230,11 @@ class AppHeader extends StatelessWidget {
     // Check if the title contains glyph strings
     if (title.contains('juz')) {
       return quranCommonFontFamily;
-    } else if (title.contains('surah') || _containsArabicText(title)) {
+    } else if (title.contains('surah')) {
       return surahNameFontFamily;
+    } else if (_containsArabicText(title)) {
+      // WHY: Use IBMPlexSansArabic for Arabic text as per user's standard font
+      return 'IBMPlexSansArabic';
     }
     return null; // Use default font for regular text
   }

@@ -7,6 +7,7 @@ import '../widgets/shared/app_bottom_navigation.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 import '../screens/bookmarks_screen.dart';
+import 'explore_hub_screen.dart';
 import 'search_screen.dart';
 import 'dart:developer' as dev;
 
@@ -91,6 +92,11 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
               onBookmarkPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+                );
+              },
+              onExplorePressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ExploreHubScreen()),
                 );
               },
             ),

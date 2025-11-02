@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
+import '../screens/topic_detail_screen.dart';
 
 /// Context menu widget that appears after long-press on an ayah
 class AyahContextMenu extends ConsumerWidget {
@@ -83,6 +85,11 @@ class AyahContextMenu extends ConsumerWidget {
       isAyahBookmarkedProvider(surahNumber, ayahNumber),
     );
 
+    // Watch topics for this ayah
+    final topicsAsync = ref.watch(
+      topicsForAyahProvider(surahNumber, ayahNumber),
+    );
+
     return Stack(
       children: [
         // Dismissible overlay - tap outside to close
@@ -112,11 +119,12 @@ class AyahContextMenu extends ConsumerWidget {
                 ),
               ),
               child: IntrinsicWidth(
-                child: isBookmarkedAsync.when(
-                  data: (isBookmarked) => Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Bookmark section
+                    isBookmarkedAsync.when(
+                      data: (isBookmarked) => InkWell(
                         onTap: () {
                           // Prevent overlay dismissal by stopping event propagation
                           if (isBookmarked) {
@@ -127,7 +135,6 @@ class AyahContextMenu extends ConsumerWidget {
                         },
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
-                          bottom: Radius.circular(16),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -165,17 +172,117 @@ class AyahContextMenu extends ConsumerWidget {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
-                  ),
-                  error: (_, _) => const SizedBox.shrink(),
+
+                    // Related Topics Section
+                    topicsAsync.when(
+                      data: (topics) {
+                        // Filter out topics without Arabic names
+                        final topicsWithArabic = topics
+                            .where((t) => t.arabicName.isNotEmpty)
+                            .toList();
+
+                        if (topicsWithArabic.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16.0,
+                                16.0,
+                                16.0,
+                                8.0,
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  'المواضيع ذات الصلة',
+                                  style: theme.textTheme.titleSmall,
+                                  textDirection: TextDirection.rtl,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16.0,
+                                0,
+                                16.0,
+                                16.0,
+                              ),
+                              child: Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                alignment: WrapAlignment.end,
+                                children: topicsWithArabic.map((topic) {
+                                  return InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop(); // Close menu
+                                      if (context.mounted) {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                TopicDetailScreen(
+                                                  topicId: topic.topicId,
+                                                ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Chip(
+                                      label: Text(
+                                        topic.arabicName,
+                                        textDirection: TextDirection.rtl,
+                                      ),
+                                      onDeleted: null,
+                                      deleteIcon: null,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      error: (error, stack) {
+                        if (kDebugMode) {
+                          debugPrint(
+                            'AyahContextMenu topics error: $error\n$stack',
+                          );
+                        }
+                        // Show error in UI instead of hiding it
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'خطأ في تحميل المواضيع',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
+                            textDirection: TextDirection.rtl,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),

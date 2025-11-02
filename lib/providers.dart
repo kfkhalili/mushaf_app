@@ -13,7 +13,9 @@ import 'services/reading_progress_service.dart';
 import 'services/app_data_service.dart';
 import 'services/memorization_storage.dart';
 import 'services/memorization_storage_sqlite.dart';
+import 'services/ontology_service.dart';
 import 'models.dart';
+import 'models/ontology_models.dart';
 import 'constants.dart';
 import 'memorization/models.dart';
 import 'services/memorization_service.dart';
@@ -597,4 +599,98 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
     if (state == null) return;
     await _storage.saveSession(state!);
   }
+}
+
+// --- Ontology Service Provider ---
+@Riverpod(keepAlive: true)
+class OntologyServiceNotifier extends _$OntologyServiceNotifier {
+  OntologyService? _service;
+
+  @override
+  Future<OntologyService> build() async {
+    final previousService = _service;
+    if (previousService != null) {
+      await previousService.close();
+    }
+
+    try {
+      _service = OntologyService();
+      await _service!.ensureInitialized();
+
+      ref.onDispose(() async {
+        final serviceToClose = _service;
+        _service = null;
+        await serviceToClose?.close();
+      });
+
+      return _service!;
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('OntologyServiceProvider build failed: $e\n$stackTrace');
+      }
+      rethrow;
+    }
+  }
+}
+
+// --- Topic by ID Provider ---
+@riverpod
+Future<Topic> topicById(Ref ref, int topicId) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getTopicById(topicId);
+}
+
+// --- Topics for Ayah Provider ---
+@riverpod
+Future<List<Topic>> topicsForAyah(
+  Ref ref,
+  int surahNumber,
+  int ayahNumber,
+) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getTopicsForAyah(surahNumber, ayahNumber);
+}
+
+// --- Verses for Topic Provider ---
+@riverpod
+Future<List<VerseReference>> versesForTopic(Ref ref, int topicId) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getVersesForTopic(topicId);
+}
+
+// --- Related Topics Provider ---
+@riverpod
+Future<List<Topic>> relatedTopics(Ref ref, int sourceTopicId) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getRelatedTopics(sourceTopicId);
+}
+
+// --- Root Topics Provider ---
+@Riverpod(keepAlive: true)
+Future<List<Topic>> rootTopics(Ref ref) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getRootTopics();
+}
+
+// --- Root Topics by Hierarchy Provider ---
+// WHY: Keep alive to prevent repeated queries when widget rebuilds
+@Riverpod(keepAlive: true)
+Future<List<Topic>> rootTopicsByHierarchy(Ref ref, bool thematic) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getRootTopicsByHierarchy(thematic: thematic);
+}
+
+// --- Child Topics Provider ---
+@riverpod
+Future<List<Topic>> childTopics(Ref ref, int topicId, bool thematic) async {
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.getChildTopics(topicId, thematic: thematic);
+}
+
+// --- Search Topics Provider ---
+@riverpod
+Future<List<Topic>> searchTopics(Ref ref, String query) async {
+  if (query.trim().isEmpty) return [];
+  final service = await ref.watch(ontologyServiceProvider.future);
+  return service.searchTopics(query);
 }

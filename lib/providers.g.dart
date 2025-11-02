@@ -1596,3 +1596,611 @@ abstract class _$MemorizationSessionNotifier
     element.handleValue(ref, created);
   }
 }
+
+@ProviderFor(OntologyServiceNotifier)
+const ontologyServiceProvider = OntologyServiceNotifierProvider._();
+
+final class OntologyServiceNotifierProvider
+    extends $AsyncNotifierProvider<OntologyServiceNotifier, OntologyService> {
+  const OntologyServiceNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ontologyServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$ontologyServiceNotifierHash();
+
+  @$internal
+  @override
+  OntologyServiceNotifier create() => OntologyServiceNotifier();
+}
+
+String _$ontologyServiceNotifierHash() =>
+    r'c09d6d08fa480230d5fed6a87572a3d1fc1f9ec2';
+
+abstract class _$OntologyServiceNotifier
+    extends $AsyncNotifier<OntologyService> {
+  FutureOr<OntologyService> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<OntologyService>, OntologyService>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<OntologyService>, OntologyService>,
+              AsyncValue<OntologyService>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(topicById)
+const topicByIdProvider = TopicByIdFamily._();
+
+final class TopicByIdProvider
+    extends $FunctionalProvider<AsyncValue<Topic>, Topic, FutureOr<Topic>>
+    with $FutureModifier<Topic>, $FutureProvider<Topic> {
+  const TopicByIdProvider._({
+    required TopicByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'topicByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$topicByIdHash();
+
+  @override
+  String toString() {
+    return r'topicByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Topic> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Topic> create(Ref ref) {
+    final argument = this.argument as int;
+    return topicById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TopicByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$topicByIdHash() => r'e08abcd4f123413ff358e6409f955c67b4f72d39';
+
+final class TopicByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Topic>, int> {
+  const TopicByIdFamily._()
+    : super(
+        retry: null,
+        name: r'topicByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TopicByIdProvider call(int topicId) =>
+      TopicByIdProvider._(argument: topicId, from: this);
+
+  @override
+  String toString() => r'topicByIdProvider';
+}
+
+@ProviderFor(topicsForAyah)
+const topicsForAyahProvider = TopicsForAyahFamily._();
+
+final class TopicsForAyahProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const TopicsForAyahProvider._({
+    required TopicsForAyahFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'topicsForAyahProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$topicsForAyahHash();
+
+  @override
+  String toString() {
+    return r'topicsForAyahProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return topicsForAyah(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TopicsForAyahProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$topicsForAyahHash() => r'4e569e1cbf758b733105b5ff5f67f703f52f7ecc';
+
+final class TopicsForAyahFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Topic>>, (int, int)> {
+  const TopicsForAyahFamily._()
+    : super(
+        retry: null,
+        name: r'topicsForAyahProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TopicsForAyahProvider call(int surahNumber, int ayahNumber) =>
+      TopicsForAyahProvider._(argument: (surahNumber, ayahNumber), from: this);
+
+  @override
+  String toString() => r'topicsForAyahProvider';
+}
+
+@ProviderFor(versesForTopic)
+const versesForTopicProvider = VersesForTopicFamily._();
+
+final class VersesForTopicProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VerseReference>>,
+          List<VerseReference>,
+          FutureOr<List<VerseReference>>
+        >
+    with
+        $FutureModifier<List<VerseReference>>,
+        $FutureProvider<List<VerseReference>> {
+  const VersesForTopicProvider._({
+    required VersesForTopicFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'versesForTopicProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$versesForTopicHash();
+
+  @override
+  String toString() {
+    return r'versesForTopicProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VerseReference>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VerseReference>> create(Ref ref) {
+    final argument = this.argument as int;
+    return versesForTopic(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VersesForTopicProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$versesForTopicHash() => r'148f93263c3b2064a4d539a4d3d02136d14cc827';
+
+final class VersesForTopicFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VerseReference>>, int> {
+  const VersesForTopicFamily._()
+    : super(
+        retry: null,
+        name: r'versesForTopicProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  VersesForTopicProvider call(int topicId) =>
+      VersesForTopicProvider._(argument: topicId, from: this);
+
+  @override
+  String toString() => r'versesForTopicProvider';
+}
+
+@ProviderFor(relatedTopics)
+const relatedTopicsProvider = RelatedTopicsFamily._();
+
+final class RelatedTopicsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const RelatedTopicsProvider._({
+    required RelatedTopicsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'relatedTopicsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$relatedTopicsHash();
+
+  @override
+  String toString() {
+    return r'relatedTopicsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    final argument = this.argument as int;
+    return relatedTopics(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RelatedTopicsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$relatedTopicsHash() => r'05514a56bdf32924cdced8c76df6b1e088912613';
+
+final class RelatedTopicsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Topic>>, int> {
+  const RelatedTopicsFamily._()
+    : super(
+        retry: null,
+        name: r'relatedTopicsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  RelatedTopicsProvider call(int sourceTopicId) =>
+      RelatedTopicsProvider._(argument: sourceTopicId, from: this);
+
+  @override
+  String toString() => r'relatedTopicsProvider';
+}
+
+@ProviderFor(rootTopics)
+const rootTopicsProvider = RootTopicsProvider._();
+
+final class RootTopicsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const RootTopicsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rootTopicsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rootTopicsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    return rootTopics(ref);
+  }
+}
+
+String _$rootTopicsHash() => r'a62d217d1c3232c0d7864f0c1e4a5ee232d81d41';
+
+@ProviderFor(rootTopicsByHierarchy)
+const rootTopicsByHierarchyProvider = RootTopicsByHierarchyFamily._();
+
+final class RootTopicsByHierarchyProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const RootTopicsByHierarchyProvider._({
+    required RootTopicsByHierarchyFamily super.from,
+    required bool super.argument,
+  }) : super(
+         retry: null,
+         name: r'rootTopicsByHierarchyProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$rootTopicsByHierarchyHash();
+
+  @override
+  String toString() {
+    return r'rootTopicsByHierarchyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    final argument = this.argument as bool;
+    return rootTopicsByHierarchy(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RootTopicsByHierarchyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$rootTopicsByHierarchyHash() =>
+    r'78b7c0f8302edb11793023ef5bd64153ee1b5fb8';
+
+final class RootTopicsByHierarchyFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Topic>>, bool> {
+  const RootTopicsByHierarchyFamily._()
+    : super(
+        retry: null,
+        name: r'rootTopicsByHierarchyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  RootTopicsByHierarchyProvider call(bool thematic) =>
+      RootTopicsByHierarchyProvider._(argument: thematic, from: this);
+
+  @override
+  String toString() => r'rootTopicsByHierarchyProvider';
+}
+
+@ProviderFor(childTopics)
+const childTopicsProvider = ChildTopicsFamily._();
+
+final class ChildTopicsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const ChildTopicsProvider._({
+    required ChildTopicsFamily super.from,
+    required (int, bool) super.argument,
+  }) : super(
+         retry: null,
+         name: r'childTopicsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$childTopicsHash();
+
+  @override
+  String toString() {
+    return r'childTopicsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    final argument = this.argument as (int, bool);
+    return childTopics(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChildTopicsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$childTopicsHash() => r'd18cd5f49baab9da4ae4aeba6205376518f72816';
+
+final class ChildTopicsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Topic>>, (int, bool)> {
+  const ChildTopicsFamily._()
+    : super(
+        retry: null,
+        name: r'childTopicsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChildTopicsProvider call(int topicId, bool thematic) =>
+      ChildTopicsProvider._(argument: (topicId, thematic), from: this);
+
+  @override
+  String toString() => r'childTopicsProvider';
+}
+
+@ProviderFor(searchTopics)
+const searchTopicsProvider = SearchTopicsFamily._();
+
+final class SearchTopicsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Topic>>,
+          List<Topic>,
+          FutureOr<List<Topic>>
+        >
+    with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
+  const SearchTopicsProvider._({
+    required SearchTopicsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'searchTopicsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchTopicsHash();
+
+  @override
+  String toString() {
+    return r'searchTopicsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Topic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Topic>> create(Ref ref) {
+    final argument = this.argument as String;
+    return searchTopics(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchTopicsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchTopicsHash() => r'c243dc4d6971e08e070920c4d9407eb4ebb79cfe';
+
+final class SearchTopicsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Topic>>, String> {
+  const SearchTopicsFamily._()
+    : super(
+        retry: null,
+        name: r'searchTopicsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SearchTopicsProvider call(String query) =>
+      SearchTopicsProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'searchTopicsProvider';
+}

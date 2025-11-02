@@ -83,7 +83,7 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
       expect(find.byIcon(Icons.settings), findsNothing);
     });
 

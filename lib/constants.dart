@@ -9,6 +9,7 @@ const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 const String imlaeiAyahDbFileName = 'imlaei-script-ayah-by-ayah.db';
+const String topicsDbFileName = 'topics.db';
 
 // --- MUSHAF LAYOUT OPTIONS ---
 enum MushafLayout { uthmani15Lines, indopak13Lines }
@@ -280,6 +281,24 @@ class DbConstants {
   static const String firstVerseKeyCol = 'first_verse_key';
   static const String lastVerseKeyCol = 'last_verse_key';
   static const String verseKeyCol = 'verse_key';
+
+  // --- Topics/Ontology Tables ---
+  static const String topicsTable = 'topics';
+  static const String topicVerseMapTable = 'TopicVerseMap';
+  static const String relatedTopicsMapTable = 'RelatedTopicsMap';
+  static const String topicIdCol = 'topic_id';
+  static const String nameCol = 'name';
+  static const String arabicNameCol = 'arabic_name';
+  static const String parentIdCol = 'parent_id';
+  static const String thematicParentIdCol = 'thematic_parent_id';
+  static const String ontologyParentIdCol = 'ontology_parent_id';
+  static const String descriptionCol = 'description';
+  static const String wikiLinkCol = 'wiki_link';
+  static const String thematicCol = 'thematic';
+  static const String ontologyCol = 'ontology';
+  static const String mapIdCol = 'map_id';
+  static const String sourceTopicIdCol = 'source_topic_id';
+  static const String relatedTopicIdCol = 'related_topic_id';
 
   // --- Bookmarks Table ---
   static const String bookmarksTable = 'bookmarks';
