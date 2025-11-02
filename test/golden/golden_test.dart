@@ -9,6 +9,7 @@ import 'package:mushaf_app/screens/settings_screen.dart';
 import 'package:mushaf_app/themes.dart';
 import 'package:mushaf_app/providers.dart';
 import 'package:mushaf_app/models.dart';
+import 'package:mushaf_app/constants.dart';
 
 void main() {
   group('Golden Tests - Visual Regression Testing', () {
@@ -45,8 +46,8 @@ void main() {
           // ignore: argument_type_not_assignable
           overrides: overrides,
           child: MaterialApp(
-            theme: lightTheme,
-            darkTheme: darkTheme,
+            theme: buildLightTheme(PrimaryColorConstants.defaultColor),
+            darkTheme: buildDarkTheme(PrimaryColorConstants.defaultColor),
             home: child,
           ),
         ),
@@ -100,7 +101,10 @@ void main() {
     testGoldens('SettingsScreen - Dark Theme', (tester) async {
       await tester.pumpWidgetBuilder(
         ProviderScope(
-          child: MaterialApp(theme: darkTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildDarkTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
         surfaceSize: const Size(428, 926),
       );
@@ -111,7 +115,10 @@ void main() {
     testGoldens('SettingsScreen - Sepia Theme', (tester) async {
       await tester.pumpWidgetBuilder(
         ProviderScope(
-          child: MaterialApp(theme: sepiaTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildSepiaTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
         surfaceSize: const Size(428, 926),
       );

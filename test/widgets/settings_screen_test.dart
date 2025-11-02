@@ -3,13 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/screens/settings_screen.dart';
 import 'package:mushaf_app/themes.dart';
+import 'package:mushaf_app/constants.dart';
 
 void main() {
   group('SettingsScreen', () {
     testWidgets('renders settings screen with title', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(theme: lightTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildLightTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
       );
 
@@ -21,7 +25,10 @@ void main() {
     testWidgets('displays theme options', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(theme: lightTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildLightTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
       );
 
@@ -34,7 +41,10 @@ void main() {
     testWidgets('renders in light theme', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(theme: lightTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildLightTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
       );
 
@@ -46,7 +56,10 @@ void main() {
     testWidgets('renders in dark theme', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(theme: darkTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildDarkTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
       );
 
@@ -58,7 +71,10 @@ void main() {
     testWidgets('renders in sepia theme', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(theme: sepiaTheme, home: const SettingsScreen()),
+          child: MaterialApp(
+            theme: buildSepiaTheme(PrimaryColorConstants.defaultColor),
+            home: const SettingsScreen(),
+          ),
         ),
       );
 

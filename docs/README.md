@@ -38,6 +38,7 @@ Feature specifications for implemented features:
 - [`archived/feature_specs/bookmarks_feature_spec.md`](./archived/feature_specs/bookmarks_feature_spec.md) - ✅ Implemented
 - [`archived/feature_specs/reading_progress_feature_spec.md`](./archived/feature_specs/reading_progress_feature_spec.md) - ✅ Implemented
 - [`archived/feature_specs/mushaf_reading_feature_spec.md`](./archived/feature_specs/mushaf_reading_feature_spec.md) - ✅ Implemented (core feature)
+- [`archived/feature_specs/primary_color_customization_feature_spec.md`](./archived/feature_specs/primary_color_customization_feature_spec.md) - ✅ Implemented
 
 ---
 

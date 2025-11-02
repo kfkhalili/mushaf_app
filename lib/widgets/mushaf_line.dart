@@ -190,17 +190,19 @@ class MushafLine extends ConsumerWidget {
             }
 
             // Base text widget
+            final primaryColor = theme.colorScheme.primary;
+            final highlightColor = isSelected || isBookmarked
+                ? primaryColor
+                : baseTextColor;
             Widget widget = Text(
               word.text,
               key: ValueKey(
-                "${word.text}-${opacity.toStringAsFixed(2)}-$isSelected",
+                "${word.text}-${opacity.toStringAsFixed(2)}-$isSelected-${primaryColor.toARGB32()}",
               ),
               style: _getWordStyle(
                 fontSize: defaultDynamicFontSize,
                 lineHeight: dynamicLineHeight,
-                baseColor: isSelected || isBookmarked
-                    ? theme.colorScheme.primary
-                    : baseTextColor,
+                baseColor: highlightColor,
                 opacity: opacity,
               ),
               textScaler: const TextScaler.linear(1.0),

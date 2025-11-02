@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 // --- DATABASE FILENAMES ---
 const String layoutDbFileName = 'uthmani-15-lines.db';
 const String indopakLayoutDbFileName = 'indopak-13-lines-layout-qudratullah.db';
@@ -180,6 +182,46 @@ class SearchHistoryConstants {
 
   // WHY: Private constructor to prevent instantiation.
   const SearchHistoryConstants._();
+}
+
+// --- PRIMARY COLOR CONSTANTS ---
+// WHY: Centralizes primary color presets and default values.
+class PrimaryColorConstants {
+  // WHY: Default primary color for light/dark themes.
+  static const int defaultColor = 0xFF009688; // Colors.teal[500]
+
+  // WHY: Default primary color for sepia theme.
+  static const int defaultSepiaColor = 0xFF795548; // Colors.brown[500]
+
+  // WHY: SharedPreferences key for storing primary color.
+  static const String preferencesKey = 'primary_color';
+
+  // WHY: Predefined color presets for user selection.
+  static const List<ColorPreset> presets = [
+    ColorPreset(name: 'شرشير', color: 0xFF009688), // Teal
+    ColorPreset(name: 'أزرق', color: 0xFF2196F3), // Blue
+    ColorPreset(name: 'بنفسجي', color: 0xFF9C27B0), // Purple
+    ColorPreset(name: 'أخضر', color: 0xFF4CAF50), // Green
+    ColorPreset(name: 'برتقالي', color: 0xFFFF9800), // Orange
+    ColorPreset(name: 'أحمر', color: 0xFFF44336), // Red
+    ColorPreset(name: 'وردي', color: 0xFFE91E63), // Pink
+    ColorPreset(name: 'أزرق داكن', color: 0xFF1976D2), // Dark Blue
+    ColorPreset(name: 'أخضر داكن', color: 0xFF388E3C), // Dark Green
+    ColorPreset(name: 'بني', color: 0xFF795548), // Brown
+  ];
+
+  // WHY: Private constructor to prevent instantiation.
+  const PrimaryColorConstants._();
+}
+
+// WHY: Represents a color preset with name and color value.
+class ColorPreset {
+  final String name;
+  final int color;
+
+  const ColorPreset({required this.name, required this.color});
+
+  Color get colorValue => Color(color);
 }
 
 // --- DATE CALCULATIONS ---

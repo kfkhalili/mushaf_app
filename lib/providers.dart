@@ -449,6 +449,41 @@ Future<int> currentStreak(Ref ref) async {
 // WHY: Defined here for centralized provider management
 enum AppThemeMode { light, dark, sepia, system }
 
+// --- Primary Color Provider ---
+// WHY: Manages custom primary color for personalization across themes
+@Riverpod(keepAlive: true)
+class PrimaryColorNotifier extends _$PrimaryColorNotifier {
+  @override
+  int build() {
+    // WHY: Try to read initial value from SharedPreferences synchronously
+    final prefsAsync = ref.read(sharedPreferencesProvider);
+    if (prefsAsync.hasValue) {
+      final savedColor = prefsAsync.value!.getInt(
+        PrimaryColorConstants.preferencesKey,
+      );
+      if (savedColor != null) {
+        return savedColor;
+      }
+    }
+    // Default to teal if SharedPreferences not loaded or no saved value
+    return PrimaryColorConstants.defaultColor;
+  }
+
+  Future<void> setPrimaryColor(int colorValue) async {
+    state = colorValue;
+    // Save to SharedPreferences using provider
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setInt(PrimaryColorConstants.preferencesKey, colorValue);
+    } catch (e) {
+      // Handle potential errors, e.g., if storage is unavailable
+      if (kDebugMode) {
+        debugPrint('Failed to save primary color: $e');
+      }
+    }
+  }
+}
+
 // --- Theme Provider ---
 // WHY: Migrated from legacy StateNotifier to codegen @riverpod pattern
 @Riverpod(keepAlive: true)

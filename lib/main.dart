@@ -26,12 +26,18 @@ class MushafApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppThemeMode currentThemeMode = ref.watch(themeProvider);
+    final primaryColorValue = ref.watch(primaryColorProvider);
+
+    // WHY: Generate themes dynamically based on selected primary color
+    final lightThemeDynamic = buildLightTheme(primaryColorValue);
+    final darkThemeDynamic = buildDarkTheme(primaryColorValue);
+    final sepiaThemeDynamic = buildSepiaTheme(primaryColorValue);
 
     return MaterialApp(
       title: 'Quran Reader',
       debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
+      theme: lightThemeDynamic,
+      darkTheme: darkThemeDynamic,
       themeMode: currentThemeMode == AppThemeMode.sepia
           ? ThemeMode.light
           : currentThemeMode == AppThemeMode.light
@@ -41,7 +47,7 @@ class MushafApp extends ConsumerWidget {
           : ThemeMode.system,
       builder: (context, child) {
         if (currentThemeMode == AppThemeMode.sepia) {
-          return Theme(data: sepiaTheme, child: child!);
+          return Theme(data: sepiaThemeDynamic, child: child!);
         }
         return child!;
       },

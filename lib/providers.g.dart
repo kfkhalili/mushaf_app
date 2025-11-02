@@ -1430,6 +1430,60 @@ final class CurrentStreakProvider
 
 String _$currentStreakHash() => r'e92074e4a2350a1e4fcc5e444be86a364ff6a968';
 
+@ProviderFor(PrimaryColorNotifier)
+const primaryColorProvider = PrimaryColorNotifierProvider._();
+
+final class PrimaryColorNotifierProvider
+    extends $NotifierProvider<PrimaryColorNotifier, int> {
+  const PrimaryColorNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'primaryColorProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$primaryColorNotifierHash();
+
+  @$internal
+  @override
+  PrimaryColorNotifier create() => PrimaryColorNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$primaryColorNotifierHash() =>
+    r'c201df1693e236dbcc15eb2d5b6dd38f1b560c52';
+
+abstract class _$PrimaryColorNotifier extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(ThemeNotifier)
 const themeProvider = ThemeNotifierProvider._();
 
