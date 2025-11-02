@@ -2,6 +2,7 @@
 
 // WHY: These are the only two imports you need for this file.
 // 'riverpod_annotation' provides the @riverpod annotation and the 'Ref' type.
+import 'dart:async';
 import 'package:flutter/foundation.dart'; // For kDebugMode and debugPrint
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ import 'services/app_data_service.dart';
 import 'services/memorization_storage.dart';
 import 'services/memorization_storage_sqlite.dart';
 import 'services/ontology_service.dart';
+import 'services/audio_service.dart';
 import 'models.dart';
 import 'models/ontology_models.dart';
 import 'constants.dart';
@@ -48,7 +50,22 @@ class CurrentPage extends _$CurrentPage {
   }
 
   void setPage(int newPage) {
-    state = newPage;
+    if (kDebugMode) {
+      debugPrint(
+        'CurrentPage: setPage called with $newPage (current state: $state)',
+      );
+    }
+    // Always update state, even if it's the same value
+    // This ensures listeners are notified even when navigating to the current page
+    // (e.g., when returning from audio config screen)
+    if (state != newPage) {
+      state = newPage;
+    } else {
+      // Force a rebuild by setting to the same value
+      // This is needed for cases where we're already on the target page
+      // but need to ensure navigation happens (e.g., coming back from audio config)
+      state = newPage;
+    }
   }
 }
 
@@ -188,13 +205,44 @@ class SelectionTabIndex extends _$SelectionTabIndex {
 // WHY: This is a keepAlive provider for managing mushaf layout preference.
 @Riverpod(keepAlive: true)
 class MushafLayoutSetting extends _$MushafLayoutSetting {
+  static const String _preferencesKey = 'mushaf_layout';
+
   @override
   MushafLayout build() {
-    return MushafLayout.uthmani15Lines; // Default to 15 lines
+    // WHY: Watch SharedPreferences to ensure it's loaded before reading
+    // This prevents returning default value before saved preference is available
+    final prefsAsync = ref.watch(sharedPreferencesProvider);
+    if (prefsAsync.hasValue) {
+      final savedLayout = prefsAsync.value!.getString(_preferencesKey);
+      if (savedLayout != null) {
+        try {
+          final layout = MushafLayout.values.firstWhere(
+            (e) => e.name == savedLayout,
+          );
+          return layout;
+        } catch (e) {
+          // Invalid value, fall back to default
+        }
+      }
+    }
+    // Default to Uthmani if SharedPreferences not loaded or no saved value
+    return MushafLayout.uthmani15Lines;
   }
 
-  void setLayout(MushafLayout layout) {
+  Future<void> setLayout(MushafLayout layout) async {
+    // WHY: Update state synchronously first, then save asynchronously
+    // This ensures the state is updated before any watchers react
     state = layout;
+    // Save to SharedPreferences using provider
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setString(_preferencesKey, layout.name);
+    } catch (e) {
+      // Handle potential errors, e.g., if storage is unavailable
+      if (kDebugMode) {
+        debugPrint('Failed to save mushaf layout: $e');
+      }
+    }
   }
 }
 
@@ -693,4 +741,363 @@ Future<List<Topic>> searchTopics(Ref ref, String query) async {
   if (query.trim().isEmpty) return [];
   final service = await ref.watch(ontologyServiceProvider.future);
   return service.searchTopics(query);
+}
+
+// --- Audio Service Provider ---
+@Riverpod(keepAlive: true)
+Future<AudioService> audioService(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  final service = AudioService(dbService);
+
+  // Dispose audio service when provider is disposed
+  ref.onDispose(() {
+    service.dispose();
+  });
+
+  return service;
+}
+
+// --- Audio State Provider ---
+@Riverpod(keepAlive: true)
+class AudioStateNotifier extends _$AudioStateNotifier {
+  StreamSubscription<dynamic>? _playerStateSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
+  bool _isRepeating = false; // Flag to prevent concurrent repeat calls
+
+  @override
+  AudioState build() {
+    // Set up listener for player state changes
+    _setupPlayerStateListener();
+
+    // Clean up subscriptions on dispose
+    ref.onDispose(() {
+      _playerStateSubscription?.cancel();
+      _positionSubscription?.cancel();
+    });
+
+    return const AudioState(
+      isPlaying: false,
+      currentSurahNumber: null,
+      currentAyahNumber: null,
+      endAyahNumber: null,
+      position: null,
+      duration: null,
+    );
+  }
+
+  void _setupPlayerStateListener() async {
+    // Cancel existing subscription if any
+    await _playerStateSubscription?.cancel();
+
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      _playerStateSubscription = audioService.playerStateStream.listen((
+        playerState,
+      ) {
+        // Update state whenever player state changes
+        _updateState(audioService);
+      });
+    } catch (e) {
+      // Ignore errors during setup
+    }
+  }
+
+  void _setupRepeatModeListener(
+    AudioService audioService,
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    // Cancel existing subscription if any
+    await _positionSubscription?.cancel();
+
+    // Listen to position stream to detect when ayah ends
+    _positionSubscription = audioService.positionStream.listen((
+      position,
+    ) async {
+      // Prevent concurrent repeat calls
+      if (_isRepeating) return;
+
+      final currentAyah = audioService.currentAyahSegment;
+      if (currentAyah == null) return;
+
+      final endTime = Duration(milliseconds: currentAyah.timestampTo);
+
+      // If we've reached the end (check position >= endTime, regardless of playing state)
+      if (position >= endTime) {
+        // Handle range playback - just play once, no repetition
+        // Check if we have an end ayah and if we've reached it
+        if (state.endAyahNumber != null &&
+            currentAyah.ayahNumber >= state.endAyahNumber!) {
+          // Reached end of range - pause and stop
+          if (kDebugMode) {
+            debugPrint(
+              'Range playback: Reached end ayah ${state.endAyahNumber}, pausing',
+            );
+          }
+          try {
+            await audioService.pause();
+            _updateState(audioService);
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('Error pausing at end of range: $e');
+            }
+          }
+          return;
+        }
+
+        // Check if we should continue range playback
+        if (state.endAyahNumber != null &&
+            currentAyah.ayahNumber < state.endAyahNumber!) {
+          // Continue to next ayah in range - use transition for smooth playback
+          if (kDebugMode) {
+            debugPrint(
+              'Range playback: Continuing from ayah ${currentAyah.ayahNumber} to next (end: ${state.endAyahNumber})',
+            );
+          }
+          _isRepeating = true;
+          try {
+            // Cancel the position subscription before moving to next
+            await _positionSubscription?.cancel();
+            // Move to next ayah in range
+            await skipToNextAyah();
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('Error skipping to next ayah in range: $e');
+            }
+          } finally {
+            _isRepeating = false;
+          }
+        } else {
+          // No range or reached end - pause and stop when ayah finishes
+          if (kDebugMode) {
+            debugPrint(
+              'Playback: Pausing at ayah ${currentAyah.ayahNumber} (end: ${state.endAyahNumber})',
+            );
+          }
+          try {
+            await audioService.pause();
+            _updateState(audioService);
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('Error pausing at end of ayah: $e');
+            }
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> playAyahRange(
+    int surahNumber,
+    int startAyah,
+    int endAyah,
+  ) async {
+    try {
+      if (kDebugMode) {
+        debugPrint(
+          'playAyahRange: Starting range playback from ayah $startAyah to $endAyah',
+        );
+      }
+      // Start playing from start ayah with end ayah set
+      state = state.copyWith(endAyahNumber: endAyah);
+      if (kDebugMode) {
+        debugPrint('playAyahRange: Set endAyahNumber to $endAyah in state');
+      }
+      await playAyah(surahNumber, startAyah);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error playing ayah range: $e');
+      }
+    }
+  }
+
+  Future<void> playAyah(
+    int surahNumber,
+    int ayahNumber, {
+    bool isTransition = false,
+  }) async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+
+      // Play ayah - pass isTransition flag for smooth transitions
+      await audioService.playAyah(
+        surahNumber: surahNumber,
+        ayahNumber: ayahNumber,
+        isTransition: isTransition,
+      );
+
+      // Set default playback speed (1.0)
+      await audioService.setSpeed(1.0);
+
+      // For transitions, update state immediately (player stays in playing state)
+      // For normal play, wait a bit for player to start
+      if (isTransition) {
+        _updateState(audioService);
+        // Set up position listener for the new ayah
+        _setupRepeatModeListener(audioService, surahNumber, ayahNumber);
+      } else {
+        // Wait a brief moment for player to actually start
+        await Future.delayed(const Duration(milliseconds: 200));
+        // Update state immediately after starting playback
+        _updateState(audioService);
+
+        // Ensure listener is set up to keep state in sync
+        _setupPlayerStateListener();
+
+        // Set up position listener to handle repeat mode
+        _setupRepeatModeListener(audioService, surahNumber, ayahNumber);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error playing ayah: $e');
+      }
+    }
+  }
+
+  Future<void> playSurah(int surahNumber) async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      await audioService.playSurah(surahNumber);
+      // Set default playback speed (1.0)
+      await audioService.setSpeed(1.0);
+      // Update state immediately after starting playback
+      _updateState(audioService);
+
+      // Ensure listener is set up
+      _setupPlayerStateListener();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error playing surah: $e');
+      }
+    }
+  }
+
+  Future<void> pause() async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      await audioService.pause();
+      _updateState(audioService);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error pausing audio: $e');
+      }
+    }
+  }
+
+  Future<void> resume() async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      await audioService.resume();
+      _updateState(audioService);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error resuming audio: $e');
+      }
+    }
+  }
+
+  Future<void> stop() async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      await audioService.stop();
+      state = const AudioState(
+        isPlaying: false,
+        currentSurahNumber: null,
+        currentAyahNumber: null,
+        endAyahNumber: null,
+        position: null,
+        duration: null,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error stopping audio: $e');
+      }
+    }
+  }
+
+  Future<void> skipToPreviousAyah() async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      final currentSurah = audioService.currentSurahAudio?.surahNumber;
+      final currentAyah = audioService.currentAyahSegment?.ayahNumber;
+
+      if (currentSurah == null || currentAyah == null) return;
+
+      // Get all segments for the current surah
+      final segments = await ref
+          .read(databaseServiceProvider.future)
+          .then((db) => db.getSurahSegments(currentSurah));
+
+      // Find current ayah index
+      final currentIndex = segments.indexWhere(
+        (s) => s.ayahNumber == currentAyah,
+      );
+
+      if (currentIndex < 0) return;
+
+      // Go to previous ayah
+      if (currentIndex > 0) {
+        final previousAyah = segments[currentIndex - 1];
+        await playAyah(previousAyah.surahNumber, previousAyah.ayahNumber);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error skipping to previous ayah: $e');
+      }
+    }
+  }
+
+  Future<void> skipToNextAyah() async {
+    try {
+      final audioService = await ref.read(audioServiceProvider.future);
+      final currentSurah = audioService.currentSurahAudio?.surahNumber;
+      final currentAyah = audioService.currentAyahSegment?.ayahNumber;
+
+      if (currentSurah == null || currentAyah == null) return;
+
+      // Get all segments for the current surah
+      final segments = await ref
+          .read(databaseServiceProvider.future)
+          .then((db) => db.getSurahSegments(currentSurah));
+
+      // Find current ayah index
+      final currentIndex = segments.indexWhere(
+        (s) => s.ayahNumber == currentAyah,
+      );
+
+      if (currentIndex < 0) return;
+
+      // Go to next ayah - use isTransition=true to keep playing smoothly
+      // Use transition for range playback
+      final shouldTransition = state.endAyahNumber != null;
+
+      if (currentIndex < segments.length - 1) {
+        final nextAyah = segments[currentIndex + 1];
+        await playAyah(
+          nextAyah.surahNumber,
+          nextAyah.ayahNumber,
+          isTransition: shouldTransition,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error skipping to next ayah: $e');
+      }
+    }
+  }
+
+  void _updateState(AudioService audioService) {
+    final currentSurah = audioService.currentSurahAudio;
+    final currentAyah = audioService.currentAyahSegment;
+
+    state = AudioState(
+      isPlaying: audioService.isPlaying,
+      currentSurahNumber: currentSurah?.surahNumber,
+      currentAyahNumber: currentAyah?.ayahNumber,
+      endAyahNumber:
+          state.endAyahNumber, // Preserve end ayah for range playback
+      position: audioService.position,
+      duration: audioService.duration,
+    );
+  }
 }

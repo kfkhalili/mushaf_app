@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers.dart';
 import '../../utils/ui_signals.dart';
 import '../../constants.dart';
+import '../../screens/audio_config_screen.dart';
 import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 
 /// Shared bottom navigation widget that can be used across different screens
@@ -143,14 +144,12 @@ class AppBottomNavigation extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: _buildMemorizationToggleButton(
-                      context,
-                      ref,
-                      selectedIconColor,
-                      unselectedIconColor,
-                    ),
+                  // Show either playback controls OR play button + memorization
+                  _buildAudioControlsOrMemorization(
+                    context,
+                    ref,
+                    selectedIconColor,
+                    unselectedIconColor,
                   ),
                 ],
               ),
@@ -236,6 +235,121 @@ class AppBottomNavigation extends ConsumerWidget {
           visualDensity: VisualDensity.compact,
         ),
       ),
+    );
+  }
+
+  Widget _buildAudioControlsOrMemorization(
+    BuildContext context,
+    WidgetRef ref,
+    Color selectedIconColor,
+    Color unselectedIconColor,
+  ) {
+    final audioState = ref.watch(audioStateProvider);
+    // Show controls if we have any current playback state (playing or paused)
+    final bool hasActivePlayback =
+        audioState.currentSurahNumber != null &&
+        audioState.currentAyahNumber != null;
+
+    // If audio is playing or has active playback, show playback controls (hide memorization)
+    if (hasActivePlayback) {
+      return SizedBox(
+        height: kBottomNavBarHeight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Stop button
+            IconButton(
+              tooltip: 'إيقاف',
+              color: unselectedIconColor,
+              icon: const Icon(Icons.stop),
+              onPressed: () async {
+                await ref.read(audioStateProvider.notifier).stop();
+              },
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Previous (skip backward) button
+            IconButton(
+              tooltip: 'السابق',
+              color: selectedIconColor,
+              icon: const Icon(Icons.skip_previous),
+              onPressed: () async {
+                await ref
+                    .read(audioStateProvider.notifier)
+                    .skipToPreviousAyah();
+              },
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Play/Pause button
+            IconButton(
+              tooltip: audioState.isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
+              color: selectedIconColor,
+              icon: Icon(
+                audioState.isPlaying ? Icons.pause : Icons.play_arrow,
+                size: kBottomNavIconSize,
+              ),
+              onPressed: () async {
+                if (audioState.isPlaying) {
+                  await ref.read(audioStateProvider.notifier).pause();
+                } else {
+                  await ref.read(audioStateProvider.notifier).resume();
+                }
+              },
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Next (skip forward) button
+            IconButton(
+              tooltip: 'التالي',
+              color: selectedIconColor,
+              icon: const Icon(Icons.skip_next),
+              onPressed: () async {
+                await ref.read(audioStateProvider.notifier).skipToNextAyah();
+              },
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show memorization button and play button when not playing
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: _buildMemorizationToggleButton(
+            context,
+            ref,
+            selectedIconColor,
+            unselectedIconColor,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: SizedBox(
+            height: kBottomNavBarHeight,
+            child: IconButton(
+              tooltip: 'تشغيل',
+              color: unselectedIconColor,
+              icon: const Icon(Icons.play_arrow, size: kBottomNavIconSize),
+              onPressed: () {
+                // Navigate to audio config screen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AudioConfigScreen(),
+                  ),
+                );
+              },
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

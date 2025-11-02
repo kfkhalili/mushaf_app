@@ -10,6 +10,7 @@ const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 const String imlaeiAyahDbFileName = 'imlaei-script-ayah-by-ayah.db';
 const String topicsDbFileName = 'topics.db';
+const String audioDbFileName = 'surah-recitation-abdullah-ali-jabir.db';
 
 // --- MUSHAF LAYOUT OPTIONS ---
 enum MushafLayout { uthmani15Lines, indopak13Lines }
@@ -72,6 +73,12 @@ const Map<MushafLayout, double> layoutMaxFontSizes = {
   MushafLayout.indopak13Lines: 24.0,
 };
 
+// Layout-specific line heights
+const Map<MushafLayout, double> layoutLineHeights = {
+  MushafLayout.uthmani15Lines: 2.1,
+  MushafLayout.indopak13Lines: 2.05, // Tighter to prevent overflow
+};
+
 // --- STYLING CONSTANTS ---
 
 // Font Size Multipliers
@@ -89,7 +96,7 @@ const double maxSurahHeaderFontSize = 44.0;
 const double minBasmallahFontSize = 15.0;
 const double maxBasmallahFontSize = 28.0;
 
-// Line Height
+// Line Height (deprecated - use layoutLineHeights instead)
 const double baseLineHeight = 2.1; // For Ayah text
 // const double tightLineHeight = 1.5; // Used directly in line_widget.dart
 
@@ -281,6 +288,19 @@ class DbConstants {
   static const String firstVerseKeyCol = 'first_verse_key';
   static const String lastVerseKeyCol = 'last_verse_key';
   static const String verseKeyCol = 'verse_key';
+
+  // --- Audio Tables ---
+  static const String surahListTable = 'surah_list';
+  static const String segmentsTable = 'segments';
+  // surahNumberCol is defined in Common Columns above
+  // Note: Audio tables use ayah_number (with underscore) instead of ayah
+  static const String audioAyahNumberCol = 'ayah_number';
+  static const String audioUrlCol = 'audio_url';
+  static const String durationCol = 'duration';
+  static const String durationSecCol = 'duration_sec';
+  static const String timestampFromCol = 'timestamp_from';
+  static const String timestampToCol = 'timestamp_to';
+  static const String segmentsCol = 'segments';
 
   // --- Topics/Ontology Tables ---
   static const String topicsTable = 'topics';

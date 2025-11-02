@@ -78,7 +78,10 @@ class MushafLine extends ConsumerWidget {
       minAyahFontSize,
       maxAyahFontSize,
     );
-    final double dynamicLineHeight = baseLineHeight;
+    // Get layout-specific line height
+    final layout = ref.watch(mushafLayoutSettingProvider);
+    final double dynamicLineHeight =
+        layoutLineHeights[layout] ?? baseLineHeight;
     const double tightLineHeight = 1.5;
     // --- End Responsive Scaling ---
 

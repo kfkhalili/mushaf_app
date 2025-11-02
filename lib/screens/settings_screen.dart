@@ -271,15 +271,18 @@ class SettingsScreen extends ConsumerWidget {
                                   child: Text(layout.displayName),
                                 );
                               }).toList(),
-                              onChanged: (MushafLayout? layout) {
+                              onChanged: (MushafLayout? layout) async {
                                 if (layout != null) {
-                                  ref
+                                  // WHY: Await setLayout to ensure state updates before invalidating
+                                  await ref
                                       .read(
                                         mushafLayoutSettingProvider.notifier,
                                       )
                                       .setLayout(layout);
-                                  // WHY: Invalidate database service to reload with new layout
-                                  ref.invalidate(databaseServiceProvider);
+                                  // WHY: DatabaseServiceProvider watches mushafLayoutSettingProvider,
+                                  // so it will rebuild automatically. We still invalidate pageDataProvider
+                                  // to force rerender with new layout and font.
+                                  ref.invalidate(pageDataProvider);
                                 }
                               },
                             ),

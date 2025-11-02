@@ -358,3 +358,130 @@ class ReadingStatistics {
   double get overallProgress => totalPagesRead / 604; // 0.0 to 1.0
   int get overallProgressPercent => (overallProgress * 100).round();
 }
+
+// --- Audio Models ---
+@immutable
+class SurahAudio {
+  final int surahNumber;
+  final String audioUrl;
+  final int duration; // Duration in seconds
+
+  const SurahAudio({
+    required this.surahNumber,
+    required this.audioUrl,
+    required this.duration,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SurahAudio &&
+          runtimeType == other.runtimeType &&
+          surahNumber == other.surahNumber &&
+          audioUrl == other.audioUrl &&
+          duration == other.duration;
+
+  @override
+  int get hashCode => Object.hash(surahNumber, audioUrl, duration);
+}
+
+@immutable
+class AyahSegment {
+  final int surahNumber;
+  final int ayahNumber;
+  final int durationSec;
+  final int timestampFrom;
+  final int timestampTo;
+  final String segments;
+
+  const AyahSegment({
+    required this.surahNumber,
+    required this.ayahNumber,
+    required this.durationSec,
+    required this.timestampFrom,
+    required this.timestampTo,
+    required this.segments,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AyahSegment &&
+          runtimeType == other.runtimeType &&
+          surahNumber == other.surahNumber &&
+          ayahNumber == other.ayahNumber &&
+          durationSec == other.durationSec &&
+          timestampFrom == other.timestampFrom &&
+          timestampTo == other.timestampTo &&
+          segments == other.segments;
+
+  @override
+  int get hashCode => Object.hash(
+    surahNumber,
+    ayahNumber,
+    durationSec,
+    timestampFrom,
+    timestampTo,
+    segments,
+  );
+}
+
+// --- Audio State Model ---
+@immutable
+class AudioState {
+  final bool isPlaying;
+  final int? currentSurahNumber;
+  final int? currentAyahNumber;
+  final int? endAyahNumber; // End ayah for range playback
+  final Duration? position;
+  final Duration? duration;
+
+  const AudioState({
+    required this.isPlaying,
+    this.currentSurahNumber,
+    this.currentAyahNumber,
+    this.endAyahNumber,
+    this.position,
+    this.duration,
+  });
+
+  AudioState copyWith({
+    bool? isPlaying,
+    int? currentSurahNumber,
+    int? currentAyahNumber,
+    int? endAyahNumber,
+    Duration? position,
+    Duration? duration,
+  }) {
+    return AudioState(
+      isPlaying: isPlaying ?? this.isPlaying,
+      currentSurahNumber: currentSurahNumber ?? this.currentSurahNumber,
+      currentAyahNumber: currentAyahNumber ?? this.currentAyahNumber,
+      endAyahNumber: endAyahNumber ?? this.endAyahNumber,
+      position: position ?? this.position,
+      duration: duration ?? this.duration,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AudioState &&
+          runtimeType == other.runtimeType &&
+          isPlaying == other.isPlaying &&
+          currentSurahNumber == other.currentSurahNumber &&
+          currentAyahNumber == other.currentAyahNumber &&
+          endAyahNumber == other.endAyahNumber &&
+          position == other.position &&
+          duration == other.duration;
+
+  @override
+  int get hashCode => Object.hash(
+    isPlaying,
+    currentSurahNumber,
+    currentAyahNumber,
+    endAyahNumber,
+    position,
+    duration,
+  );
+}

@@ -64,6 +64,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
     // WHY: Remove lifecycle observer when widget is disposed.
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _externalPageUpdate = null; // Reset for next time
+    // Page change listener is automatically disposed by Riverpod
     super.dispose();
   }
 
@@ -137,10 +139,163 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
     // No legacy fallback
   }
 
+  // Track if we're currently animating to prevent conflicts
+  bool _isAnimating = false;
+  int? _externalPageUpdate; // Track external page updates (from audio)
+
+  // Navigate to a specific page (called from external sources like audio)
+  void _navigateToPage(int pageNumber) {
+    final targetIndex = pageNumber - 1;
+
+    if (targetIndex < 0 || !_pageController.hasClients) {
+      if (kDebugMode) {
+        debugPrint(
+          'MushafScreen: Cannot navigate - targetIndex=$targetIndex, hasClients=${_pageController.hasClients}',
+        );
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        'MushafScreen: Starting navigation to page $pageNumber (index $targetIndex)',
+      );
+    }
+
+    // Navigate immediately without delay to ensure it happens as soon as audio starts
+    if (mounted && _pageController.hasClients && !_isAnimating) {
+      final currentIndex = _pageController.page?.round() ?? -1;
+      if (kDebugMode) {
+        debugPrint(
+          'MushafScreen: Current index=$currentIndex, targetIndex=$targetIndex',
+        );
+      }
+      if (currentIndex != targetIndex && targetIndex >= 0) {
+        _isAnimating = true;
+        if (kDebugMode) {
+          debugPrint('MushafScreen: Animating to page $pageNumber');
+        }
+        _pageController
+            .animateToPage(
+              targetIndex,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            )
+            .then((_) {
+              if (mounted) {
+                _isAnimating = false;
+                _externalPageUpdate = null; // Clear after animation
+                if (kDebugMode) {
+                  debugPrint(
+                    'MushafScreen: Animation complete to page $pageNumber',
+                  );
+                }
+              }
+            })
+            .catchError((error) {
+              if (mounted) {
+                _isAnimating = false;
+                _externalPageUpdate = null;
+                if (kDebugMode) {
+                  debugPrint('MushafScreen: Animation error: $error');
+                }
+              }
+            });
+      } else {
+        _isAnimating = false;
+        _externalPageUpdate = null;
+        if (kDebugMode) {
+          debugPrint(
+            'MushafScreen: Already at target page, skipping animation',
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
+
+    // WHY: Listen to currentPageProvider changes for external updates (e.g., from audio)
+    // Only animate if the change came from external source (audio config screen)
+    // Don't animate if it's from normal navigation, initial load, or user swiping
+    ref.listen(currentPageProvider, (previous, next) {
+      // Handle page changes (previous != next)
+      // If previous is null, it's the initial build - skip
+      if (previous == null) return;
+
+      final isPageChange = previous != next;
+
+      // Handle page changes - always navigate when page changes from external source
+      if (isPageChange && !_isAnimating && mounted) {
+        if (kDebugMode) {
+          debugPrint(
+            'MushafScreen: Page change detected: $previous -> $next (initialPage: ${widget.initialPage})',
+          );
+        }
+
+        // Skip if this matches the initial page AND PageController is already there
+        // This prevents animations when screen is first created with initialPage
+        if (_pageController.hasClients) {
+          final currentIndex = _pageController.page?.round() ?? -1;
+          final initialIndex = widget.initialPage - 1;
+          final targetIndex = next - 1;
+
+          if (kDebugMode) {
+            debugPrint(
+              'MushafScreen: currentIndex=$currentIndex, initialIndex=$initialIndex, targetIndex=$targetIndex',
+            );
+          }
+
+          // If target is initial page AND controller is already at initial page AND previous was also initial, skip
+          // This is normal navigation (new screen created)
+          if (next == widget.initialPage &&
+              currentIndex == initialIndex &&
+              previous == widget.initialPage) {
+            if (kDebugMode) {
+              debugPrint(
+                'MushafScreen: Skipping - matches initial page and controller position (normal navigation)',
+              );
+            }
+            return;
+          }
+
+          // Always navigate if PageController is showing a different page than target
+          // For same-page navigation, check if we're coming back from a temporary page
+          final shouldNavigate =
+              (currentIndex != targetIndex && targetIndex >= 0) ||
+              // If we're at target but previous was different (coming back from temp page), navigate
+              (currentIndex == targetIndex && previous != next);
+
+          if (shouldNavigate) {
+            if (kDebugMode) {
+              debugPrint(
+                'MushafScreen: Navigating to page $next (external update, alreadyAtTarget: ${currentIndex == targetIndex}, previous: $previous)',
+              );
+            }
+            // Mark as external update to prevent conflicts
+            _externalPageUpdate = next;
+            _navigateToPage(next);
+          } else {
+            if (kDebugMode) {
+              debugPrint(
+                'MushafScreen: Skipping - PageController already at target',
+              );
+            }
+          }
+        } else {
+          if (kDebugMode) {
+            debugPrint(
+              'MushafScreen: PageController not ready yet, marking for later',
+            );
+          }
+          // Mark for later when controller is ready
+          _externalPageUpdate = next;
+        }
+      }
+    });
 
     // Listen for session transitions to reset circle values (inside build)
     ref.listen(memorizationSessionProvider, (prev, next) {
@@ -261,6 +416,22 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                           ? const NeverScrollableScrollPhysics()
                           : const BouncingScrollPhysics(),
                       onPageChanged: (index) {
+                        // Don't update provider if we're animating from external change
+                        if (_isAnimating && _externalPageUpdate != null) {
+                          // Clear the external update flag once animation completes
+                          final targetPage = index + 1;
+                          if (targetPage == _externalPageUpdate) {
+                            _isAnimating = false;
+                            _externalPageUpdate = null;
+                            return; // Don't update provider, it's already set
+                          }
+                        }
+
+                        // Clear animation flag if it was set
+                        if (_isAnimating) {
+                          _isAnimating = false;
+                        }
+
                         final int newPageNumber = index + 1;
                         // WHY: Update the global state provider.
                         ref

@@ -18,6 +18,7 @@ class DatabaseService with InitializationMixin {
   Database? _juzDb;
   Database? _hizbDb;
   Database? _ayahTextDb;
+  Database? _audioDb;
 
   List<Map<String, dynamic>> _juzCache = const [];
   List<Map<String, dynamic>> _hizbCache = const [];
@@ -26,18 +27,19 @@ class DatabaseService with InitializationMixin {
 
   // WHY: This is the public 'init' method. It uses InitializationMixin for
   // thread-safe initialization while supporting layout parameterization.
-  Future<void> init({MushafLayout layout = MushafLayout.uthmani15Lines}) async {
-    // If already initialized with the same layout, return early
-    if (isInitialized && _currentLayout == layout) return;
-
-    // If initialized with different layout, reset and reinitialize
-    if (isInitialized && _currentLayout != layout) {
-      await switchLayout(layout);
+  Future<void> init({MushafLayout? layout}) async {
+    // If already initialized, don't change layout unless explicitly requested
+    if (isInitialized) {
+      if (layout != null && _currentLayout != layout) {
+        // Only switch if different layout explicitly requested
+        await switchLayout(layout);
+      }
+      // If already initialized and no layout change requested, return early
       return;
     }
 
-    // Store layout before initialization
-    _currentLayout = layout;
+    // Not initialized yet - use provided layout or default to Uthmani
+    _currentLayout = layout ?? MushafLayout.uthmani15Lines;
     await ensureInitialized();
   }
 
@@ -78,6 +80,7 @@ class DatabaseService with InitializationMixin {
       _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
       _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
       _initDb(documentsDirectory, dbAssetPath, imlaeiAyahDbFileName),
+      _initDb(documentsDirectory, dbAssetPath, audioDbFileName),
     ]);
 
     _layoutDb = databases[0];
@@ -86,6 +89,7 @@ class DatabaseService with InitializationMixin {
     _juzDb = databases[3];
     _hizbDb = databases[4];
     _ayahTextDb = databases[5];
+    _audioDb = databases[6];
 
     // WHY: Load Juz and Hizb data into cache upon initialization for faster lookups later.
     if (_juzCache.isEmpty && _juzDb != null) {
@@ -119,6 +123,7 @@ class DatabaseService with InitializationMixin {
         _juzDb?.close(),
         _hizbDb?.close(),
         _ayahTextDb?.close(),
+        _audioDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
   }
@@ -705,6 +710,119 @@ class DatabaseService with InitializationMixin {
     return PageLayout(pageNumber: pageNumber, lines: lines);
   }
 
+  /// Gets audio information for a specific surah.
+  Future<SurahAudio?> getSurahAudio(int surahNumber) async {
+    await init();
+    if (_audioDb == null) {
+      throw DatabaseNotInitializedException(
+        "Audio database is not initialized",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> result = await _audioDb!.query(
+        DbConstants.surahListTable,
+        where: '${DbConstants.surahNumberCol} = ?',
+        whereArgs: [surahNumber.toString()],
+        limit: QueryLimits.singleResult,
+      );
+
+      if (result.isEmpty) {
+        return null;
+      }
+
+      final row = result.first;
+      return SurahAudio(
+        surahNumber: parseInt(row[DbConstants.surahNumberCol]),
+        audioUrl: row[DbConstants.audioUrlCol] as String,
+        duration: parseInt(row[DbConstants.durationCol]),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint("Error fetching surah audio for $surahNumber: $e");
+      }
+      return null;
+    }
+  }
+
+  /// Gets segment information for a specific ayah.
+  Future<AyahSegment?> getAyahSegment(int surahNumber, int ayahNumber) async {
+    await init();
+    if (_audioDb == null) {
+      throw DatabaseNotInitializedException(
+        "Audio database is not initialized",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> result = await _audioDb!.query(
+        DbConstants.segmentsTable,
+        where:
+            '${DbConstants.surahNumberCol} = ? AND ${DbConstants.audioAyahNumberCol} = ?',
+        whereArgs: [surahNumber.toString(), ayahNumber.toString()],
+        limit: QueryLimits.singleResult,
+      );
+
+      if (result.isEmpty) {
+        return null;
+      }
+
+      final row = result.first;
+      return AyahSegment(
+        surahNumber: parseInt(row[DbConstants.surahNumberCol]),
+        ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
+        durationSec: parseInt(row[DbConstants.durationSecCol]),
+        timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
+        timestampTo: parseInt(row[DbConstants.timestampToCol]),
+        segments: row[DbConstants.segmentsCol] as String,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          "Error fetching ayah segment for $surahNumber:$ayahNumber: $e",
+        );
+      }
+      return null;
+    }
+  }
+
+  /// Gets all segments for a specific surah.
+  Future<List<AyahSegment>> getSurahSegments(int surahNumber) async {
+    await init();
+    if (_audioDb == null) {
+      throw DatabaseNotInitializedException(
+        "Audio database is not initialized",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> results = await _audioDb!.query(
+        DbConstants.segmentsTable,
+        where: '${DbConstants.surahNumberCol} = ?',
+        whereArgs: [surahNumber.toString()],
+        orderBy: '${DbConstants.audioAyahNumberCol} ASC',
+      );
+
+      return results
+          .map(
+            (row) => AyahSegment(
+              surahNumber: parseInt(row[DbConstants.surahNumberCol]),
+              ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
+              durationSec: parseInt(row[DbConstants.durationSecCol]),
+              timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
+              timestampTo: parseInt(row[DbConstants.timestampToCol]),
+              segments: row[DbConstants.segmentsCol] as String,
+            ),
+          )
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint("Error fetching surah segments for $surahNumber: $e");
+      }
+      return [];
+    }
+  }
+
   /// Finds the page number containing the start of a specific ayah.
   Future<int> getPageForAyah(int surahNumber, int ayahNumber) async {
     await init();
@@ -872,6 +990,99 @@ class DatabaseService with InitializationMixin {
     }
     // Return the list of successfully processed Juz' info.
     return juzList;
+  }
+
+  /// Gets the last ayah on a specific page.
+  Future<Map<String, int>?> getLastAyahOnPage(int pageNumber) async {
+    await init();
+    try {
+      final ayahs = await getAyahsOnPage(pageNumber);
+      if (ayahs.isEmpty) return null;
+
+      // Sort by surah number, then ayah number to get the last one
+      ayahs.sort((a, b) {
+        final surahCompare = a['surah']!.compareTo(b['surah']!);
+        if (surahCompare != 0) return surahCompare;
+        return a['ayah']!.compareTo(b['ayah']!);
+      });
+
+      return ayahs.last;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error getting last ayah on page $pageNumber: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Gets the last ayah number in a specific surah.
+  Future<int?> getLastAyahInSurah(int surahNumber) async {
+    await init();
+    try {
+      final segments = await getSurahSegments(surahNumber);
+      if (segments.isEmpty) return null;
+
+      // Segments are already ordered by ayah number ASC, so get the last one
+      return segments.last.ayahNumber;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error getting last ayah in surah $surahNumber: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Gets the last ayah in a specific juz.
+  Future<Map<String, int>?> getLastAyahInJuz(int juzNumber) async {
+    await init();
+    if (_juzCache.isEmpty) return null;
+
+    try {
+      // Find the juz in cache
+      final juzData = _juzCache.firstWhere(
+        (row) => parseInt(row[DbConstants.juzNumberCol]) == juzNumber,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (juzData.isEmpty) return null;
+
+      final lastKey = juzData[DbConstants.lastVerseKeyCol] as String?;
+      if (lastKey == null || lastKey.isEmpty) return null;
+
+      // Parse the last verse key (format: "surah:ayah")
+      final parts = lastKey.split(':');
+      if (parts.length != 2) return null;
+
+      final surah = parseInt(parts[0]);
+      final ayah = parseInt(parts[1]);
+
+      if (surah > 0 && ayah > 0) {
+        return {'surah': surah, 'ayah': ayah};
+      }
+
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error getting last ayah in juz $juzNumber: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Gets the juz number for a specific surah and ayah.
+  Future<int?> getJuzForAyah(int surahNumber, int ayahNumber) async {
+    await init();
+    try {
+      final juzNumber = _findJuz(surahNumber, ayahNumber);
+      return juzNumber > 0 ? juzNumber : null;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          'Error getting juz for surah $surahNumber, ayah $ayahNumber: $e',
+        );
+      }
+      return null;
+    }
   }
 
   /// Retrieves the text of the first 'count' words appearing on a specific page.

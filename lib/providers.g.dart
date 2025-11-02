@@ -679,7 +679,7 @@ final class MushafLayoutSettingProvider
 }
 
 String _$mushafLayoutSettingHash() =>
-    r'1dab6478f90439f86f7f1f720db9302a7e972a30';
+    r'eea8f96fae8abbefbd64312a9c8c17bcff26beeb';
 
 abstract class _$MushafLayoutSetting extends $Notifier<MushafLayout> {
   MushafLayout build();
@@ -2203,4 +2203,97 @@ final class SearchTopicsFamily extends $Family
 
   @override
   String toString() => r'searchTopicsProvider';
+}
+
+@ProviderFor(audioService)
+const audioServiceProvider = AudioServiceProvider._();
+
+final class AudioServiceProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<AudioService>,
+          AudioService,
+          FutureOr<AudioService>
+        >
+    with $FutureModifier<AudioService>, $FutureProvider<AudioService> {
+  const AudioServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'audioServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$audioServiceHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<AudioService> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AudioService> create(Ref ref) {
+    return audioService(ref);
+  }
+}
+
+String _$audioServiceHash() => r'f1e443368f920a7836226a184b56436971806473';
+
+@ProviderFor(AudioStateNotifier)
+const audioStateProvider = AudioStateNotifierProvider._();
+
+final class AudioStateNotifierProvider
+    extends $NotifierProvider<AudioStateNotifier, AudioState> {
+  const AudioStateNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'audioStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$audioStateNotifierHash();
+
+  @$internal
+  @override
+  AudioStateNotifier create() => AudioStateNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AudioState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AudioState>(value),
+    );
+  }
+}
+
+String _$audioStateNotifierHash() =>
+    r'16f8cfa660abbe916efc0476c501c0494780fa65';
+
+abstract class _$AudioStateNotifier extends $Notifier<AudioState> {
+  AudioState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AudioState, AudioState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AudioState, AudioState>,
+              AudioState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
 }
