@@ -497,3 +497,23 @@ class AudioState {
     duration,
   );
 }
+
+// --- Layout Info Model ---
+@immutable
+class LayoutInfo {
+  final String name;
+  final int linesPerPage;
+
+  const LayoutInfo({required this.name, required this.linesPerPage});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LayoutInfo &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          linesPerPage == other.linesPerPage;
+
+  @override
+  int get hashCode => Object.hash(name, linesPerPage);
+}

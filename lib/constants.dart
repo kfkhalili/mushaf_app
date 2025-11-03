@@ -354,6 +354,8 @@ class DbConstants {
 
   // --- Info Table ---
   static const String numberOfPagesCol = 'number_of_pages';
+  static const String layoutNameCol = 'name';
+  static const String linesPerPageCol = 'lines_per_page';
 
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';

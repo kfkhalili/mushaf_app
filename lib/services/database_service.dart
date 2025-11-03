@@ -175,8 +175,10 @@ class DatabaseService with InitializationMixin {
     required String destinationPath,
   }) async {
     final dbFile = File(destinationPath);
-    // WHY: Avoid recopying if the database already exists.
-    if (await dbFile.exists()) {
+    // WHY: In debug mode, always recopy databases to pick up changes during development.
+    // In release mode, avoid recopying if the database already exists for performance.
+    final shouldRecopy = kDebugMode || !await dbFile.exists();
+    if (!shouldRecopy) {
       return;
     }
     try {
@@ -1122,6 +1124,127 @@ class DatabaseService with InitializationMixin {
       // Fallback to 604 on error
       return 604;
     }
+  }
+
+  /// Retrieves layout information (name and lines_per_page) from the info table.
+  /// Reads from the 'info' table in the layout database.
+  Future<LayoutInfo> getLayoutInfo() async {
+    await init();
+    if (_layoutDb == null) {
+      throw DatabaseNotInitializedException(
+        "Layout database is not initialized for getLayoutInfo",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> result = await _layoutDb!.query(
+        DbConstants.infoTable,
+        columns: [DbConstants.layoutNameCol, DbConstants.linesPerPageCol],
+        limit: QueryLimits.singleResult,
+      );
+
+      if (result.isNotEmpty) {
+        final name = result.first[DbConstants.layoutNameCol] as String?;
+        final linesPerPage = result.first[DbConstants.linesPerPageCol];
+
+        if (name != null && linesPerPage != null) {
+          return LayoutInfo(name: name, linesPerPage: parseInt(linesPerPage));
+        }
+      }
+
+      // Fallback if info table doesn't exist or has no data
+      if (kDebugMode) {
+        debugPrint(
+          'Warning: layout info not found in info table, using fallback values',
+        );
+      }
+      // Default fallback values based on current layout
+      return LayoutInfo(
+        name: _currentLayout == MushafLayout.indopak13Lines
+            ? 'Indopak'
+            : 'Uthmani Hafs',
+        linesPerPage: _currentLayout == MushafLayout.indopak13Lines ? 13 : 15,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error retrieving layout info from database: $e');
+      }
+      // Fallback on error
+      return LayoutInfo(
+        name: _currentLayout == MushafLayout.indopak13Lines
+            ? 'Indopak'
+            : 'Uthmani Hafs',
+        linesPerPage: _currentLayout == MushafLayout.indopak13Lines ? 13 : 15,
+      );
+    }
+  }
+
+  /// Retrieves layout information for a specific layout without switching to it.
+  /// Opens the layout's database temporarily to read from the info table.
+  Future<LayoutInfo> getLayoutInfoForLayout(MushafLayout layout) async {
+    // If this is the current layout, use the existing database connection
+    if (_currentLayout == layout && _layoutDb != null) {
+      try {
+        final List<Map<String, dynamic>> result = await _layoutDb!.query(
+          DbConstants.infoTable,
+          columns: [DbConstants.layoutNameCol, DbConstants.linesPerPageCol],
+          limit: QueryLimits.singleResult,
+        );
+
+        if (result.isNotEmpty) {
+          final name = result.first[DbConstants.layoutNameCol] as String?;
+          final linesPerPage = result.first[DbConstants.linesPerPageCol];
+
+          if (name != null && linesPerPage != null) {
+            return LayoutInfo(name: name, linesPerPage: parseInt(linesPerPage));
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Error retrieving layout info for current layout: $e');
+        }
+      }
+    }
+
+    // For other layouts, open the database temporarily
+    try {
+      final documentsDirectory = await getApplicationDocumentsDirectory();
+      const dbAssetPath = 'assets/db';
+      final db = await _initDb(
+        documentsDirectory,
+        dbAssetPath,
+        layout.layoutDatabaseFileName,
+      );
+
+      try {
+        final List<Map<String, dynamic>> result = await db.query(
+          DbConstants.infoTable,
+          columns: [DbConstants.layoutNameCol, DbConstants.linesPerPageCol],
+          limit: QueryLimits.singleResult,
+        );
+
+        if (result.isNotEmpty) {
+          final name = result.first[DbConstants.layoutNameCol] as String?;
+          final linesPerPage = result.first[DbConstants.linesPerPageCol];
+
+          if (name != null && linesPerPage != null) {
+            return LayoutInfo(name: name, linesPerPage: parseInt(linesPerPage));
+          }
+        }
+      } finally {
+        await db.close();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error retrieving layout info for layout $layout: $e');
+      }
+    }
+
+    // Fallback values
+    return LayoutInfo(
+      name: layout == MushafLayout.indopak13Lines ? 'Indopak' : 'Uthmani Hafs',
+      linesPerPage: layout == MushafLayout.indopak13Lines ? 13 : 15,
+    );
   }
 
   /// Retrieves the text of the first 'count' words appearing on a specific page.

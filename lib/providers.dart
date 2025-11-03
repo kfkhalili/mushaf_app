@@ -161,6 +161,31 @@ Future<int> totalPages(Ref ref) async {
   return dbService.getTotalPages();
 }
 
+// --- Layout Info Provider ---
+// WHY: Reads layout information (name and lines_per_page) from the layout database's info table.
+// Automatically updates when layout changes since databaseServiceProvider watches layout.
+@Riverpod(keepAlive: true)
+Future<LayoutInfo> layoutInfo(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return dbService.getLayoutInfo();
+}
+
+// --- All Layouts Info Provider ---
+// WHY: Provides layout information for all layouts (used in settings dropdown).
+// Allows displaying database names for all layout options, not just the current one.
+@Riverpod(keepAlive: true)
+Future<Map<MushafLayout, LayoutInfo>> allLayoutsInfo(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  final Map<MushafLayout, LayoutInfo> infoMap = {};
+
+  for (final layout in MushafLayout.values) {
+    final info = await dbService.getLayoutInfoForLayout(layout);
+    infoMap[layout] = info;
+  }
+
+  return infoMap;
+}
+
 // --- Page Preview Provider ---
 // WHY: Lightweight provider for list view previews (DB-only, no font loading or full layout).
 @riverpod

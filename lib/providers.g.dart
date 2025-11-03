@@ -412,6 +412,85 @@ final class TotalPagesProvider
 
 String _$totalPagesHash() => r'bcef078e4b884a0b80697856c948bef2bbbde496';
 
+@ProviderFor(layoutInfo)
+const layoutInfoProvider = LayoutInfoProvider._();
+
+final class LayoutInfoProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<LayoutInfo>,
+          LayoutInfo,
+          FutureOr<LayoutInfo>
+        >
+    with $FutureModifier<LayoutInfo>, $FutureProvider<LayoutInfo> {
+  const LayoutInfoProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'layoutInfoProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$layoutInfoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<LayoutInfo> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<LayoutInfo> create(Ref ref) {
+    return layoutInfo(ref);
+  }
+}
+
+String _$layoutInfoHash() => r'38d5ff4d9b5bd8f97e36bd1c34e75d329b302b61';
+
+@ProviderFor(allLayoutsInfo)
+const allLayoutsInfoProvider = AllLayoutsInfoProvider._();
+
+final class AllLayoutsInfoProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<MushafLayout, LayoutInfo>>,
+          Map<MushafLayout, LayoutInfo>,
+          FutureOr<Map<MushafLayout, LayoutInfo>>
+        >
+    with
+        $FutureModifier<Map<MushafLayout, LayoutInfo>>,
+        $FutureProvider<Map<MushafLayout, LayoutInfo>> {
+  const AllLayoutsInfoProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allLayoutsInfoProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allLayoutsInfoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<MushafLayout, LayoutInfo>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<MushafLayout, LayoutInfo>> create(Ref ref) {
+    return allLayoutsInfo(ref);
+  }
+}
+
+String _$allLayoutsInfoHash() => r'328b77292e0ab322e32929db7d8ab8df8170fe4c';
+
 @ProviderFor(pagePreview)
 const pagePreviewProvider = PagePreviewFamily._();
 

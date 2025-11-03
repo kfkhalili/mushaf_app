@@ -254,36 +254,165 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            DropdownButtonFormField<MushafLayout>(
-                              initialValue: ref.watch(
-                                mushafLayoutSettingProvider,
-                              ),
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                              items: MushafLayout.values.map((layout) {
-                                return DropdownMenuItem(
-                                  value: layout,
-                                  child: Text(layout.displayName),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final allLayoutsInfoAsync = ref.watch(
+                                  allLayoutsInfoProvider,
                                 );
-                              }).toList(),
-                              onChanged: (MushafLayout? layout) async {
-                                if (layout != null) {
-                                  // WHY: Await setLayout to ensure state updates before invalidating
-                                  await ref
-                                      .read(
-                                        mushafLayoutSettingProvider.notifier,
-                                      )
-                                      .setLayout(layout);
-                                  // WHY: DatabaseServiceProvider watches mushafLayoutSettingProvider,
-                                  // so it will rebuild automatically. We still invalidate pageDataProvider
-                                  // to force rerender with new layout and font.
-                                  ref.invalidate(pageDataProvider);
-                                }
+                                final currentLayout = ref.watch(
+                                  mushafLayoutSettingProvider,
+                                );
+
+                                return allLayoutsInfoAsync.when(
+                                  data: (allLayoutsInfo) {
+                                    final currentLayoutInfo =
+                                        allLayoutsInfo[currentLayout];
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        InputDecorator(
+                                          decoration: const InputDecoration(
+                                            border: OutlineInputBorder(),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 8,
+                                                ),
+                                          ),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<MushafLayout>(
+                                              value: currentLayout,
+                                              isExpanded: true,
+                                              items: MushafLayout.values.map((
+                                                layout,
+                                              ) {
+                                                // WHY: Use database name from info table for all layouts
+                                                final info =
+                                                    allLayoutsInfo[layout];
+                                                final displayText =
+                                                    info?.name ??
+                                                    layout.displayName;
+                                                return DropdownMenuItem(
+                                                  value: layout,
+                                                  child: Text(displayText),
+                                                );
+                                              }).toList(),
+                                              onChanged: (MushafLayout? layout) async {
+                                                if (layout != null) {
+                                                  // WHY: Await setLayout to ensure state updates before invalidating
+                                                  await ref
+                                                      .read(
+                                                        mushafLayoutSettingProvider
+                                                            .notifier,
+                                                      )
+                                                      .setLayout(layout);
+                                                  // WHY: Invalidate allLayoutsInfoProvider to refresh all layout info
+                                                  ref.invalidate(
+                                                    allLayoutsInfoProvider,
+                                                  );
+                                                  // WHY: DatabaseServiceProvider watches mushafLayoutSettingProvider,
+                                                  // so it will rebuild automatically. We still invalidate pageDataProvider
+                                                  // to force rerender with new layout and font.
+                                                  ref.invalidate(
+                                                    pageDataProvider,
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        if (currentLayoutInfo != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'عدد الأسطر في الصفحة: ${convertToEasternArabicNumerals(currentLayoutInfo.linesPerPage.toString())}',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.7),
+                                                ),
+                                          ),
+                                        ],
+                                      ],
+                                    );
+                                  },
+                                  loading: () => InputDecorator(
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<MushafLayout>(
+                                        value: currentLayout,
+                                        isExpanded: true,
+                                        items: MushafLayout.values.map((
+                                          layout,
+                                        ) {
+                                          return DropdownMenuItem(
+                                            value: layout,
+                                            child: Text(layout.displayName),
+                                          );
+                                        }).toList(),
+                                        onChanged: (MushafLayout? layout) async {
+                                          if (layout != null) {
+                                            await ref
+                                                .read(
+                                                  mushafLayoutSettingProvider
+                                                      .notifier,
+                                                )
+                                                .setLayout(layout);
+                                            ref.invalidate(
+                                              allLayoutsInfoProvider,
+                                            );
+                                            ref.invalidate(pageDataProvider);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  error: (error, stack) => InputDecorator(
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<MushafLayout>(
+                                        value: currentLayout,
+                                        isExpanded: true,
+                                        items: MushafLayout.values.map((
+                                          layout,
+                                        ) {
+                                          return DropdownMenuItem(
+                                            value: layout,
+                                            child: Text(layout.displayName),
+                                          );
+                                        }).toList(),
+                                        onChanged: (MushafLayout? layout) async {
+                                          if (layout != null) {
+                                            await ref
+                                                .read(
+                                                  mushafLayoutSettingProvider
+                                                      .notifier,
+                                                )
+                                                .setLayout(layout);
+                                            ref.invalidate(
+                                              allLayoutsInfoProvider,
+                                            );
+                                            ref.invalidate(pageDataProvider);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
                               },
                             ),
                           ],
