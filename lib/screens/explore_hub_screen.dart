@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../widgets/shared/app_header.dart';
 import '../models/ontology_models.dart';
+import '../utils/navigation.dart';
 import 'topic_detail_screen.dart';
 
 class ExploreHubScreen extends ConsumerStatefulWidget {
@@ -120,14 +121,11 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
                                   textDirection: TextDirection.rtl,
                                   textAlign: TextAlign.right,
                                 ),
-                                leading: const Icon(Icons.chevron_left),
+                                trailing: const Icon(Icons.chevron_right),
                                 onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => TopicDetailScreen(
-                                        topicId: topic.topicId,
-                                      ),
-                                    ),
+                                  pushSlideFromRight(
+                                    context,
+                                    TopicDetailScreen(topicId: topic.topicId),
                                   );
                                 },
                               );
@@ -151,14 +149,11 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
                                 textDirection: TextDirection.rtl,
                                 textAlign: TextAlign.right,
                               ),
-                              leading: const Icon(Icons.chevron_left),
+                              trailing: const Icon(Icons.chevron_right),
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => TopicDetailScreen(
-                                      topicId: topic.topicId,
-                                    ),
-                                  ),
+                                pushSlideFromRight(
+                                  context,
+                                  TopicDetailScreen(topicId: topic.topicId),
                                 );
                               },
                             );

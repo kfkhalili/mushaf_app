@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../screens/topic_detail_screen.dart';
 import '../utils/helpers.dart';
+import '../utils/navigation.dart';
 
 /// Screen showing detailed information about a specific ayah
 class AyahDetailsScreen extends ConsumerWidget {
@@ -140,11 +141,9 @@ class AyahDetailsScreen extends ConsumerWidget {
                     children: topicsWithArabic.map((topic) {
                       return InkWell(
                         onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  TopicDetailScreen(topicId: topic.topicId),
-                            ),
+                          pushSlideFromRight(
+                            context,
+                            TopicDetailScreen(topicId: topic.topicId),
                           );
                         },
                         child: Chip(
