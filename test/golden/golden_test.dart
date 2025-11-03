@@ -32,6 +32,7 @@ void main() {
         overrides = [
           surahListProvider.overrideWith((ref) => Future.value(mockSurahs)),
           juzListProvider.overrideWith((ref) => Future.value(mockJuzs)),
+          totalPagesProvider.overrideWith((ref) => Future.value(604)),
           pagePreviewProvider.overrideWith(
             (ref, pageNumber) => Future.value(''),
           ),

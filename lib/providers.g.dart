@@ -122,7 +122,7 @@ final class CurrentPageProvider extends $NotifierProvider<CurrentPage, int> {
   }
 }
 
-String _$currentPageHash() => r'63033d1ee10caf58175182a9ebcbb345cb93e275';
+String _$currentPageHash() => r'24e6c34cafe3c631741e2249179112e464c19cdd';
 
 abstract class _$CurrentPage extends $Notifier<int> {
   int build();

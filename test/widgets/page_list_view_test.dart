@@ -23,6 +23,7 @@ void main() {
         ProviderScope(
           // ignore: argument_type_not_assignable
           overrides: [
+            totalPagesProvider.overrideWith((ref) => Future.value(604)),
             pagePreviewProvider.overrideWith(
               (ref, pageNumber) => Future.value('Preview $pageNumber'),
             ),
