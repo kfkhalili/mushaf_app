@@ -1085,6 +1085,45 @@ class DatabaseService with InitializationMixin {
     }
   }
 
+  /// Retrieves the total number of pages for the current layout.
+  /// Reads from the 'info' table's 'number_of_pages' column in the layout database.
+  Future<int> getTotalPages() async {
+    await init();
+    if (_layoutDb == null) {
+      throw DatabaseNotInitializedException(
+        "Layout database is not initialized for getTotalPages",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> result = await _layoutDb!.query(
+        DbConstants.infoTable,
+        columns: [DbConstants.numberOfPagesCol],
+        limit: QueryLimits.singleResult,
+      );
+
+      if (result.isNotEmpty &&
+          result.first[DbConstants.numberOfPagesCol] != null) {
+        return parseInt(result.first[DbConstants.numberOfPagesCol]);
+      }
+
+      // Fallback to 604 if info table doesn't exist or has no data
+      // This should never happen with valid databases, but provides safety
+      if (kDebugMode) {
+        debugPrint(
+          'Warning: number_of_pages not found in info table, using fallback value',
+        );
+      }
+      return 604;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error retrieving total pages from database: $e');
+      }
+      // Fallback to 604 on error
+      return 604;
+    }
+  }
+
   /// Retrieves the text of the first 'count' words appearing on a specific page.
   Future<String> getFirstWordsOfPage(int pageNumber, {int count = 3}) async {
     await init();

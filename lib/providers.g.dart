@@ -379,6 +379,39 @@ final class JuzListProvider
 
 String _$juzListHash() => r'22515260ff8ac16d6e63f46fd1e8067debe78fdc';
 
+@ProviderFor(totalPages)
+const totalPagesProvider = TotalPagesProvider._();
+
+final class TotalPagesProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  const TotalPagesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'totalPagesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$totalPagesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return totalPages(ref);
+  }
+}
+
+String _$totalPagesHash() => r'bcef078e4b884a0b80697856c948bef2bbbde496';
+
 @ProviderFor(pagePreview)
 const pagePreviewProvider = PagePreviewFamily._();
 
@@ -1321,7 +1354,7 @@ final class ReadingProgressServiceProvider
 }
 
 String _$readingProgressServiceHash() =>
-    r'51ae74f95ad5d87850b1520db052aee85ac0673b';
+    r'cbb770ea3b372dddb792cad1472b25de37f2c52d';
 
 @ProviderFor(readingStatistics)
 const readingStatisticsProvider = ReadingStatisticsProvider._();
@@ -2277,7 +2310,7 @@ final class AudioStateNotifierProvider
 }
 
 String _$audioStateNotifierHash() =>
-    r'e8c3a5214b2064d861372a59de9fcb3dfc3f8f00';
+    r'd73016b757a098cca635302b2e01c548e11e44ad';
 
 abstract class _$AudioStateNotifier extends $Notifier<AudioState> {
   AudioState build();

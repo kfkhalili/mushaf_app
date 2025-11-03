@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/statistics_cards.dart';
 import 'package:mushaf_app/models.dart';
+import 'package:mushaf_app/providers.dart';
 
 void main() {
   group('StatisticsCards', () {
@@ -20,10 +22,17 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: OverallProgressCard(stats: stats)),
+        ProviderScope(
+          overrides: [
+            totalPagesProvider.overrideWith((ref) => Future.value(604)),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: OverallProgressCard(stats: stats)),
+          ),
         ),
       );
+
+      await tester.pumpAndSettle();
 
       expect(find.text('التقدم الإجمالي'), findsOneWidget);
     });
@@ -89,10 +98,17 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: OverallProgressCard(stats: stats)),
+        ProviderScope(
+          overrides: [
+            totalPagesProvider.overrideWith((ref) => Future.value(604)),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: OverallProgressCard(stats: stats)),
+          ),
         ),
       );
+
+      await tester.pumpAndSettle();
 
       expect(find.byType(OverallProgressCard), findsOneWidget);
     });

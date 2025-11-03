@@ -355,8 +355,20 @@ class ReadingStatistics {
     required this.averagePagesPerDay,
   });
 
+  // Deprecated: Use totalPages parameter instead
+  // This getter uses hardcoded 604 which doesn't work for different layouts
+  @Deprecated('Use overallProgressForTotalPages instead')
   double get overallProgress => totalPagesRead / 604; // 0.0 to 1.0
+
+  // Deprecated: Use totalPages parameter instead
+  @Deprecated('Use overallProgressPercentForTotalPages instead')
   int get overallProgressPercent => (overallProgress * 100).round();
+
+  // Calculate progress for a specific total page count
+  double overallProgressForTotalPages(int totalPages) =>
+      totalPagesRead / totalPages;
+  int overallProgressPercentForTotalPages(int totalPages) =>
+      (overallProgressForTotalPages(totalPages) * 100).round();
 }
 
 // --- Audio Models ---

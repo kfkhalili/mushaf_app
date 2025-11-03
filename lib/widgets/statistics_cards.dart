@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
 import '../utils/helpers.dart';
+import '../providers.dart';
 
 // Base card style
 class _BaseStatCard extends StatelessWidget {
@@ -28,14 +30,15 @@ class _BaseStatCard extends StatelessWidget {
 }
 
 // Overall Progress Card
-class OverallProgressCard extends StatelessWidget {
+class OverallProgressCard extends ConsumerWidget {
   final ReadingStatistics stats;
 
   const OverallProgressCard({super.key, required this.stats});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final totalPagesAsync = ref.watch(totalPagesProvider);
 
     return _BaseStatCard(
       child: Column(
@@ -50,38 +53,55 @@ class OverallProgressCard extends StatelessWidget {
             textAlign: TextAlign.right,
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            textDirection: TextDirection.rtl,
-            children: [
-              Text(
-                formatPagesProgress(stats.totalPagesRead, 604),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                textDirection: TextDirection.rtl,
-              ),
-              Text(
-                '${convertToEasternArabicNumerals(stats.overallProgressPercent.toString())}%',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-                textDirection: TextDirection.rtl,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: stats.overallProgress,
-              minHeight: 8,
-              backgroundColor: theme.dividerColor.withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
-            ),
+          totalPagesAsync.when(
+            data: (totalPages) {
+              final overallProgress = stats.totalPagesRead / totalPages;
+              final overallProgressPercent = (overallProgress * 100).round();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      Text(
+                        formatPagesProgress(stats.totalPagesRead, totalPages),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                      Text(
+                        '${convertToEasternArabicNumerals(overallProgressPercent.toString())}%',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: overallProgress,
+                      minHeight: 8,
+                      backgroundColor: theme.dividerColor.withValues(
+                        alpha: 0.3,
+                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) =>
+                Center(child: Text('Error loading pages: $error')),
           ),
         ],
       ),

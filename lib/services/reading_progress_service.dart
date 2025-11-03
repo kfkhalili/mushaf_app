@@ -7,6 +7,7 @@ import '../utils/date_query_helpers.dart';
 import '../exceptions/database_exceptions.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
+import 'database_service.dart';
 
 abstract class ReadingProgressService {
   Future<void> recordPageView(int pageNumber);
@@ -23,12 +24,13 @@ abstract class ReadingProgressService {
 /// Migrates data from old database on first use.
 class SqliteReadingProgressService implements ReadingProgressService {
   final AppDataService _appDataService;
+  final DatabaseService? _databaseService;
   final MigrationService _migrationService;
   SharedPreferences? _prefs;
   bool _initialized = false;
   ReadingStatistics? _cachedStatistics;
 
-  SqliteReadingProgressService(this._appDataService)
+  SqliteReadingProgressService(this._appDataService, [this._databaseService])
     : _migrationService = MigrationService(_appDataService);
 
   /// WHY: Sets SharedPreferences for migration (dependency injection).
@@ -63,8 +65,29 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<void> recordPageView(int pageNumber) async {
-    if (pageNumber < 1 || pageNumber > totalPages) {
-      throw ArgumentError('Page number must be between 1 and $totalPages');
+    // Validate page number against current layout's total pages
+    if (pageNumber < 1) {
+      throw ArgumentError('Page number must be >= 1');
+    }
+
+    // Get total pages from database if available, otherwise skip validation
+    if (_databaseService != null) {
+      try {
+        final totalPages = await _databaseService.getTotalPages();
+        if (pageNumber > totalPages) {
+          throw ArgumentError('Page number must be between 1 and $totalPages');
+        }
+      } catch (e) {
+        // If we can't get total pages, use fallback validation
+        if (pageNumber > 604) {
+          throw ArgumentError('Page number must be between 1 and 604');
+        }
+      }
+    } else {
+      // Fallback validation if database service not available
+      if (pageNumber > 604) {
+        throw ArgumentError('Page number must be between 1 and 604');
+      }
     }
 
     await _ensureInitialized();

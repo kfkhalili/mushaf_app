@@ -50,11 +50,6 @@ class CurrentPage extends _$CurrentPage {
   }
 
   void setPage(int newPage) {
-    if (kDebugMode) {
-      debugPrint(
-        'CurrentPage: setPage called with $newPage (current state: $state)',
-      );
-    }
     // Always update state, even if it's the same value
     // This ensures listeners are notified even when navigating to the current page
     // (e.g., when returning from audio config screen)
@@ -155,6 +150,15 @@ Future<List<SurahInfo>> surahList(Ref ref) async {
 Future<List<JuzInfo>> juzList(Ref ref) async {
   final dbService = await ref.watch(databaseServiceProvider.future);
   return dbService.getAllJuzInfo();
+}
+
+// --- Total Pages Provider ---
+// WHY: Reads total number of pages from the layout database's info table.
+// Automatically updates when layout changes since databaseServiceProvider watches layout.
+@Riverpod(keepAlive: true)
+Future<int> totalPages(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return dbService.getTotalPages();
 }
 
 // --- Page Preview Provider ---
@@ -467,8 +471,9 @@ Future<int?> bookmarkPageNumber(
 @Riverpod(keepAlive: true)
 Future<ReadingProgressService> readingProgressService(Ref ref) async {
   final appDataService = ref.watch(appDataServiceProvider);
+  final dbService = await ref.watch(databaseServiceProvider.future);
   final prefs = await ref.watch(sharedPreferencesProvider.future);
-  final service = SqliteReadingProgressService(appDataService);
+  final service = SqliteReadingProgressService(appDataService, dbService);
   // WHY: Inject SharedPreferences from provider for dependency injection pattern
   service.setSharedPreferences(prefs);
   return service;

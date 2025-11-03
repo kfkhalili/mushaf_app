@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
-import '../constants.dart';
 import 'shared/leading_number_text.dart';
 
 class PageListView extends ConsumerStatefulWidget {
@@ -15,15 +14,22 @@ class PageListView extends ConsumerStatefulWidget {
 class _PageListViewState extends ConsumerState<PageListView> {
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      // WHY: Use the named constant for total page count.
-      itemCount: totalPages,
-      itemBuilder: (context, index) {
-        final int pageNumber = index + 1;
-        return PageListItem(pageNumber: pageNumber);
-      },
-      separatorBuilder: (context, index) =>
-          const Divider(height: 1, indent: 24, endIndent: 24),
+    final totalPagesAsync = ref.watch(totalPagesProvider);
+
+    return totalPagesAsync.when(
+      data: (totalPages) => ListView.separated(
+        // WHY: Use the total pages from the database for the current layout.
+        itemCount: totalPages,
+        itemBuilder: (context, index) {
+          final int pageNumber = index + 1;
+          return PageListItem(pageNumber: pageNumber);
+        },
+        separatorBuilder: (index, _) =>
+            const Divider(height: 1, indent: 24, endIndent: 24),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) =>
+          Center(child: Text('Error loading pages: $error')),
     );
   }
 }

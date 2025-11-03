@@ -260,6 +260,7 @@ class DbConstants {
   static const String juzTable = 'juz';
   static const String hizbsTable = 'hizbs';
   static const String versesTable = 'verses';
+  static const String infoTable = 'info';
 
   // --- Common Columns ---
   static const String idCol = 'id';
@@ -350,6 +351,9 @@ class DbConstants {
   static const String keyCol = 'key';
   static const String valueCol = 'value';
   static const String updatedAtCol = 'updated_at';
+
+  // --- Info Table ---
+  static const String numberOfPagesCol = 'number_of_pages';
 
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';
