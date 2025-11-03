@@ -76,6 +76,19 @@ class AppHeader extends StatelessWidget {
           ),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
+          // Back button (if enabled) - comes right after title, to the right of title
+          // WHY: In RTL, chevron_right should appear to the right of the title
+          if (showBackButton) ...[
+            const SizedBox(width: 8), // Add spacing between title and arrow
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.chevron_right,
+                size: kAppHeaderIconSize,
+                color: iconColor,
+              ),
+            ),
+          ],
           // Explore icon (before bookmark icon in RTL)
           if (onExplorePressed != null && trailing == null)
             IconButton(
@@ -100,19 +113,6 @@ class AppHeader extends StatelessWidget {
             ),
           // Optional trailing widget
           if (trailing != null) trailing!,
-          // Back button (if enabled) - comes after title for RTL
-          // WHY: In RTL, back button should point right (chevron_right)
-          if (showBackButton) ...[
-            const SizedBox(width: 8), // Add spacing between title and arrow
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.chevron_right,
-                size: kAppHeaderIconSize,
-                color: iconColor,
-              ),
-            ),
-          ],
         ],
       ),
     );
