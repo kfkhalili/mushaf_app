@@ -54,14 +54,8 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
 
       if (!context.mounted) return;
 
-      // Navigate back to SelectionScreen, then push MushafScreen
-      // After SplashScreen completes, SelectionScreen replaces it and becomes the first route
-      // So we pop until we reach the first route (SelectionScreen), then push MushafScreen
-      Navigator.of(context).popUntil((route) => route.isFirst);
-
-      if (!context.mounted) return;
-
-      // Push MushafScreen on top of SelectionScreen
+      // Push MushafScreen directly to maintain navigation stack
+      // This allows back button to return to TopicDetailScreen
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => MushafScreen(initialPage: pageNumber),
