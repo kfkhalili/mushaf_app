@@ -9,6 +9,7 @@ import '../providers.dart';
 import '../screens/bookmarks_screen.dart';
 import 'explore_hub_screen.dart';
 import 'search_screen.dart';
+import '../utils/navigation.dart';
 import 'dart:developer' as dev;
 
 class SelectionScreen extends ConsumerStatefulWidget {
@@ -85,19 +86,13 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             AppHeader(
               title: _getScreenTitle(currentIndex),
               onSearchPressed: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
+                pushSlideFromRight(context, const SearchScreen());
               },
               onBookmarkPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const BookmarksScreen()),
-                );
+                pushSlideFromRight(context, const BookmarksScreen());
               },
               onExplorePressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ExploreHubScreen()),
-                );
+                pushSlideFromRight(context, const ExploreHubScreen());
               },
             ),
             Expanded(

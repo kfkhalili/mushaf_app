@@ -46,14 +46,25 @@ class AppHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Search and Settings icons (left side)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!showBackButton)
+          // Right side: Back button OR Search and Settings icons
+          if (showBackButton)
+            // Back button - appears on the right in RTL
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.chevron_left,
+                size: kAppHeaderIconSize,
+                color: iconColor,
+              ),
+            )
+          else
+            // Search and Settings icons - appear on the right in RTL when no back button
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 IconButton(
                   onPressed: () {
-                    pushSlideFromLeft(context, const SettingsScreen());
+                    pushSlideFromRight(context, const SettingsScreen());
                   },
                   icon: Icon(
                     Icons.settings,
@@ -61,34 +72,35 @@ class AppHeader extends StatelessWidget {
                     color: iconColor,
                   ),
                 ),
-              if (onSearchPressed != null)
-                IconButton(
-                  onPressed: () {
-                    pushSlideFromLeft(context, const SearchScreen());
-                  },
-                  icon: Icon(
-                    Icons.search,
-                    size: kAppHeaderIconSize,
-                    color: iconColor,
+                if (onSearchPressed != null)
+                  IconButton(
+                    onPressed: () {
+                      pushSlideFromRight(context, const SearchScreen());
+                    },
+                    icon: Icon(
+                      Icons.search,
+                      size: kAppHeaderIconSize,
+                      color: iconColor,
+                    ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
+          // Spacing between right side icons and title
+          if (showBackButton) const SizedBox(width: 8),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
-          // Back button (if enabled) - comes right after title, to the right of title
-          // WHY: In RTL, chevron_right should appear to the right of the title
-          if (showBackButton) ...[
-            const SizedBox(width: 8), // Add spacing between title and arrow
+          // Search icon (only if back button is shown and search is enabled)
+          if (showBackButton && onSearchPressed != null)
             IconButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                pushSlideFromRight(context, const SearchScreen());
+              },
               icon: Icon(
-                Icons.chevron_right,
+                Icons.search,
                 size: kAppHeaderIconSize,
                 color: iconColor,
               ),
             ),
-          ],
           // Explore icon (before bookmark icon in RTL)
           if (onExplorePressed != null && trailing == null)
             IconButton(

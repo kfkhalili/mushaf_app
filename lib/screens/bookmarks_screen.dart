@@ -10,17 +10,20 @@ class BookmarksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     dev.log("BookmarksScreen: build", name: "UI_BUILD");
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppHeader(title: '', showBackButton: true),
-            const Expanded(
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: BookmarksListView(),
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            children: [
+              const AppHeader(title: 'العلامات المرجعية', showBackButton: true),
+              const Expanded(
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: BookmarksListView(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
