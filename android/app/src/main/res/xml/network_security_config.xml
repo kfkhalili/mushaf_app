@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for Mushaf App
+
+  WHY: Explicitly blocks cleartext (HTTP) traffic to enforce HTTPS-only connections.
+  This provides defense in depth for network security and prevents accidental
+  cleartext data transmission.
+
+  Android 9+ requires explicit network security configuration to allow cleartext
+  traffic. By blocking it here, we ensure all network requests use HTTPS.
+-->
+<network-security-config>
+    <!-- Base configuration: Block all cleartext traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust system-provided certificate authorities -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+

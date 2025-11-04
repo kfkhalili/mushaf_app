@@ -164,3 +164,27 @@ void validateDatabaseFileName(String fileName, List<String> allowedNames) {
     );
   }
 }
+
+/// Validates a SQL identifier (table or column name) to ensure it's safe.
+///
+/// WHY: Defense in depth - validates that SQL identifiers contain only safe
+/// characters before using them in raw queries. While constants are compile-time
+/// safe, this adds runtime validation for additional security.
+///
+/// [identifier] - The SQL identifier to validate (table or column name)
+///
+/// Throws [ArgumentError] if identifier contains unsafe characters.
+void validateSqlIdentifier(String identifier) {
+  if (identifier.isEmpty) {
+    throw ArgumentError('SQL identifier cannot be empty');
+  }
+
+  // SQL identifiers must start with a letter or underscore
+  // and contain only alphanumeric characters and underscores
+  final sqlIdentifierPattern = RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$');
+  if (!sqlIdentifierPattern.hasMatch(identifier)) {
+    throw ArgumentError(
+      'Invalid SQL identifier: $identifier. Must match pattern [a-zA-Z_][a-zA-Z0-9_]*',
+    );
+  }
+}

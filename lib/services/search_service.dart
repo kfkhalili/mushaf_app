@@ -13,6 +13,7 @@ import '../utils/initialization_mixin.dart';
 import '../utils/lru_cache.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
+import '../utils/rate_limiter.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -225,6 +226,19 @@ class SearchService with InitializationMixin {
   /// Search for Arabic text in the Quran
   Future<List<SearchResult>> searchText(String query) async {
     await init();
+
+    // Check rate limit before processing
+    // WHY: Defense in depth - prevent DoS attacks with rapid search requests
+    if (!SearchRateLimiter.canMakeRequest()) {
+      if (kDebugMode) {
+        developer.log(
+          'Search rate limit exceeded. Remaining: ${SearchRateLimiter.remainingRequests}',
+          name: 'SearchService',
+        );
+      }
+      // Return empty results instead of throwing to provide graceful degradation
+      return [];
+    }
 
     // Validate and sanitize search query
     try {
