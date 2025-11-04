@@ -12,6 +12,7 @@ import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/lru_cache.dart';
 import '../utils/parsing_helpers.dart';
+import '../utils/validation_helpers.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -175,7 +176,28 @@ class SearchService with InitializationMixin {
     required String assetFileName,
     required String destinationPath,
   }) async {
+    // Validate database file name against whitelist
+    final allowedDbNames = [
+      imlaeiAyahDbFileName,
+      'imlaei-simple.db',
+      'imlaei-script-ayah-by-ayah.db',
+    ];
+    try {
+      validateDatabaseFileName(assetFileName, allowedDbNames);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Invalid database file name: $e");
+    }
+
     final dbFile = File(destinationPath);
+
+    // Validate path to prevent path traversal
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    try {
+      validateFilePath(destinationPath, documentsDirectory.path);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Path traversal detected: $e");
+    }
+
     // WHY: Avoid recopying if the database already exists.
     if (await dbFile.exists()) {
       return;
@@ -204,7 +226,17 @@ class SearchService with InitializationMixin {
   Future<List<SearchResult>> searchText(String query) async {
     await init();
 
-    if (query.trim().isEmpty) return [];
+    // Validate and sanitize search query
+    try {
+      final sanitizedQuery = validateSearchQuery(query);
+      // Use sanitized query for search
+      query = sanitizedQuery;
+    } on ArgumentError catch (e) {
+      if (kDebugMode) {
+        developer.log('Invalid search query: $e', name: 'SearchService');
+      }
+      return [];
+    }
 
     // Check cache first
     final cacheKey = query.trim().toLowerCase();
@@ -488,7 +520,16 @@ class SearchService with InitializationMixin {
   Future<List<SearchResult>> searchBySurahName(String surahName) async {
     await init();
 
-    if (surahName.trim().isEmpty) return [];
+    // Validate and sanitize surah name query
+    try {
+      final sanitizedQuery = validateSearchQuery(surahName);
+      surahName = sanitizedQuery;
+    } on ArgumentError catch (e) {
+      if (kDebugMode) {
+        developer.log('Invalid surah name query: $e', name: 'SearchService');
+      }
+      return [];
+    }
 
     final List<Map<String, dynamic>> surahResults = await _databaseService
         .getSurahByName(surahName);

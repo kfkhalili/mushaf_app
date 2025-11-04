@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models.dart';
+import '../utils/validation_helpers.dart';
 import 'database_service.dart';
 
 /// Service for managing audio playback of Quranic recitation.
@@ -101,8 +102,9 @@ class AudioService {
         _currentSurahAudio = surahAudio;
         _currentAyahSegment = ayahSegment;
 
-        // Load the audio URL
-        await _audioPlayer.setUrl(surahAudio.audioUrl);
+        // Validate and load the audio URL
+        final validatedUrl = validateAudioUrl(surahAudio.audioUrl);
+        await _audioPlayer.setUrl(validatedUrl);
 
         // Set playback range to play only the ayah
         final startTime = Duration(milliseconds: ayahSegment.timestampFrom);
@@ -150,8 +152,9 @@ class AudioService {
       _currentSurahAudio = surahAudio;
       _currentAyahSegment = null;
 
-      // Load and play the audio URL
-      await _audioPlayer.setUrl(surahAudio.audioUrl);
+      // Validate and load the audio URL
+      final validatedUrl = validateAudioUrl(surahAudio.audioUrl);
+      await _audioPlayer.setUrl(validatedUrl);
       await _audioPlayer.seek(Duration.zero);
       await _audioPlayer.play();
       // _isPlaying is now synced with _audioPlayer.playing

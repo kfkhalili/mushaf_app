@@ -10,6 +10,7 @@ import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/parsing_helpers.dart';
+import '../utils/validation_helpers.dart';
 
 class DatabaseService with InitializationMixin {
   Database? _layoutDb;
@@ -174,7 +175,35 @@ class DatabaseService with InitializationMixin {
     required String assetFileName,
     required String destinationPath,
   }) async {
+    // Validate database file name against whitelist
+    final allowedDbNames = [
+      layoutDbFileName,
+      indopakLayoutDbFileName,
+      scriptDbFileName,
+      indopakScriptDbFileName,
+      metadataDbFileName,
+      juzDbFileName,
+      hizbDbFileName,
+      imlaeiAyahDbFileName,
+      topicsDbFileName,
+      audioDbFileName,
+    ];
+    try {
+      validateDatabaseFileName(assetFileName, allowedDbNames);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Invalid database file name: $e");
+    }
+
     final dbFile = File(destinationPath);
+
+    // Validate path to prevent path traversal
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    try {
+      validateFilePath(destinationPath, documentsDirectory.path);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Path traversal detected: $e");
+    }
+
     // WHY: In debug mode, always recopy databases to pick up changes during development.
     // In release mode, avoid recopying if the database already exists for performance.
     final shouldRecopy = kDebugMode || !await dbFile.exists();
@@ -203,6 +232,9 @@ class DatabaseService with InitializationMixin {
 
   /// Fetches the text for a specific ayah.
   Future<String> getAyahText(int surahNumber, int ayahNumber) async {
+    // Validate input parameters
+    validateSurahAyah(surahNumber, ayahNumber);
+
     await init();
     if (_ayahTextDb == null) {
       throw DatabaseNotInitializedException(
@@ -297,6 +329,20 @@ class DatabaseService with InitializationMixin {
 
   /// Search by Surah name to get the surah number
   Future<List<Map<String, dynamic>>> getSurahByName(String surahName) async {
+    // Validate and sanitize surah name input
+    // WHY: Prevent DoS attacks with extremely long strings and add defense in depth
+    try {
+      final sanitizedSurahName = validateSearchQuery(surahName);
+      surahName = sanitizedSurahName;
+    } on ArgumentError catch (e) {
+      if (kDebugMode) {
+        debugPrint('Invalid surah name query: $e');
+      }
+      // Return empty list for invalid input instead of throwing
+      // This allows callers to handle gracefully (e.g., show "no results")
+      return [];
+    }
+
     await init();
     if (_metadataDb == null) {
       throw DatabaseNotInitializedException(
@@ -358,11 +404,17 @@ class DatabaseService with InitializationMixin {
 
   /// Retrieves the Arabic name of a Surah given its ID (1-114).
   Future<String> getSurahName(int surahId) async {
+    // Validate input parameter
+    try {
+      validateSurahNumber(surahId);
+    } on ArgumentError {
+      return ""; // Return empty string for invalid IDs
+    }
+
     await init();
     if (_metadataDb == null) {
       throw DatabaseNotInitializedException("Metadata DB not initialized");
     }
-    if (surahId <= 0 || surahId > 114) return ""; // Handle invalid IDs
 
     try {
       final List<Map<String, dynamic>> result = await _metadataDb!.query(
@@ -388,6 +440,8 @@ class DatabaseService with InitializationMixin {
   /// Determines the first Surah and Ayah number that appears on a given page.
   /// Public method for use by bookmarks service migration.
   Future<Map<String, int>> getFirstAyahOnPage(int pageNumber) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
     return await _getFirstAyahOnPage(pageNumber);
   }
 
@@ -457,6 +511,9 @@ class DatabaseService with InitializationMixin {
 
   /// Retrieves a list of all ayahs (surah and ayah numbers) on a given page.
   Future<List<Map<String, int>>> getAyahsOnPage(int pageNumber) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
+
     await init();
     if (_layoutDb == null || _scriptDb == null) {
       throw DatabaseNotInitializedException(
@@ -497,11 +554,16 @@ class DatabaseService with InitializationMixin {
     }
 
     // 3. Query the script DB to get unique surah/ayah pairs for these word IDs.
+    // WHY: Use parameterized query with placeholders instead of string interpolation
+    // to prevent SQL injection vulnerabilities.
+    final wordIdsList = wordIds.toList();
+    final placeholders = List.filled(wordIdsList.length, '?').join(', ');
     final List<Map<String, dynamic>> words = await _scriptDb!.query(
       DbConstants.wordsTable,
       distinct: true,
       columns: [DbConstants.surahCol, DbConstants.ayahNumberCol],
-      where: '${DbConstants.idCol} IN (${wordIds.join(', ')})',
+      where: '${DbConstants.idCol} IN ($placeholders)',
+      whereArgs: wordIdsList,
     );
 
     // 4. Map the results to the required format.
@@ -585,6 +647,9 @@ class DatabaseService with InitializationMixin {
 
   /// Retrieves header information (Juz', Hizb, Surah Name, Surah Number) for a given page.
   Future<Map<String, dynamic>> getPageHeaderInfo(int pageNumber) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
+
     await init();
     try {
       // Find the first ayah on the page to determine context.
@@ -612,6 +677,9 @@ class DatabaseService with InitializationMixin {
 
   /// Retrieves the complete layout (lines and words) for a given page number.
   Future<PageLayout> getPageLayout(int pageNumber) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
+
     await init();
     if (_layoutDb == null || _scriptDb == null) {
       throw DatabaseNotInitializedException(
@@ -827,6 +895,9 @@ class DatabaseService with InitializationMixin {
 
   /// Finds the page number containing the start of a specific ayah.
   Future<int> getPageForAyah(int surahNumber, int ayahNumber) async {
+    // Validate input parameters
+    validateSurahAyah(surahNumber, ayahNumber);
+
     await init();
     if (_scriptDb == null || _layoutDb == null) {
       throw DatabaseNotInitializedException(
@@ -996,6 +1067,9 @@ class DatabaseService with InitializationMixin {
 
   /// Gets the last ayah on a specific page.
   Future<Map<String, int>?> getLastAyahOnPage(int pageNumber) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
+
     await init();
     try {
       final ayahs = await getAyahsOnPage(pageNumber);
@@ -1249,6 +1323,9 @@ class DatabaseService with InitializationMixin {
 
   /// Retrieves the text of the first 'count' words appearing on a specific page.
   Future<String> getFirstWordsOfPage(int pageNumber, {int count = 3}) async {
+    // Validate input parameter
+    validatePageNumber(pageNumber);
+
     await init();
     if (_layoutDb == null || _scriptDb == null) {
       throw DatabaseNotInitializedException(

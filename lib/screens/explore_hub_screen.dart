@@ -5,6 +5,7 @@ import '../providers.dart';
 import '../widgets/shared/app_header.dart';
 import '../models/ontology_models.dart';
 import '../utils/navigation.dart';
+import '../exceptions/database_exceptions.dart';
 import 'topic_detail_screen.dart';
 
 class ExploreHubScreen extends ConsumerStatefulWidget {
@@ -211,7 +212,7 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Text(
-                              error.toString(),
+                              _getUserFriendlyErrorMessage(error),
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
@@ -250,5 +251,26 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
       }
     }
     return topicsWithVerses;
+  }
+
+  /// Returns a user-friendly error message that doesn't leak sensitive information.
+  /// WHY: Security - Never expose technical details like paths, stack traces, or internal errors.
+  String _getUserFriendlyErrorMessage(Object error) {
+    // Map technical errors to generic user-facing messages
+    if (error is DatabaseConnectionException) {
+      return 'لا يمكن الاتصال بقاعدة البيانات';
+    } else if (error is DatabaseNotInitializedException) {
+      return 'قاعدة البيانات غير جاهزة';
+    } else if (error is DatabaseNotFoundException) {
+      return 'البيانات المطلوبة غير موجودة';
+    } else if (error is DatabaseOperationException) {
+      return 'حدث خطأ أثناء معالجة البيانات';
+    } else if (error is DatabaseConstraintException) {
+      return 'خطأ في البيانات';
+    } else {
+      // Generic message for unknown errors
+      // In debug mode, the full error is already logged
+      return 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى';
+    }
   }
 }

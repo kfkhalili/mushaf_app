@@ -8,6 +8,7 @@ import '../models/ontology_models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
+import '../utils/validation_helpers.dart';
 
 class OntologyService with InitializationMixin {
   Database? _topicsDb;
@@ -86,7 +87,24 @@ class OntologyService with InitializationMixin {
     required String assetFileName,
     required String destinationPath,
   }) async {
+    // Validate database file name against whitelist
+    final allowedDbNames = [topicsDbFileName];
+    try {
+      validateDatabaseFileName(assetFileName, allowedDbNames);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Invalid database file name: $e");
+    }
+
     final dbFile = File(destinationPath);
+
+    // Validate path to prevent path traversal
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    try {
+      validateFilePath(destinationPath, documentsDirectory.path);
+    } on ArgumentError catch (e) {
+      throw DatabaseConnectionException("Path traversal detected: $e");
+    }
+
     // WHY: Avoid recopying if the database already exists.
     if (await dbFile.exists()) {
       return;
@@ -139,6 +157,9 @@ class OntologyService with InitializationMixin {
 
   /// Fetches all topics related to a specific ayah.
   Future<List<Topic>> getTopicsForAyah(int surahNumber, int ayahNumber) async {
+    // Validate input parameters
+    validateSurahAyah(surahNumber, ayahNumber);
+
     await ensureInitialized();
     if (_topicsDb == null) {
       throw DatabaseNotInitializedException("Topics DB not initialized");
@@ -264,7 +285,20 @@ class OntologyService with InitializationMixin {
           final surah = int.tryParse(parts[0].trim());
           final ayahNum = int.tryParse(parts[1].trim());
           if (surah != null && ayahNum != null) {
-            verses.add(VerseReference(surahNumber: surah, ayahNumber: ayahNum));
+            // Validate parsed surah/ayah numbers before use
+            // WHY: Defense in depth - validate even trusted database data
+            try {
+              validateSurahNumber(surah);
+              validateAyahNumber(ayahNum);
+              verses.add(
+                VerseReference(surahNumber: surah, ayahNumber: ayahNum),
+              );
+            } catch (e) {
+              // Skip invalid entries - database data may be corrupted
+              if (kDebugMode) {
+                debugPrint('Invalid surah/ayah in database: $surah:$ayahNum');
+              }
+            }
           }
         }
       }
@@ -452,11 +486,18 @@ class OntologyService with InitializationMixin {
       throw DatabaseNotInitializedException("Topics DB not initialized");
     }
 
-    if (query.trim().isEmpty) {
-      return [];
+    // Validate and sanitize search query
+    try {
+      final sanitizedQuery = validateSearchQuery(query);
+      query = sanitizedQuery;
+    } on ArgumentError catch (e) {
+      if (kDebugMode) {
+        debugPrint('Invalid search query: $e');
+      }
+      return []; // Return empty results for invalid input
     }
 
-    final searchPattern = '%${query.trim()}%';
+    final searchPattern = '%$query%';
 
     final List<Map<String, dynamic>> results = await _topicsDb!.query(
       DbConstants.topicsTable,

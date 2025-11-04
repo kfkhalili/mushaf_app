@@ -5,6 +5,7 @@ import '../models.dart';
 import '../providers.dart';
 import '../utils/helpers.dart';
 import '../constants.dart';
+import '../exceptions/database_exceptions.dart';
 
 class BookmarkItemCard extends ConsumerWidget {
   final Bookmark bookmark;
@@ -88,7 +89,9 @@ class BookmarkItemCard extends ConsumerWidget {
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(
-          content: Text('خطأ في العثور على الصفحة: $e'),
+          content: Text(
+            'خطأ في العثور على الصفحة: ${_getUserFriendlyErrorMessage(e)}',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -250,5 +253,26 @@ class BookmarkItemCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Returns a user-friendly error message that doesn't leak sensitive information.
+  /// WHY: Security - Never expose technical details like paths, stack traces, or internal errors.
+  String _getUserFriendlyErrorMessage(Object error) {
+    // Map technical errors to generic user-facing messages
+    if (error is DatabaseConnectionException) {
+      return 'لا يمكن الاتصال بقاعدة البيانات';
+    } else if (error is DatabaseNotInitializedException) {
+      return 'قاعدة البيانات غير جاهزة';
+    } else if (error is DatabaseNotFoundException) {
+      return 'البيانات المطلوبة غير موجودة';
+    } else if (error is DatabaseOperationException) {
+      return 'حدث خطأ أثناء معالجة البيانات';
+    } else if (error is DatabaseConstraintException) {
+      return 'خطأ في البيانات';
+    } else {
+      // Generic message for unknown errors
+      // In debug mode, the full error is already logged
+      return 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى';
+    }
   }
 }

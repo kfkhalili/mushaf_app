@@ -80,8 +80,9 @@ void main() {
         final preview = await container.read(pagePreviewProvider(0).future);
         expect(preview, isA<String>());
       } catch (e) {
-        // Database service might throw for invalid page, which is expected
-        expect(e, isA<Exception>());
+        // Database service now validates input and throws ArgumentError for invalid pages
+        // This is expected behavior - validation is working correctly
+        expect(e, isA<ArgumentError>());
       }
     });
   });

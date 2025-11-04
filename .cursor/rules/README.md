@@ -174,6 +174,32 @@ Critical rules for testing and pre-commit hooks that MUST NEVER be bypassed.
 
 ---
 
+### 12. **security-by-design.mdc** 🔒 Always Applied
+
+Security-by-design principles and patterns for secure coding. All code must follow these security patterns.
+
+**Key Topics:**
+
+- Input validation patterns (always validate at service boundaries)
+- Parameterized SQL queries (never use string interpolation)
+- Path validation (prevent path traversal attacks)
+- URL validation (validate before network requests)
+- Error handling security (never leak sensitive information)
+- File operation security (whitelist validation)
+- Network security (HTTPS preference)
+- Data security (sensitive data handling)
+- Security checklist for code reviews
+
+**Validation Helpers:**
+
+- `validateSearchQuery()` - Search input validation
+- `validateSurahNumber()`, `validateAyahNumber()`, `validateSurahAyah()` - Surah/ayah validation
+- `validatePageNumber()` - Page number validation
+- `validateAudioUrl()` - URL validation
+- `validateFilePath()`, `validateDatabaseFileName()` - Path validation
+
+---
+
 ## Rule Activation
 
 - **Always Applied**: Applied to every AI request automatically

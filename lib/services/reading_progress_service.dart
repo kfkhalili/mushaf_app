@@ -4,6 +4,7 @@ import '../models.dart';
 import '../constants.dart';
 import '../utils/date_helpers.dart';
 import '../utils/date_query_helpers.dart';
+import '../utils/validation_helpers.dart';
 import '../exceptions/database_exceptions.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
@@ -65,12 +66,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<void> recordPageView(int pageNumber) async {
-    // Validate page number against current layout's total pages
-    if (pageNumber < 1) {
-      throw ArgumentError('Page number must be >= 1');
-    }
+    // Validate page number using centralized validation helper
+    // WHY: Use centralized validation for consistency and security
+    validatePageNumber(pageNumber);
 
-    // Get total pages from database if available, otherwise skip validation
+    // Additional validation: Check against actual total pages from database if available
+    // WHY: validatePageNumber() checks against 604, but we should respect actual layout
     if (_databaseService != null) {
       try {
         final totalPages = await _databaseService.getTotalPages();
@@ -78,15 +79,8 @@ class SqliteReadingProgressService implements ReadingProgressService {
           throw ArgumentError('Page number must be between 1 and $totalPages');
         }
       } catch (e) {
-        // If we can't get total pages, use fallback validation
-        if (pageNumber > 604) {
-          throw ArgumentError('Page number must be between 1 and 604');
-        }
-      }
-    } else {
-      // Fallback validation if database service not available
-      if (pageNumber > 604) {
-        throw ArgumentError('Page number must be between 1 and 604');
+        // If we can't get total pages, validatePageNumber() already validated against 604
+        // This is acceptable fallback behavior
       }
     }
 
