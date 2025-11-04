@@ -467,8 +467,11 @@ class SearchService with InitializationMixin {
     }
 
     // Parse verse key (format: "1:1")
+    // WHY: Validate split results before parsing
     final parts = verseKey.split(':');
-    if (parts.length != 2) return 1;
+    if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
+      return 1; // Invalid format
+    }
 
     final int surahNumber = parseInt(parts[0]);
     final int ayahNumber = parseInt(parts[1]);

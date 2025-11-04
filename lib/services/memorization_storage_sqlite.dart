@@ -65,7 +65,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
       final String? windowDataStr = row[DbConstants.windowDataCol] as String?;
       if (windowDataStr == null) {
         if (kDebugMode) {
-          print('Missing window data in memorization session');
+          debugPrint('Missing window data in memorization session');
         }
         return null; // Safe default
       }
@@ -74,7 +74,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
       final decoded = jsonDecode(windowDataStr);
       if (decoded is! Map<String, dynamic>) {
         if (kDebugMode) {
-          print('Expected Map, got ${decoded.runtimeType}');
+          debugPrint('Expected Map, got ${decoded.runtimeType}');
         }
         return null; // Safe default
       }
@@ -86,7 +86,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
           !windowJson.containsKey('opacities') ||
           !windowJson.containsKey('tapsSinceReveal')) {
         if (kDebugMode) {
-          print('Missing required fields in window data');
+          debugPrint('Missing required fields in window data');
         }
         return null; // Safe default
       }
@@ -96,7 +96,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
           windowJson['opacities'] is! List ||
           windowJson['tapsSinceReveal'] is! List) {
         if (kDebugMode) {
-          print('Invalid field types in window data');
+          debugPrint('Invalid field types in window data');
         }
         return null; // Safe default
       }
@@ -113,7 +113,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
           passCount == null ||
           lastUpdatedAtStr == null) {
         if (kDebugMode) {
-          print('Missing required fields in memorization session');
+          debugPrint('Missing required fields in memorization session');
         }
         return null; // Safe default
       }
@@ -125,7 +125,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
         lastUpdatedAt = DateTime.parse(lastUpdatedAtStr);
       } catch (e) {
         if (kDebugMode) {
-          print(
+          debugPrint(
             'Invalid date format in memorization session: $lastUpdatedAtStr',
           );
         }
@@ -133,14 +133,54 @@ class SqliteMemorizationStorage implements MemorizationStorage {
         lastUpdatedAt = DateTime.now();
       }
 
+      // Validate and convert list elements before List.from() conversion
+      // WHY: Defense in depth - validate individual list elements
+      final ayahIndicesRaw = windowJson['ayahIndices'] as List;
+      final ayahIndices = ayahIndicesRaw
+          .map((e) {
+            if (e is int) return e;
+            if (e is String) {
+              final parsed = int.tryParse(e);
+              if (parsed != null) return parsed;
+            }
+            return null; // Invalid element
+          })
+          .whereType<int>() // Filter out null values
+          .toList();
+
+      final opacitiesRaw = windowJson['opacities'] as List;
+      final opacities = opacitiesRaw
+          .map((e) {
+            if (e is double) return e;
+            if (e is int) return e.toDouble();
+            if (e is String) {
+              final parsed = double.tryParse(e);
+              if (parsed != null) return parsed;
+            }
+            return null; // Invalid element
+          })
+          .whereType<double>() // Filter out null values
+          .toList();
+
+      final tapsSinceRevealRaw = windowJson['tapsSinceReveal'] as List;
+      final tapsSinceReveal = tapsSinceRevealRaw
+          .map((e) {
+            if (e is int) return e;
+            if (e is String) {
+              final parsed = int.tryParse(e);
+              if (parsed != null) return parsed;
+            }
+            return null; // Invalid element
+          })
+          .whereType<int>() // Filter out null values
+          .toList();
+
       return MemorizationSessionState(
         pageNumber: pageNumber,
         window: AyahWindowState(
-          ayahIndices: List<int>.from(windowJson['ayahIndices'] as List),
-          opacities: List<double>.from(windowJson['opacities'] as List),
-          tapsSinceReveal: List<int>.from(
-            windowJson['tapsSinceReveal'] as List,
-          ),
+          ayahIndices: ayahIndices,
+          opacities: opacities,
+          tapsSinceReveal: tapsSinceReveal,
         ),
         lastAyahIndexShown: lastAyahIndexShown,
         lastUpdatedAt: lastUpdatedAt,
@@ -150,7 +190,7 @@ class SqliteMemorizationStorage implements MemorizationStorage {
       // WHY: If JSON parsing fails, return null (corrupted data)
       // This allows the user to start fresh
       if (kDebugMode) {
-        print('Error deserializing memorization session: $e');
+        debugPrint('Error deserializing memorization session: $e');
       }
       return null;
     }

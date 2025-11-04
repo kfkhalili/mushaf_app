@@ -466,6 +466,7 @@ Before committing code, verify:
 - [Security Audit v4](mdc:docs/security_audit_v4.md) - Deep security review with edge case analysis
 - [Security Audit v5](mdc:docs/security_audit_v5.md) - Comprehensive review of parsed data validation and type safety
 - [Security Audit v6](mdc:docs/security_audit_v6.md) - Review of DateTime parsing, JSON deserialization, and type casts
+- [Security Audit v7](mdc:docs/security_audit_v7.md) - Comprehensive "audit to rule them all" - final comprehensive security review
 
 ## Remember
 

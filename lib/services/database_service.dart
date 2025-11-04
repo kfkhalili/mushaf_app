@@ -627,10 +627,37 @@ class DatabaseService with InitializationMixin {
 
       try {
         // Parse the start and end Surah:Ayah keys.
-        final sFirst = parseInt(firstKey.split(':').first);
-        final aFirst = parseInt(firstKey.split(':').last);
-        final sLast = parseInt(lastKey.split(':').first);
-        final aLast = parseInt(lastKey.split(':').last);
+        // WHY: Validate split results before parsing
+        final firstParts = firstKey.split(':');
+        final lastParts = lastKey.split(':');
+        if (firstParts.length != 2 ||
+            lastParts.length != 2 ||
+            firstParts[0].isEmpty ||
+            firstParts[1].isEmpty ||
+            lastParts[0].isEmpty ||
+            lastParts[1].isEmpty) {
+          continue; // Skip invalid keys
+        }
+
+        final int sFirst = parseInt(firstParts[0]);
+        final int aFirst = parseInt(firstParts[1]);
+        final int sLast = parseInt(lastParts[0]);
+        final int aLast = parseInt(lastParts[1]);
+
+        // Validate parsed surah/ayah numbers before use
+        // WHY: Defense in depth - validate even trusted database data
+        try {
+          validateSurahNumber(sFirst);
+          validateAyahNumber(aFirst);
+          validateSurahNumber(sLast);
+          validateAyahNumber(aLast);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Invalid surah/ayah in Juz keys: $firstKey, $lastKey');
+          }
+          continue; // Skip invalid entries
+        }
+
         // Check if the target ayah falls within this Juz' range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
           return parseInt(row[DbConstants.juzNumberCol]); // Found it
@@ -653,10 +680,37 @@ class DatabaseService with InitializationMixin {
 
       try {
         // Parse the start and end Surah:Ayah keys.
-        final sFirst = parseInt(firstKey.split(':').first);
-        final aFirst = parseInt(firstKey.split(':').last);
-        final sLast = parseInt(lastKey.split(':').first);
-        final aLast = parseInt(lastKey.split(':').last);
+        // WHY: Validate split results before parsing
+        final firstParts = firstKey.split(':');
+        final lastParts = lastKey.split(':');
+        if (firstParts.length != 2 ||
+            lastParts.length != 2 ||
+            firstParts[0].isEmpty ||
+            firstParts[1].isEmpty ||
+            lastParts[0].isEmpty ||
+            lastParts[1].isEmpty) {
+          continue; // Skip invalid keys
+        }
+
+        final int sFirst = parseInt(firstParts[0]);
+        final int aFirst = parseInt(firstParts[1]);
+        final int sLast = parseInt(lastParts[0]);
+        final int aLast = parseInt(lastParts[1]);
+
+        // Validate parsed surah/ayah numbers before use
+        // WHY: Defense in depth - validate even trusted database data
+        try {
+          validateSurahNumber(sFirst);
+          validateAyahNumber(aFirst);
+          validateSurahNumber(sLast);
+          validateAyahNumber(aLast);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Invalid surah/ayah in Hizb keys: $firstKey, $lastKey');
+          }
+          continue; // Skip invalid entries
+        }
+
         // Check if the target ayah falls within this Hizb range.
         if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
           return parseInt(row[DbConstants.hizbNumberCol]); // Found it
@@ -1014,6 +1068,16 @@ class DatabaseService with InitializationMixin {
         "Word not found for Surah $surahNumber, Ayah $ayahNumber",
       );
     }
+    // Defense in depth: Check isEmpty before accessing .first
+    // WHY: Even though we checked above, this provides additional safety
+    if (words.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('Unexpected empty words list after isEmpty check');
+      }
+      throw DatabaseNotFoundException(
+        "Word not found for Surah $surahNumber, Ayah $ayahNumber",
+      );
+    }
     final int firstWordId = parseInt(words.first[DbConstants.idCol]);
 
     // 2. Find the page layout entry containing this word ID.
@@ -1124,23 +1188,38 @@ class DatabaseService with InitializationMixin {
       if (firstVerseKey != null && firstVerseKey.isNotEmpty) {
         try {
           // Parse Surah:Ayah from the key.
+          // WHY: Validate split results before parsing
           final parts = firstVerseKey.split(':');
-          if (parts.length == 2) {
-            final int surah = parseInt(parts[0]);
-            final int ayah = parseInt(parts[1]);
-            if (surah > 0 && ayah > 0) {
-              // Find the page number for the starting ayah of this Juz'.
-              final int startPage = await getPageForAyah(surah, ayah);
-              juzList.add(JuzInfo(juzNumber: juzNum, startingPage: startPage));
-            } else {
-              // Log warning for invalid keys but continue processing others.
-              if (kDebugMode) {
-                debugPrint(
-                  "Warning: Invalid verse key '$firstVerseKey' for Juz $juzNum",
-                );
-              }
+          if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
+            if (kDebugMode) {
+              debugPrint(
+                "Warning: Invalid verse key format '$firstVerseKey' for Juz $juzNum",
+              );
             }
+            continue; // Skip invalid keys
           }
+
+          final int surah = parseInt(parts[0]);
+          final int ayah = parseInt(parts[1]);
+
+          // Validate parsed surah/ayah numbers before use
+          // WHY: Defense in depth - validate even trusted database data
+          try {
+            validateSurahNumber(surah);
+            validateAyahNumber(ayah);
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint(
+                "Warning: Invalid surah/ayah in verse key '$firstVerseKey' for Juz $juzNum",
+              );
+            }
+            continue; // Skip invalid entries
+          }
+
+          // Find the page number for the starting ayah of this Juz'.
+          // Safe to use validated surah and ayah
+          final int startPage = await getPageForAyah(surah, ayah);
+          juzList.add(JuzInfo(juzNumber: juzNum, startingPage: startPage));
         } catch (e) {
           // Log errors during processing but continue.
           if (kDebugMode) {
@@ -1216,17 +1295,28 @@ class DatabaseService with InitializationMixin {
       if (lastKey == null || lastKey.isEmpty) return null;
 
       // Parse the last verse key (format: "surah:ayah")
+      // WHY: Validate split results before parsing
       final parts = lastKey.split(':');
-      if (parts.length != 2) return null;
-
-      final surah = parseInt(parts[0]);
-      final ayah = parseInt(parts[1]);
-
-      if (surah > 0 && ayah > 0) {
-        return {'surah': surah, 'ayah': ayah};
+      if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
+        return null; // Invalid format
       }
 
-      return null;
+      final int surah = parseInt(parts[0]);
+      final int ayah = parseInt(parts[1]);
+
+      // Validate parsed surah/ayah numbers before use
+      // WHY: Defense in depth - validate even trusted database data
+      try {
+        validateSurahNumber(surah);
+        validateAyahNumber(ayah);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Invalid surah/ayah in last key: $lastKey');
+        }
+        return null; // Invalid values
+      }
+
+      return {'surah': surah, 'ayah': ayah};
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error getting last ayah in juz $juzNumber: $e');
