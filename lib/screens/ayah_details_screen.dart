@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as math;
 import '../providers.dart';
 import '../screens/topic_detail_screen.dart';
 import '../utils/helpers.dart';
 import '../utils/navigation.dart';
+import '../constants.dart';
 
 /// Screen showing detailed information about a specific ayah
 class AyahDetailsScreen extends ConsumerWidget {
@@ -21,21 +23,13 @@ class AyahDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    // Get ayah text
-    final ayahTextAsync = ref.watch(
-      FutureProvider((ref) async {
-        final dbService = await ref.watch(databaseServiceProvider.future);
-        return dbService.getAyahText(surahNumber, ayahNumber);
-      }),
+    // Get ayah display data (words, page number, font)
+    final ayahDisplayAsync = ref.watch(
+      ayahDisplayDataProvider(surahNumber, ayahNumber),
     );
 
     // Get surah name
-    final surahNameAsync = ref.watch(
-      FutureProvider((ref) async {
-        final dbService = await ref.watch(databaseServiceProvider.future);
-        return dbService.getSurahName(surahNumber);
-      }),
-    );
+    final surahNameAsync = ref.watch(surahNameProvider(surahNumber));
 
     // Get topics for this ayah
     final topicsAsync = ref.watch(
@@ -67,17 +61,66 @@ class AyahDetailsScreen extends ConsumerWidget {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: ayahTextAsync.when(
-                    data: (text) => Text(
-                      text,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontSize: 24,
-                        height: 2.0,
-                        fontFamily: 'QuranCommon',
-                      ),
-                      textDirection: TextDirection.rtl,
-                      textAlign: TextAlign.justify,
-                    ),
+                  child: ayahDisplayAsync.when(
+                    data: (displayData) {
+                      final words = displayData.words;
+                      final fontFamily = displayData.fontFamily;
+
+                      if (words.isEmpty) {
+                        return Text(
+                          'لا يوجد نص للآية',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                          textDirection: TextDirection.rtl,
+                        );
+                      }
+
+                      // Calculate responsive font size like mushaf screen
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final screenHeight = MediaQuery.of(context).size.height;
+                      final widthScale = screenWidth / referenceScreenWidth;
+                      final heightScale = screenHeight / referenceScreenHeight;
+                      final scaleFactor = math.min(widthScale, heightScale);
+
+                      final userFontSize = ref.watch(fontSizeSettingProvider);
+                      final unclampedDynamicFontSize =
+                          userFontSize * scaleFactor;
+                      final fontSize = unclampedDynamicFontSize.clamp(
+                        minAyahFontSize,
+                        maxAyahFontSize,
+                      );
+
+                      final layout = ref.watch(mushafLayoutSettingProvider);
+                      final lineHeight =
+                          layoutLineHeights[layout] ?? baseLineHeight;
+
+                      final baseTextColor =
+                          theme.textTheme.bodyLarge?.color ?? Colors.black;
+
+                      // Display words as individual widgets in a Row, matching mushaf layout
+                      final wordWidgets = words.map((word) {
+                        return Text(
+                          word.text,
+                          style: TextStyle(
+                            fontFamily: fontFamily,
+                            fontSize: fontSize,
+                            height: lineHeight,
+                            color: baseTextColor,
+                          ),
+                          textScaler: const TextScaler.linear(1.0),
+                        );
+                      }).toList();
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          textDirection: TextDirection.rtl,
+                          children: wordWidgets,
+                        ),
+                      );
+                    },
                     loading: () => const Center(
                       child: Padding(
                         padding: EdgeInsets.all(16),
@@ -86,7 +129,9 @@ class AyahDetailsScreen extends ConsumerWidget {
                     ),
                     error: (error, stack) {
                       if (kDebugMode) {
-                        debugPrint('Error loading ayah text: $error\n$stack');
+                        debugPrint(
+                          'Error loading ayah display: $error\n$stack',
+                        );
                       }
                       return Text(
                         'خطأ في تحميل نص الآية',

@@ -203,6 +203,15 @@ Future<String> pageFontFamily(Ref ref, int pageNumber) async {
   return fontService.loadFontForPage(pageNumber, layout: layout);
 }
 
+// --- Common Font Provider ---
+// WHY: Returns the common font family for the current layout (QuranCommon for Uthmani, Indopak for Indopak)
+@Riverpod(keepAlive: true)
+Future<String> commonFont(Ref ref) async {
+  final fontService = ref.watch(fontServiceProvider);
+  final layout = ref.watch(mushafLayoutSettingProvider);
+  return fontService.loadCommonFont(layout: layout);
+}
+
 // --- Page Preview with Font Provider ---
 // WHY: Combines pagePreview and pageFontFamily to avoid nested AsyncValue.when() calls
 // in PageListView widget. This reduces unnecessary rebuilds and simplifies the widget tree.
@@ -716,6 +725,51 @@ class OntologyServiceNotifier extends _$OntologyServiceNotifier {
 Future<Topic> topicById(Ref ref, int topicId) async {
   final service = await ref.watch(ontologyServiceProvider.future);
   return service.getTopicById(topicId);
+}
+
+// --- Ayah Text Provider ---
+@riverpod
+Future<String> ayahText(Ref ref, int surahNumber, int ayahNumber) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return dbService.getAyahText(surahNumber, ayahNumber);
+}
+
+// --- Ayah Words Provider ---
+// WHY: Returns words with layout-specific glyphs (Uthmani) or text (Indopak)
+@riverpod
+Future<List<Word>> ayahWords(Ref ref, int surahNumber, int ayahNumber) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return dbService.getWordsForAyah(surahNumber, ayahNumber);
+}
+
+// --- Ayah Display Data Provider ---
+// WHY: Combines words, page number, and font for displaying ayah matching mushaf appearance
+@riverpod
+Future<({List<Word> words, int pageNumber, String fontFamily})> ayahDisplayData(
+  Ref ref,
+  int surahNumber,
+  int ayahNumber,
+) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  final fontService = ref.watch(fontServiceProvider);
+  final layout = ref.watch(mushafLayoutSettingProvider);
+
+  final words = await dbService.getWordsForAyah(surahNumber, ayahNumber);
+  final pageNumber = await dbService.getPageForAyah(surahNumber, ayahNumber);
+
+  // Load page-specific font for Uthmani, common font for Indopak
+  final fontFamily = layout == MushafLayout.uthmani15Lines
+      ? await fontService.loadFontForPage(pageNumber, layout: layout)
+      : await fontService.loadCommonFont(layout: layout);
+
+  return (words: words, pageNumber: pageNumber, fontFamily: fontFamily);
+}
+
+// --- Surah Name Provider ---
+@riverpod
+Future<String> surahName(Ref ref, int surahNumber) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return dbService.getSurahName(surahNumber);
 }
 
 // --- Topics for Ayah Provider ---

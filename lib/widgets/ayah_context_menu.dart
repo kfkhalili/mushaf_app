@@ -129,6 +129,7 @@ class AyahContextMenu extends ConsumerWidget {
               child: IntrinsicWidth(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     // Bookmark section
                     isBookmarkedAsync.when(
@@ -151,6 +152,7 @@ class AyahContextMenu extends ConsumerWidget {
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             textDirection: TextDirection.rtl,
                             children: [
                               Icon(
@@ -175,6 +177,7 @@ class AyahContextMenu extends ConsumerWidget {
                                       : theme.textTheme.bodyLarge?.color,
                                 ),
                                 textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.right,
                               ),
                             ],
                           ),
@@ -207,6 +210,7 @@ class AyahContextMenu extends ConsumerWidget {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           textDirection: TextDirection.rtl,
                           children: [
                             Icon(
@@ -223,6 +227,7 @@ class AyahContextMenu extends ConsumerWidget {
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
                               textDirection: TextDirection.rtl,
+                              textAlign: TextAlign.right,
                             ),
                           ],
                         ),

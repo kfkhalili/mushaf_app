@@ -270,6 +270,66 @@ class DatabaseService with InitializationMixin {
     }
   }
 
+  /// Retrieves all words for a specific ayah from the script database.
+  /// This returns words with layout-specific glyphs (Uthmani) or text (Indopak).
+  Future<List<Word>> getWordsForAyah(int surahNumber, int ayahNumber) async {
+    // Validate input parameters
+    validateSurahAyah(surahNumber, ayahNumber);
+
+    await init();
+    if (_scriptDb == null) {
+      throw DatabaseNotInitializedException(
+        "Script database is not initialized",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> wordsData = await _scriptDb!.query(
+        DbConstants.wordsTable,
+        columns: [
+          DbConstants.textCol,
+          DbConstants.surahCol,
+          DbConstants.ayahNumberCol,
+        ],
+        where:
+            '${DbConstants.surahCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
+        whereArgs: [surahNumber.toString(), ayahNumber.toString()],
+        orderBy: '${DbConstants.idCol} ASC',
+      );
+
+      return wordsData.map((wordMap) {
+        // Use nullable cast and check for null
+        // WHY: Type safety - database data may be corrupted
+        final String? text = wordMap[DbConstants.textCol] as String?;
+        if (text == null) {
+          if (kDebugMode) {
+            debugPrint('Missing word text in database result');
+          }
+          // Return a word with empty text as safe default
+          return Word(
+            text: '',
+            surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+            ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
+          );
+        }
+        return Word(
+          text: text,
+          surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+          ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
+        );
+      }).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          "Error fetching words for ayah $surahNumber:$ayahNumber: $e",
+        );
+        // TODO: Include stackTrace when implementing crash analytics
+        // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
+      }
+      return []; // Return empty list on error
+    }
+  }
+
   /// Fetches texts for multiple ayahs in a single query (optimized for bulk operations).
   /// Returns a map from verse key (format: "surah:ayah") to text.
   /// WHY: This method eliminates N+1 query problems when fetching multiple ayah texts.
