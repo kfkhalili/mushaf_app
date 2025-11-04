@@ -13,7 +13,11 @@ description: Widget structure and UI component conventions
 
 ## ConsumerWidget Pattern
 
-Prefer `ConsumerWidget` over `StatelessWidget` for provider access:
+**Use `ConsumerWidget` only when you need provider access.** If a widget doesn't need to access providers, use `StatelessWidget` instead - it's lighter, clearer, and follows the "props down, events up" pattern.
+
+### When to Use ConsumerWidget
+
+Use `ConsumerWidget` when you need to access Riverpod providers:
 
 ```dart
 class MyWidget extends ConsumerWidget {
@@ -23,15 +27,52 @@ class MyWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(someProvider);
+    final data = ref.watch(someProvider); // Needs provider access
     return Widget();
   }
 }
 ```
 
+### When to Use StatelessWidget
+
+Use `StatelessWidget` when the widget receives all data via props (no provider access needed):
+
+```dart
+// ✅ CORRECT - StatelessWidget is appropriate when no provider access needed
+class AppHeader extends StatelessWidget {
+  const AppHeader({
+    super.key,
+    required this.title,
+    this.onSearchPressed,
+    this.onBookmarkPressed,
+  });
+
+  final String title;
+  final VoidCallback? onSearchPressed;
+  final VoidCallback? onBookmarkPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    // No ref.watch(), ref.read(), or ref.listen() needed
+    // All data comes from props
+    return Widget();
+  }
+}
+```
+
+**Benefits of using StatelessWidget when appropriate:**
+- Better performance (lighter widget)
+- Clearer dependencies (explicit props vs implicit providers)
+- Easier testing (pure presentation components)
+- Follows React-like patterns (props down, events up)
+
 ## ConsumerStatefulWidget Pattern
 
-For stateful widgets needing provider access:
+**Use `ConsumerStatefulWidget` only when you need both stateful behavior AND provider access.** If you need state but not providers, use `StatefulWidget`. If you need providers but not state, use `ConsumerWidget`.
+
+### When to Use ConsumerStatefulWidget
+
+Use `ConsumerStatefulWidget` when you need both state management and provider access:
 
 ```dart
 class MyWidget extends ConsumerStatefulWidget {
@@ -42,8 +83,35 @@ class MyWidget extends ConsumerStatefulWidget {
 }
 
 class _MyWidgetState extends ConsumerState<MyWidget> {
+  int _counter = 0; // Local state
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(someProvider); // Provider access
+    return Widget();
+  }
+}
+```
+
+### When to Use StatefulWidget
+
+Use `StatefulWidget` when you need state but not provider access:
+
+```dart
+// ✅ CORRECT - StatefulWidget when no provider access needed
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  int _counter = 0; // Local state only
+
+  @override
+  Widget build(BuildContext context) {
+    // No ref parameter needed
     return Widget();
   }
 }
