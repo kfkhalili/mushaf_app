@@ -159,6 +159,21 @@ Functional programming paradigms, constructs, and structures to be used whenever
 
 ---
 
+### 11. **testing-and-pre-commit.mdc** ✅ Always Applied
+
+Critical rules for testing and pre-commit hooks that MUST NEVER be bypassed.
+
+**Key Topics:**
+
+- NEVER bypass pre-commit hooks (`--no-verify` is FORBIDDEN)
+- NEVER bypass or skip tests
+- Always fix test failures before committing
+- Handle golden test failures properly
+- Correct commit workflow
+- No exceptions to testing rules
+
+---
+
 ## Rule Activation
 
 - **Always Applied**: Applied to every AI request automatically

@@ -36,6 +36,7 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // Always use ontology hierarchy (more structured for visualization)
     final rootTopicsAsync = ref.watch(
       rootTopicsByHierarchyProvider(false), // false = ontology hierarchy
@@ -59,11 +60,35 @@ class _ExploreHubScreenState extends ConsumerState<ExploreHubScreen> {
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.right,
                   decoration: InputDecoration(
-                    hintText: '...ابحث عن موضوع',
-                    suffixIcon: const Icon(Icons.search),
+                    hintText: 'ابحث عن موضوع...',
+                    hintStyle: TextStyle(color: theme.hintColor, fontSize: 16),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: theme.iconTheme.color,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                            icon: Icon(
+                              Icons.clear,
+                              color: theme.iconTheme.color,
+                            ),
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    filled: true,
+                    fillColor: theme.cardColor,
+                  ),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
