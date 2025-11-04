@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
@@ -160,7 +161,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       FROM ${DbConstants.readingSessionsTable}
     ''');
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getPagesToday() async {
@@ -175,7 +181,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       [todayDateStr],
     );
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getPagesThisWeek() async {
@@ -190,7 +201,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       [weekAgoDateStr],
     );
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getPagesThisMonth() async {
@@ -205,7 +221,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       [monthStartDateStr],
     );
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getDaysThisWeek() async {
@@ -220,7 +241,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       [weekAgoDateStr],
     );
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getDaysThisMonth() async {
@@ -235,7 +261,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       [monthStartDateStr],
     );
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   Future<int> _getTotalReadingDays() async {
@@ -244,7 +275,12 @@ class SqliteReadingProgressService implements ReadingProgressService {
       FROM ${DbConstants.readingSessionsTable}
     ''');
 
-    return result.first['count'] as int? ?? 0;
+    // Check isNotEmpty before accessing .first for consistency
+    // WHY: Defense in depth - check even though query should return results
+    if (result.isNotEmpty) {
+      return result.first['count'] as int? ?? 0;
+    }
+    return 0; // Safe default
   }
 
   @override
@@ -299,9 +335,22 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
     if (dateResults.isEmpty) return 0;
 
-    // Convert to DateTime list
+    // Convert to DateTime list with safe parsing
+    // WHY: Corrupted database data may contain invalid date formats
     final dates = dateResults
-        .map((row) => DateTime.parse(row[DbConstants.sessionDateCol] as String))
+        .map((row) {
+          final String? dateStr = row[DbConstants.sessionDateCol] as String?;
+          if (dateStr == null) return null;
+          try {
+            return DateTime.parse(dateStr);
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('Invalid date format in reading progress: $dateStr');
+            }
+            return null; // Skip invalid entries
+          }
+        })
+        .whereType<DateTime>() // Filter out null values
         .toList();
 
     int longestStreak = 0;
@@ -352,8 +401,11 @@ class SqliteReadingProgressService implements ReadingProgressService {
       whereArgs: [dateStr],
     );
 
+    // Use nullable cast and filter out null values
+    // WHY: Type safety - database data may be corrupted
     return results
-        .map((row) => row[DbConstants.pageNumberCol] as int)
+        .map((row) => row[DbConstants.pageNumberCol] as int?)
+        .whereType<int>()
         .toSet()
         .toList(); // Return unique page numbers
   }
@@ -379,9 +431,23 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
     final Map<DateTime, int> progress = {};
     for (final row in results) {
-      final dateStr = row[DbConstants.sessionDateCol] as String;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? dateStr = row[DbConstants.sessionDateCol] as String?;
+      if (dateStr == null) continue; // Skip invalid entries
+
       final pages = row['pages'] as int? ?? 0;
-      progress[DateTime.parse(dateStr)] = pages;
+
+      // Parse DateTime safely with exception handling
+      // WHY: Corrupted database data may contain invalid date formats
+      try {
+        progress[DateTime.parse(dateStr)] = pages;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Invalid date format in weekly progress: $dateStr');
+        }
+        // Skip invalid entries
+      }
     }
 
     return progress;
@@ -408,9 +474,23 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
     final Map<DateTime, int> progress = {};
     for (final row in results) {
-      final dateStr = row[DbConstants.sessionDateCol] as String;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? dateStr = row[DbConstants.sessionDateCol] as String?;
+      if (dateStr == null) continue; // Skip invalid entries
+
       final pages = row['pages'] as int? ?? 0;
-      progress[DateTime.parse(dateStr)] = pages;
+
+      // Parse DateTime safely with exception handling
+      // WHY: Corrupted database data may contain invalid date formats
+      try {
+        progress[DateTime.parse(dateStr)] = pages;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Invalid date format in weekly progress: $dateStr');
+        }
+        // Skip invalid entries
+      }
     }
 
     return progress;

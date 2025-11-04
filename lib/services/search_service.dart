@@ -295,14 +295,22 @@ class SearchService with InitializationMixin {
     // Step 2: Filter results by stripping diacritics and checking if stripped query matches
     final List<Map<String, dynamic>> filteredSimpleResults = simpleResults
         .where((verse) {
-          final strippedText = _stripDiacritics(verse['text'] as String);
+          // Use nullable cast and check for null
+          // WHY: Type safety - database data may be corrupted
+          final String? verseText = verse['text'] as String?;
+          if (verseText == null) return false;
+          final strippedText = _stripDiacritics(verseText);
           return strippedText.contains(strippedQuery);
         })
         .toList();
 
     final List<Map<String, dynamic>> filteredScriptResults = scriptResults
         .where((verse) {
-          final strippedText = _stripDiacritics(verse['text'] as String);
+          // Use nullable cast and check for null
+          // WHY: Type safety - database data may be corrupted
+          final String? verseText = verse['text'] as String?;
+          if (verseText == null) return false;
+          final strippedText = _stripDiacritics(verseText);
           return strippedText.contains(strippedQuery);
         })
         .toList();
@@ -310,10 +318,14 @@ class SearchService with InitializationMixin {
     // Step 3: Collect all unique verse keys from both databases
     final Set<String> allFoundVerseKeys = {};
     allFoundVerseKeys.addAll(
-      filteredSimpleResults.map((v) => v['verse_key'] as String),
+      filteredSimpleResults
+          .map((v) => v['verse_key'] as String?)
+          .whereType<String>(), // Filter out null values
     );
     allFoundVerseKeys.addAll(
-      filteredScriptResults.map((v) => v['verse_key'] as String),
+      filteredScriptResults
+          .map((v) => v['verse_key'] as String?)
+          .whereType<String>(), // Filter out null values
     );
 
     if (allFoundVerseKeys.isEmpty) return [];
@@ -380,9 +392,37 @@ class SearchService with InitializationMixin {
       final verseData = verseMap[verseKey] ?? simpleVerseMap[verseKey];
       if (verseData == null) continue; // Skip if not found in either database
 
-      final String verseText = verseData['text'] as String;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted or schema may change
+      final String? verseText = verseData['text'] as String?;
+      if (verseText == null) {
+        if (kDebugMode) {
+          developer.log(
+            'Missing verse text in search result: $verseKey',
+            name: 'SearchService',
+          );
+        }
+        continue; // Skip invalid entries
+      }
+
       final int surahNumber = parseInt(verseData['surah']);
       final int ayahNumber = parseInt(verseData['ayah']);
+
+      // Validate parsed surah/ayah numbers before use
+      // WHY: Defense in depth - validate even trusted database data
+      try {
+        validateSurahNumber(surahNumber);
+        validateAyahNumber(ayahNumber);
+      } catch (e) {
+        // Skip invalid entries - database data may be corrupted
+        if (kDebugMode) {
+          developer.log(
+            'Invalid surah/ayah in search result: $surahNumber:$ayahNumber',
+            name: 'SearchService',
+          );
+        }
+        continue;
+      }
 
       // Debug: Check if text contains diacritics
       if (kDebugMode && ayahNumber <= 3) {
@@ -393,7 +433,7 @@ class SearchService with InitializationMixin {
         developer.log('  Text: $verseText', name: 'SearchService');
       }
 
-      // Get Surah name
+      // Get Surah name - safe to use validated surahNumber
       final String surahName = await _getSurahName(surahNumber);
 
       // Get page number for this verse
@@ -433,8 +473,21 @@ class SearchService with InitializationMixin {
     final int surahNumber = parseInt(parts[0]);
     final int ayahNumber = parseInt(parts[1]);
 
+    // Validate parsed surah/ayah numbers before use
+    // WHY: Defense in depth - validate parsed values before operations
+    try {
+      validateSurahNumber(surahNumber);
+      validateAyahNumber(ayahNumber);
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log('Invalid verse key: $verseKey', name: 'SearchService');
+      }
+      return 1; // Safe default
+    }
+
     try {
       // Use the existing DatabaseService method for accurate page mapping
+      // Safe to use validated surahNumber and ayahNumber
       final int pageNumber = await _databaseService.getPageForAyah(
         surahNumber,
         ayahNumber,
@@ -579,10 +632,38 @@ class SearchService with InitializationMixin {
     for (final verse in verseResults) {
       final int surahNumber = parseInt(verse['surah']);
       final int ayahNumber = parseInt(verse['ayah']);
-      final String verseText = verse['text'] as String;
-      final String verseKey = verse['verse_key'] as String;
 
-      // Get Surah name
+      // Validate parsed surah/ayah numbers before use
+      // WHY: Defense in depth - validate even trusted database data
+      try {
+        validateSurahNumber(surahNumber);
+        validateAyahNumber(ayahNumber);
+      } catch (e) {
+        // Skip invalid entries - database data may be corrupted
+        if (kDebugMode) {
+          developer.log(
+            'Invalid surah/ayah in search result: $surahNumber:$ayahNumber',
+            name: 'SearchService',
+          );
+        }
+        continue;
+      }
+
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? verseText = verse['text'] as String?;
+      final String? verseKey = verse['verse_key'] as String?;
+      if (verseText == null || verseKey == null) {
+        if (kDebugMode) {
+          developer.log(
+            'Missing verse text or key in search result',
+            name: 'SearchService',
+          );
+        }
+        continue; // Skip invalid entries
+      }
+
+      // Get Surah name - safe to use validated surahNumber
       final String surahName = await _getSurahName(surahNumber);
 
       // Get page number for this verse

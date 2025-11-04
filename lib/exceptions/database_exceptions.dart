@@ -12,6 +12,14 @@ abstract class DatabaseException implements Exception {
 
   @override
   String toString() {
+    // Don't include originalError in toString() to prevent information leakage
+    // Use toDebugString() for detailed error information in debug mode only
+    return '$runtimeType: $message';
+  }
+
+  /// Returns detailed error information for debugging.
+  /// SHOULD ONLY BE USED IN DEBUG MODE to prevent information leakage.
+  String toDebugString() {
     if (originalError != null) {
       return '$runtimeType: $message\nOriginal error: $originalError';
     }
@@ -74,6 +82,14 @@ class FontException implements Exception {
 
   @override
   String toString() {
+    // Don't include originalError in toString() to prevent information leakage
+    // Use toDebugString() for detailed error information in debug mode only
+    return 'FontException: $message';
+  }
+
+  /// Returns detailed error information for debugging.
+  /// SHOULD ONLY BE USED IN DEBUG MODE to prevent information leakage.
+  String toDebugString() {
     if (originalError != null) {
       return 'FontException: $message\nOriginal error: $originalError';
     }

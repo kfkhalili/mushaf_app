@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../memorization/models.dart';
 import '../constants.dart';
@@ -59,13 +60,81 @@ class SqliteMemorizationStorage implements MemorizationStorage {
     final row = results.first;
 
     try {
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? windowDataStr = row[DbConstants.windowDataCol] as String?;
+      if (windowDataStr == null) {
+        if (kDebugMode) {
+          print('Missing window data in memorization session');
+        }
+        return null; // Safe default
+      }
+
       // WHY: Deserialize JSON back to AyahWindowState
-      final windowJson =
-          jsonDecode(row[DbConstants.windowDataCol] as String)
-              as Map<String, dynamic>;
+      final decoded = jsonDecode(windowDataStr);
+      if (decoded is! Map<String, dynamic>) {
+        if (kDebugMode) {
+          print('Expected Map, got ${decoded.runtimeType}');
+        }
+        return null; // Safe default
+      }
+      final windowJson = decoded;
+
+      // Validate required fields before accessing
+      // WHY: Defense in depth - validate JSON structure
+      if (!windowJson.containsKey('ayahIndices') ||
+          !windowJson.containsKey('opacities') ||
+          !windowJson.containsKey('tapsSinceReveal')) {
+        if (kDebugMode) {
+          print('Missing required fields in window data');
+        }
+        return null; // Safe default
+      }
+
+      // Validate field types
+      if (windowJson['ayahIndices'] is! List ||
+          windowJson['opacities'] is! List ||
+          windowJson['tapsSinceReveal'] is! List) {
+        if (kDebugMode) {
+          print('Invalid field types in window data');
+        }
+        return null; // Safe default
+      }
+
+      final int? pageNumber = row[DbConstants.pageNumberCol] as int?;
+      final int? lastAyahIndexShown =
+          row[DbConstants.lastAyahIndexShownCol] as int?;
+      final int? passCount = row[DbConstants.passCountCol] as int?;
+      final String? lastUpdatedAtStr =
+          row[DbConstants.lastUpdatedAtCol] as String?;
+
+      if (pageNumber == null ||
+          lastAyahIndexShown == null ||
+          passCount == null ||
+          lastUpdatedAtStr == null) {
+        if (kDebugMode) {
+          print('Missing required fields in memorization session');
+        }
+        return null; // Safe default
+      }
+
+      // Parse DateTime safely with exception handling
+      // WHY: Corrupted database data may contain invalid date formats
+      DateTime lastUpdatedAt;
+      try {
+        lastUpdatedAt = DateTime.parse(lastUpdatedAtStr);
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+            'Invalid date format in memorization session: $lastUpdatedAtStr',
+          );
+        }
+        // Use current date as safe default
+        lastUpdatedAt = DateTime.now();
+      }
 
       return MemorizationSessionState(
-        pageNumber: row[DbConstants.pageNumberCol] as int,
+        pageNumber: pageNumber,
         window: AyahWindowState(
           ayahIndices: List<int>.from(windowJson['ayahIndices'] as List),
           opacities: List<double>.from(windowJson['opacities'] as List),
@@ -73,15 +142,16 @@ class SqliteMemorizationStorage implements MemorizationStorage {
             windowJson['tapsSinceReveal'] as List,
           ),
         ),
-        lastAyahIndexShown: row[DbConstants.lastAyahIndexShownCol] as int,
-        lastUpdatedAt: DateTime.parse(
-          row[DbConstants.lastUpdatedAtCol] as String,
-        ),
-        passCount: row[DbConstants.passCountCol] as int,
+        lastAyahIndexShown: lastAyahIndexShown,
+        lastUpdatedAt: lastUpdatedAt,
+        passCount: passCount,
       );
     } catch (e) {
       // WHY: If JSON parsing fails, return null (corrupted data)
       // This allows the user to start fresh
+      if (kDebugMode) {
+        print('Error deserializing memorization session: $e');
+      }
       return null;
     }
   }

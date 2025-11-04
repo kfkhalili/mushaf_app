@@ -200,6 +200,38 @@ Security-by-design principles and patterns for secure coding. All code must foll
 
 ---
 
+### 13. **defense-in-depth-type-safety.mdc** 🛡️ Always Applied
+
+Defense-in-depth principles and type safety best practices. All code must follow these patterns for robust, secure, and reliable code.
+
+**Key Topics:**
+
+- Defense in depth (validate data even from trusted sources)
+- Type safety (always use nullable casts and check for null)
+- Validate parsed data (always validate after parsing)
+- Safe defaults (always provide safe defaults when validation fails)
+- Multiple validation layers (use multiple validation layers for critical operations)
+- Exception handling (handle exceptions gracefully with safe defaults)
+
+**Core Principles:**
+
+- Always validate data, even from trusted sources (database, internal services, etc.)
+- Always use nullable casts (`as String?`) and check for null before use
+- Always validate parsed data before using it in operations
+- Always provide safe defaults when validation fails
+- Always use multiple validation layers for critical operations
+- Always handle exceptions gracefully with safe defaults
+- Always log errors in debug mode only
+
+**Common Patterns:**
+
+- Database query results (use nullable casts and null checks)
+- Parsed integers (validate using centralized helpers)
+- Exception handling (catch exceptions and provide safe defaults)
+- Type safety (prefer nullable types and null checks)
+
+---
+
 ## Rule Activation
 
 - **Always Applied**: Applied to every AI request automatically

@@ -1,0 +1,479 @@
+---
+alwaysApply: true
+---
+
+# Defense in Depth and Type Safety
+
+This project follows defense-in-depth principles and prioritizes type safety at every stage of development. All code must follow these patterns and best practices.
+
+## Core Principles
+
+### 1. Defense in Depth
+
+**ALWAYS validate data, even from trusted sources.** Never trust data just because it comes from:
+
+- Database queries
+- Internal services
+- Previously validated inputs
+- System components
+
+**Why**: Defense in depth means having multiple layers of security. Even if one layer fails, others should catch the issue.
+
+```dart
+// ✅ GOOD - Validate even trusted database data
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+
+// Validate parsed values before use
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  // Skip invalid entries - database data may be corrupted
+  if (kDebugMode) {
+    debugPrint('Invalid surah/ayah in database: $surahNumber:$ayahNumber');
+  }
+  continue;
+}
+
+// Now safe to use validated values
+final String surahName = await _getSurahName(surahNumber);
+
+// ❌ BAD - Trust database data without validation
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+// Directly use without validation - could be invalid!
+final String surahName = await _getSurahName(surahNumber);
+```
+
+### 2. Type Safety First
+
+**ALWAYS use nullable casts and check for null** before using values. Never use non-nullable casts (`as String`, `as int`) without null checks.
+
+```dart
+// ✅ GOOD - Use nullable cast and check for null
+final String? verseText = verseData['text'] as String?;
+if (verseText == null) {
+  if (kDebugMode) {
+    debugPrint('Missing verse text in database result');
+  }
+  continue; // Skip invalid entries
+}
+// Safe to use verseText
+
+// ❌ BAD - Non-nullable cast without check
+final String verseText = verseData['text'] as String;
+// Will throw exception if data is corrupted or schema changes
+```
+
+### 3. Validate Parsed Data
+
+**ALWAYS validate parsed data** before using it in operations, even if parsing succeeded.
+
+```dart
+// ✅ GOOD - Validate parsed values
+final int surahNumber = parseInt(parts[0]);
+final int ayahNumber = parseInt(parts[1]);
+
+// Validate before use
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  return 1; // Safe default
+}
+
+// Safe to use validated values
+final int pageNumber = await _databaseService.getPageForAyah(
+  surahNumber,
+  ayahNumber,
+);
+
+// ❌ BAD - Use parsed values without validation
+final int surahNumber = parseInt(parts[0]);
+final int ayahNumber = parseInt(parts[1]);
+// Directly use without validation - could be invalid!
+final int pageNumber = await _databaseService.getPageForAyah(
+  surahNumber,
+  ayahNumber,
+);
+```
+
+### 4. Safe Defaults
+
+**ALWAYS provide safe defaults** when validation fails or data is missing.
+
+```dart
+// ✅ GOOD - Safe defaults
+final int surahNumber = parseInt(verseData['surah']);
+if (surahNumber == 0 || surahNumber < 1 || surahNumber > 114) {
+  // Skip invalid entry
+  continue;
+}
+
+// ❌ BAD - No safe defaults
+final int surahNumber = parseInt(verseData['surah']);
+// Could be 0 or invalid, but no check!
+```
+
+## Type Safety Patterns
+
+### Database Query Results
+
+**ALWAYS use nullable casts and check for null** when accessing database results:
+
+```dart
+// ✅ GOOD - Nullable cast with null check
+final String? verseText = verseData['text'] as String?;
+if (verseText == null) {
+  if (kDebugMode) {
+    debugPrint('Missing verse text in database result');
+  }
+  continue;
+}
+
+// ✅ GOOD - Check before accessing
+if (result.isNotEmpty && result.first[DbConstants.textCol] != null) {
+  return result.first[DbConstants.textCol] as String;
+}
+return ''; // Safe default
+
+// ❌ BAD - Non-nullable cast without check
+final String verseText = verseData['text'] as String;
+// Will throw if null or wrong type
+```
+
+### Parsed Integers
+
+**ALWAYS validate parsed integers** before using them:
+
+```dart
+// ✅ GOOD - Validate parsed values
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  // Handle invalid values gracefully
+  continue;
+}
+
+// ❌ BAD - Use parsed values without validation
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+// Could be invalid but used directly
+```
+
+### Exception Handling
+
+**ALWAYS handle exceptions gracefully** and provide safe defaults:
+
+```dart
+// ✅ GOOD - Graceful exception handling
+try {
+  final int pageNumber = await _databaseService.getPageForAyah(
+    surahNumber,
+    ayahNumber,
+  );
+  return pageNumber;
+} catch (e) {
+  if (kDebugMode) {
+    debugPrint('Error getting page for verse: $e');
+  }
+  return 1; // Safe default
+}
+
+// ❌ BAD - Let exceptions propagate
+final int pageNumber = await _databaseService.getPageForAyah(
+  surahNumber,
+  ayahNumber,
+);
+// Will throw if invalid
+```
+
+## Defense in Depth Patterns
+
+### Multiple Validation Layers
+
+**ALWAYS use multiple validation layers** for critical operations:
+
+```dart
+// ✅ GOOD - Multiple validation layers
+Future<void> recordPageView(int pageNumber) async {
+  // Layer 1: Centralized validation
+  validatePageNumber(pageNumber);
+
+  // Layer 2: Additional validation against actual data
+  if (_databaseService != null) {
+    try {
+      final totalPages = await _databaseService.getTotalPages();
+      if (pageNumber > totalPages) {
+        throw ArgumentError('Page number must be between 1 and $totalPages');
+      }
+    } catch (e) {
+      // Fallback to centralized validation (already validated against 604)
+    }
+  }
+
+  // Safe to proceed
+}
+
+// ❌ BAD - Single validation layer
+Future<void> recordPageView(int pageNumber) async {
+  validatePageNumber(pageNumber);
+  // No additional validation
+}
+```
+
+### Validate Even Trusted Data
+
+**ALWAYS validate data, even from trusted sources**:
+
+```dart
+// ✅ GOOD - Validate even trusted database data
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+
+// Validate even though data comes from database
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  // Database data may be corrupted
+  continue;
+}
+
+// ❌ BAD - Trust database data without validation
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+// Trust database data implicitly
+```
+
+### Safe Parsing
+
+**ALWAYS use safe parsing utilities** and validate results:
+
+```dart
+// ✅ GOOD - Safe parsing with validation
+final int surahNumber = parseInt(parts[0]);
+final int ayahNumber = parseInt(parts[1]);
+
+// Validate parsed values
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  return 1; // Safe default
+}
+
+// ❌ BAD - Unsafe parsing
+final int surahNumber = int.parse(parts[0]); // Will throw on failure
+final int ayahNumber = int.parse(parts[1]); // Will throw on failure
+```
+
+## Best Practices
+
+### 1. Always Check for Null
+
+**NEVER use non-nullable casts without null checks**:
+
+```dart
+// ✅ GOOD
+final String? text = data['text'] as String?;
+if (text == null) {
+  // Handle null case
+  return '';
+}
+
+// ❌ BAD
+final String text = data['text'] as String;
+// Will throw if null
+```
+
+### 2. Always Validate Parsed Data
+
+**NEVER use parsed data without validation**:
+
+```dart
+// ✅ GOOD
+final int surah = parseInt(data['surah']);
+try {
+  validateSurahNumber(surah);
+} catch (e) {
+  // Handle invalid value
+  return;
+}
+
+// ❌ BAD
+final int surah = parseInt(data['surah']);
+// Use directly without validation
+```
+
+### 3. Always Provide Safe Defaults
+
+**NEVER fail silently without safe defaults**:
+
+```dart
+// ✅ GOOD
+try {
+  final int pageNumber = await getPageNumber();
+  return pageNumber;
+} catch (e) {
+  return 1; // Safe default
+}
+
+// ❌ BAD
+try {
+  final int pageNumber = await getPageNumber();
+  return pageNumber;
+} catch (e) {
+  // No safe default - will propagate exception
+  rethrow;
+}
+```
+
+### 4. Always Log Errors in Debug Mode
+
+**ALWAYS log errors in debug mode** for debugging while not exposing information in production:
+
+```dart
+// ✅ GOOD
+try {
+  // ... operation
+} catch (e) {
+  if (kDebugMode) {
+    debugPrint('Error in operation: $e');
+  }
+  return safeDefault;
+}
+
+// ❌ BAD
+try {
+  // ... operation
+} catch (e) {
+  // No logging - hard to debug
+  return safeDefault;
+}
+```
+
+## Common Patterns
+
+### Database Query Results
+
+```dart
+// ✅ GOOD - Safe database result access
+final List<Map<String, dynamic>> results = await _db.query(
+  'table',
+  where: 'id = ?',
+  whereArgs: [id],
+  limit: 1,
+);
+
+if (results.isNotEmpty) {
+  final row = results.first;
+  final String? text = row['text'] as String?;
+  if (text != null) {
+    // Safe to use text
+  }
+}
+
+// ❌ BAD - Unsafe database result access
+final List<Map<String, dynamic>> results = await _db.query(
+  'table',
+  where: 'id = ?',
+  whereArgs: [id],
+  limit: 1,
+);
+
+final String text = results.first['text'] as String;
+// Will throw if empty or null
+```
+
+### Parsed Values
+
+```dart
+// ✅ GOOD - Validate parsed values
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+
+try {
+  validateSurahNumber(surahNumber);
+  validateAyahNumber(ayahNumber);
+} catch (e) {
+  if (kDebugMode) {
+    debugPrint('Invalid surah/ayah: $surahNumber:$ayahNumber');
+  }
+  continue;
+}
+
+// Safe to use validated values
+final String surahName = await _getSurahName(surahNumber);
+
+// ❌ BAD - Use parsed values without validation
+final int surahNumber = parseInt(verseData['surah']);
+final int ayahNumber = parseInt(verseData['ayah']);
+// Directly use without validation
+final String surahName = await _getSurahName(surahNumber);
+```
+
+### Exception Handling
+
+```dart
+// ✅ GOOD - Safe exception handling
+try {
+  final int pageNumber = await _databaseService.getPageForAyah(
+    surahNumber,
+    ayahNumber,
+  );
+  return pageNumber;
+} catch (e) {
+  if (kDebugMode) {
+    debugPrint('Error getting page for ayah: $e');
+  }
+  return 1; // Safe default
+}
+
+// ❌ BAD - Let exceptions propagate
+final int pageNumber = await _databaseService.getPageForAyah(
+  surahNumber,
+  ayahNumber,
+);
+// Will throw if invalid
+```
+
+## Security Checklist
+
+Before committing code, verify:
+
+- [ ] All parsed data is validated before use
+- [ ] All type casts use nullable types (`as String?`) and check for null
+- [ ] All database results are checked for null before use
+- [ ] All exceptions are handled gracefully with safe defaults
+- [ ] All errors are logged in debug mode only
+- [ ] All validation uses centralized helpers when available
+- [ ] All operations have multiple layers of validation (defense in depth)
+- [ ] All data is validated, even from trusted sources
+
+## Common Mistakes to Avoid
+
+1. **Non-nullable casts without checks** - Always use nullable casts (`as String?`) and check for null
+2. **Using parsed data without validation** - Always validate parsed values before use
+3. **Trusting database data** - Always validate data from databases, even if trusted
+4. **No safe defaults** - Always provide safe defaults when validation fails
+5. **Letting exceptions propagate** - Always handle exceptions gracefully
+6. **Single validation layer** - Use multiple validation layers for critical operations
+7. **No error logging** - Always log errors in debug mode for debugging
+
+## Remember
+
+**Defense in depth and type safety are not optional.** They are essential for:
+
+- Preventing runtime exceptions
+- Handling corrupted data gracefully
+- Maintaining code reliability
+- Protecting against unexpected data
+- Ensuring production stability
+
+**When in doubt, validate more, not less. Use nullable casts, check for null, and provide safe defaults.**

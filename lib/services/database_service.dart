@@ -253,8 +253,11 @@ class DatabaseService with InitializationMixin {
         limit: QueryLimits.singleResult,
       );
 
-      if (result.isNotEmpty && result.first[DbConstants.textCol] != null) {
-        return result.first[DbConstants.textCol] as String;
+      if (result.isNotEmpty) {
+        final String? text = result.first[DbConstants.textCol] as String?;
+        if (text != null) {
+          return text;
+        }
       }
       return ''; // Return empty string if not found
     } catch (e) {
@@ -393,10 +396,15 @@ class DatabaseService with InitializationMixin {
     // 4. Combine the data into a list of SurahInfo objects.
     return chapters.map((chapter) {
       final int surahNum = parseInt(chapter[DbConstants.idCol]);
+      // Use nullable casts and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? nameArabic = chapter[DbConstants.nameArabicCol] as String?;
+      final String? revelationPlace =
+          chapter[DbConstants.revelationPlaceCol] as String?;
       return SurahInfo(
         surahNumber: surahNum,
-        nameArabic: chapter[DbConstants.nameArabicCol] as String,
-        revelationPlace: chapter[DbConstants.revelationPlaceCol] as String,
+        nameArabic: nameArabic ?? '',
+        revelationPlace: revelationPlace ?? '',
         startingPage: pageMap[surahNum] ?? 0, // Default to 0 if not found
       );
     }).toList();
@@ -424,9 +432,12 @@ class DatabaseService with InitializationMixin {
         whereArgs: [surahId.toString()],
         limit: QueryLimits.singleResult,
       );
-      if (result.isNotEmpty &&
-          result.first[DbConstants.nameArabicCol] != null) {
-        return result.first[DbConstants.nameArabicCol] as String;
+      if (result.isNotEmpty) {
+        final String? nameArabic =
+            result.first[DbConstants.nameArabicCol] as String?;
+        if (nameArabic != null) {
+          return nameArabic;
+        }
       }
       return 'Surah $surahId'; // Fallback name
     } catch (e) {
@@ -486,8 +497,20 @@ class DatabaseService with InitializationMixin {
         if (words.isNotEmpty) {
           final int surah = parseInt(words.first[DbConstants.surahCol]);
           final int ayah = parseInt(words.first[DbConstants.ayahNumberCol]);
-          if (surah > 0 && ayah > 0) {
-            return {'surah': surah, 'ayah': ayah}; // Found it
+
+          // Validate parsed surah/ayah numbers before use
+          // WHY: Defense in depth - validate even trusted database data
+          try {
+            validateSurahNumber(surah);
+            validateAyahNumber(ayah);
+            if (surah > 0 && ayah > 0) {
+              return {'surah': surah, 'ayah': ayah}; // Found it
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('Invalid surah/ayah in database: $surah:$ayah');
+            }
+            // Continue to next iteration
           }
         }
       }
@@ -704,7 +727,17 @@ class DatabaseService with InitializationMixin {
     List<LineInfo> lines = [];
     // Process each line to fetch words or surah name.
     for (var lineData in linesData) {
-      final lineType = lineData[DbConstants.lineTypeCol] as String;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted or schema may change
+      final String? lineTypeNullable =
+          lineData[DbConstants.lineTypeCol] as String?;
+      if (lineTypeNullable == null) {
+        if (kDebugMode) {
+          debugPrint('Missing line type in database result');
+        }
+        continue; // Skip invalid entries
+      }
+      final String lineType = lineTypeNullable;
       List<Word> words = [];
       String? surahName;
       final int surahNum = parseInt(lineData[DbConstants.surahNumberCol]);
@@ -728,8 +761,22 @@ class DatabaseService with InitializationMixin {
             orderBy: '${DbConstants.idCol} ASC',
           );
           words = wordsData.map((wordMap) {
+            // Use nullable cast and check for null
+            // WHY: Type safety - database data may be corrupted
+            final String? text = wordMap[DbConstants.textCol] as String?;
+            if (text == null) {
+              if (kDebugMode) {
+                debugPrint('Missing word text in database result');
+              }
+              // Return a word with empty text as safe default
+              return Word(
+                text: '',
+                surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+                ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
+              );
+            }
             return Word(
-              text: wordMap[DbConstants.textCol] as String,
+              text: text,
               surahNumber: parseInt(wordMap[DbConstants.surahCol]),
               ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
@@ -750,8 +797,22 @@ class DatabaseService with InitializationMixin {
             limit: QueryLimits.singleResult,
           );
           words = wordsData.map((wordMap) {
+            // Use nullable cast and check for null
+            // WHY: Type safety - database data may be corrupted
+            final String? text = wordMap[DbConstants.textCol] as String?;
+            if (text == null) {
+              if (kDebugMode) {
+                debugPrint('Missing word text in database result');
+              }
+              // Return a word with empty text as safe default
+              return Word(
+                text: '',
+                surahNumber: parseInt(wordMap[DbConstants.surahCol]),
+                ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
+              );
+            }
             return Word(
-              text: wordMap[DbConstants.textCol] as String,
+              text: text,
               surahNumber: parseInt(wordMap[DbConstants.surahCol]),
               ayahNumber: parseInt(wordMap[DbConstants.ayahNumberCol]),
             );
@@ -802,9 +863,17 @@ class DatabaseService with InitializationMixin {
       }
 
       final row = result.first;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? audioUrl = row[DbConstants.audioUrlCol] as String?;
+      if (audioUrl == null) {
+        throw DatabaseNotFoundException(
+          "Surah audio URL not found for surah $surahNumber",
+        );
+      }
       return SurahAudio(
         surahNumber: parseInt(row[DbConstants.surahNumberCol]),
-        audioUrl: row[DbConstants.audioUrlCol] as String,
+        audioUrl: audioUrl,
         duration: parseInt(row[DbConstants.durationCol]),
       );
     } catch (e) {
@@ -838,13 +907,21 @@ class DatabaseService with InitializationMixin {
       }
 
       final row = result.first;
+      // Use nullable cast and check for null
+      // WHY: Type safety - database data may be corrupted
+      final String? segments = row[DbConstants.segmentsCol] as String?;
+      if (segments == null) {
+        throw DatabaseNotFoundException(
+          "Ayah segment data not found for $surahNumber:$ayahNumber",
+        );
+      }
       return AyahSegment(
         surahNumber: parseInt(row[DbConstants.surahNumberCol]),
         ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
         durationSec: parseInt(row[DbConstants.durationSecCol]),
         timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
         timestampTo: parseInt(row[DbConstants.timestampToCol]),
-        segments: row[DbConstants.segmentsCol] as String,
+        segments: segments,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -874,16 +951,29 @@ class DatabaseService with InitializationMixin {
       );
 
       return results
-          .map(
-            (row) => AyahSegment(
+          .map((row) {
+            // Use nullable cast and check for null
+            // WHY: Type safety - database data may be corrupted
+            final String? segments = row[DbConstants.segmentsCol] as String?;
+            if (segments == null) {
+              // Skip invalid entries - database data may be corrupted
+              if (kDebugMode) {
+                debugPrint(
+                  'Missing segments data for surah ${row[DbConstants.surahNumberCol]}:${row[DbConstants.audioAyahNumberCol]}',
+                );
+              }
+              return null;
+            }
+            return AyahSegment(
               surahNumber: parseInt(row[DbConstants.surahNumberCol]),
               ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
               durationSec: parseInt(row[DbConstants.durationSecCol]),
               timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
               timestampTo: parseInt(row[DbConstants.timestampToCol]),
-              segments: row[DbConstants.segmentsCol] as String,
-            ),
-          )
+              segments: segments,
+            );
+          })
+          .whereType<AyahSegment>() // Filter out null values
           .toList();
     } catch (e) {
       if (kDebugMode) {
@@ -1390,6 +1480,11 @@ class DatabaseService with InitializationMixin {
     );
 
     // 3. Join the text of the words.
-    return words.map((w) => w[DbConstants.textCol] as String).join(' ');
+    // Use nullable cast and filter out null values
+    // WHY: Type safety - database data may be corrupted
+    return words
+        .map((w) => w[DbConstants.textCol] as String?)
+        .whereType<String>()
+        .join(' ');
   }
 }

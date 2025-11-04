@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
+import '../utils/validation_helpers.dart';
 import 'database_service.dart';
 import 'app_data_service.dart';
 import 'migration_service.dart';
@@ -190,13 +191,32 @@ class SqliteBookmarksService implements BookmarksService {
       final Map<String, String> ayahTextsMap = <String, String>{};
       if (includeAyahText) {
         // Collect all surah:ayah pairs for bulk fetching
+        // Use nullable casts and validate before use
+        // WHY: Type safety - database data may be corrupted
         final ayahs = results
-            .map(
-              (row) => (
-                surahNumber: row[DbConstants.surahNumberCol] as int,
-                ayahNumber: row[DbConstants.ayahNumberCol] as int,
-              ),
-            )
+            .map((row) {
+              final int? surahNumber = row[DbConstants.surahNumberCol] as int?;
+              final int? ayahNumber = row[DbConstants.ayahNumberCol] as int?;
+              if (surahNumber == null || ayahNumber == null) {
+                return null; // Skip invalid entries
+              }
+              // Validate parsed surah/ayah numbers
+              // WHY: Defense in depth - validate even trusted database data
+              try {
+                validateSurahNumber(surahNumber);
+                validateAyahNumber(ayahNumber);
+                return (surahNumber: surahNumber, ayahNumber: ayahNumber);
+              } catch (e) {
+                if (kDebugMode) {
+                  debugPrint(
+                    'Invalid surah/ayah in bookmark: $surahNumber:$ayahNumber',
+                  );
+                }
+                return null; // Skip invalid entries
+              }
+            })
+            .whereType<(int surahNumber, int ayahNumber)>()
+            .map((record) => (surahNumber: record.$1, ayahNumber: record.$2))
             .toList();
 
         // WHY: Bulk fetch all ayah texts in a single query instead of N queries
@@ -206,17 +226,63 @@ class SqliteBookmarksService implements BookmarksService {
       // Build bookmarks with optional pre-fetched ayah texts
       final bookmarks = <Bookmark>[];
       for (final row in results) {
-        final surahNumber = row[DbConstants.surahNumberCol] as int;
-        final ayahNumber = row[DbConstants.ayahNumberCol] as int;
+        // Use nullable casts and check for null
+        // WHY: Type safety - database data may be corrupted
+        final int? surahNumberNullable =
+            row[DbConstants.surahNumberCol] as int?;
+        final int? ayahNumberNullable = row[DbConstants.ayahNumberCol] as int?;
+        final int? idNullable = row[DbConstants.idCol] as int?;
+        final String? createdAtStr = row[DbConstants.createdAtCol] as String?;
+
+        if (surahNumberNullable == null ||
+            ayahNumberNullable == null ||
+            idNullable == null ||
+            createdAtStr == null) {
+          if (kDebugMode) {
+            debugPrint('Missing required fields in bookmark data');
+          }
+          continue; // Skip invalid entries
+        }
+
+        // Validate parsed surah/ayah numbers
+        // WHY: Defense in depth - validate even trusted database data
+        try {
+          validateSurahNumber(surahNumberNullable);
+          validateAyahNumber(ayahNumberNullable);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+              'Invalid surah/ayah in bookmark: $surahNumberNullable:$ayahNumberNullable',
+            );
+          }
+          continue; // Skip invalid entries
+        }
+
+        final int surahNumber = surahNumberNullable;
+        final int ayahNumber = ayahNumberNullable;
+        final int id = idNullable;
         final verseKey = '$surahNumber:$ayahNumber';
+
+        // Parse DateTime safely with exception handling
+        // WHY: Corrupted database data may contain invalid date formats
+        DateTime createdAt;
+        try {
+          createdAt = DateTime.parse(createdAtStr);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Invalid date format in bookmark: $createdAtStr');
+          }
+          // Use current date as safe default
+          createdAt = DateTime.now();
+        }
 
         bookmarks.add(
           Bookmark(
-            id: row[DbConstants.idCol] as int,
+            id: id,
             surahNumber: surahNumber,
             ayahNumber: ayahNumber,
             cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
-            createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
+            createdAt: createdAt,
             note: row[DbConstants.noteCol] as String?,
             ayahText: includeAyahText ? (ayahTextsMap[verseKey] ?? '') : null,
           ),
@@ -248,16 +314,61 @@ class SqliteBookmarksService implements BookmarksService {
       if (results.isEmpty) return null;
 
       final row = results.first;
+      // Use nullable casts and check for null
+      // WHY: Type safety - database data may be corrupted
+      final int? idNullable = row[DbConstants.idCol] as int?;
+      final int? surahNumberNullable = row[DbConstants.surahNumberCol] as int?;
+      final int? ayahNumberNullable = row[DbConstants.ayahNumberCol] as int?;
+      final String? createdAtStr = row[DbConstants.createdAtCol] as String?;
+
+      if (idNullable == null ||
+          surahNumberNullable == null ||
+          ayahNumberNullable == null ||
+          createdAtStr == null) {
+        if (kDebugMode) {
+          debugPrint('Missing required fields in bookmark data');
+        }
+        return null; // Safe default
+      }
+
+      // Validate parsed surah/ayah numbers
+      // WHY: Defense in depth - validate even trusted database data
+      try {
+        validateSurahNumber(surahNumberNullable);
+        validateAyahNumber(ayahNumberNullable);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint(
+            'Invalid surah/ayah in bookmark: $surahNumberNullable:$ayahNumberNullable',
+          );
+        }
+        return null; // Safe default
+      }
+
       final ayahText = await _databaseService.getAyahText(
-        surahNumber,
-        ayahNumber,
+        surahNumberNullable,
+        ayahNumberNullable,
       );
+
+      // Parse DateTime safely with exception handling
+      // WHY: Corrupted database data may contain invalid date formats
+      DateTime createdAt;
+      try {
+        createdAt = DateTime.parse(createdAtStr);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Invalid date format in bookmark: $createdAtStr');
+        }
+        // Use current date as safe default
+        createdAt = DateTime.now();
+      }
+
       return Bookmark(
-        id: row[DbConstants.idCol] as int,
-        surahNumber: row[DbConstants.surahNumberCol] as int,
-        ayahNumber: row[DbConstants.ayahNumberCol] as int,
+        id: idNullable,
+        surahNumber: surahNumberNullable,
+        ayahNumber: ayahNumberNullable,
         cachedPageNumber: row[DbConstants.cachedPageNumberCol] as int?,
-        createdAt: DateTime.parse(row[DbConstants.createdAtCol] as String),
+        createdAt: createdAt,
         note: row[DbConstants.noteCol] as String?,
         ayahText: ayahText,
       );
