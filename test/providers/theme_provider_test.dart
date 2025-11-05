@@ -43,5 +43,23 @@ void main() {
         expect(container.read(themeProvider), mode);
       }
     });
+
+    test('themeProvider loads saved theme from SharedPreferences', () async {
+      // Set up SharedPreferences with saved theme
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('theme_mode', 'dark');
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Wait for SharedPreferences to load
+      await container.read(sharedPreferencesProvider.future);
+
+      // Give the listener a chance to fire
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Theme should be loaded from SharedPreferences
+      expect(container.read(themeProvider), AppThemeMode.dark);
+    });
   });
 }

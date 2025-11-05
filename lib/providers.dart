@@ -580,9 +580,35 @@ class PrimaryColorNotifier extends _$PrimaryColorNotifier {
 class ThemeNotifier extends _$ThemeNotifier {
   @override
   AppThemeMode build() {
-    // WHY: Try to read initial value from SharedPreferences synchronously
-    // Similar pattern to SearchHistory provider (line 253)
-    final prefsAsync = ref.read(sharedPreferencesProvider);
+    // WHY: Watch SharedPreferences to react when it loads
+    // This ensures theme is loaded from storage when SharedPreferences becomes available
+    final prefsAsync = ref.watch(sharedPreferencesProvider);
+
+    // Set up listener to update state when SharedPreferences loads
+    ref.listen(sharedPreferencesProvider, (previous, next) {
+      if (next.hasValue && previous?.hasValue != true) {
+        // SharedPreferences just loaded, read saved theme
+        final savedTheme = next.value!.getString('theme_mode');
+        if (savedTheme != null) {
+          try {
+            final themeMode = AppThemeMode.values.firstWhere(
+              (e) => e.name == savedTheme,
+            );
+            // Only update if different from current state to avoid unnecessary rebuilds
+            if (state != themeMode) {
+              state = themeMode;
+            }
+          } catch (e) {
+            // Invalid value, fall back to system
+            if (state != AppThemeMode.system) {
+              state = AppThemeMode.system;
+            }
+          }
+        }
+      }
+    });
+
+    // Try to read initial value from SharedPreferences if already loaded
     if (prefsAsync.hasValue) {
       final savedTheme = prefsAsync.value!.getString('theme_mode');
       if (savedTheme != null) {
