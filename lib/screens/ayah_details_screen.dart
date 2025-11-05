@@ -98,26 +98,27 @@ class AyahDetailsScreen extends ConsumerWidget {
                       final baseTextColor =
                           theme.textTheme.bodyLarge?.color ?? Colors.black;
 
-                      // Display words as individual widgets in a Row, matching mushaf layout
-                      final wordWidgets = words.map((word) {
-                        return Text(
-                          word.text,
-                          style: TextStyle(
-                            fontFamily: fontFamily,
-                            fontSize: fontSize,
-                            height: lineHeight,
-                            color: baseTextColor,
-                          ),
-                          textScaler: const TextScaler.linear(1.0),
-                        );
-                      }).toList();
-
+                      // Display words as individual widgets in a Wrap, allowing wrapping to next line
+                      // WHY: Wrap allows words to flow to next line when they don't fit, preventing overflow
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          alignment: WrapAlignment.start,
                           textDirection: TextDirection.rtl,
-                          children: wordWidgets,
+                          children: words.map((word) {
+                            return Text(
+                              word.text,
+                              style: TextStyle(
+                                fontFamily: fontFamily,
+                                fontSize: fontSize,
+                                height: lineHeight,
+                                color: baseTextColor,
+                              ),
+                              textScaler: const TextScaler.linear(1.0),
+                            );
+                          }).toList(),
                         ),
                       );
                     },
