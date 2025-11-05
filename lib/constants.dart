@@ -11,6 +11,7 @@ const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
 const String imlaeiAyahDbFileName = 'imlaei-script-ayah-by-ayah.db';
 const String topicsDbFileName = 'topics.db';
 const String audioDbFileName = 'surah-recitation-abdullah-ali-jabir.db';
+const String tafsirDbFileName = 'ar-tafsir-muyassar.db';
 
 // --- MUSHAF LAYOUT OPTIONS ---
 enum MushafLayout { uthmani15Lines, indopak13Lines }

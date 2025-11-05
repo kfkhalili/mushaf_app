@@ -15,6 +15,7 @@ import 'services/app_data_service.dart';
 import 'services/memorization_storage.dart';
 import 'services/memorization_storage_sqlite.dart';
 import 'services/ontology_service.dart';
+import 'services/tafsir_service.dart';
 import 'services/audio_service.dart';
 import 'models.dart';
 import 'models/ontology_models.dart';
@@ -720,6 +721,38 @@ class OntologyServiceNotifier extends _$OntologyServiceNotifier {
   }
 }
 
+// --- Tafsir Service Provider ---
+@Riverpod(keepAlive: true)
+class TafsirServiceNotifier extends _$TafsirServiceNotifier {
+  TafsirService? _service;
+
+  @override
+  Future<TafsirService> build() async {
+    final previousService = _service;
+    if (previousService != null) {
+      await previousService.close();
+    }
+
+    try {
+      _service = TafsirService();
+      await _service!.ensureInitialized();
+
+      ref.onDispose(() async {
+        final serviceToClose = _service;
+        _service = null;
+        await serviceToClose?.close();
+      });
+
+      return _service!;
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('TafsirServiceProvider build failed: $e\n$stackTrace');
+      }
+      rethrow;
+    }
+  }
+}
+
 // --- Topic by ID Provider ---
 @riverpod
 Future<Topic> topicById(Ref ref, int topicId) async {
@@ -770,6 +803,91 @@ Future<({List<Word> words, int pageNumber, String fontFamily})> ayahDisplayData(
 Future<String> surahName(Ref ref, int surahNumber) async {
   final dbService = await ref.watch(databaseServiceProvider.future);
   return dbService.getSurahName(surahNumber);
+}
+
+// --- Tafsir Provider ---
+@riverpod
+Future<String?> tafsir(Ref ref, int surahNumber, int ayahNumber) async {
+  final service = await ref.watch(tafsirServiceProvider.future);
+  return service.getTafsirForAyah(surahNumber, ayahNumber);
+}
+
+// --- Previous Ayah Provider ---
+@riverpod
+Future<({int surahNumber, int ayahNumber})?> previousAyah(
+  Ref ref,
+  int surahNumber,
+  int ayahNumber,
+) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+
+  // If not at first ayah of current surah, go to previous ayah
+  if (ayahNumber > 1) {
+    try {
+      final words = await dbService.getWordsForAyah(
+        surahNumber,
+        ayahNumber - 1,
+      );
+      if (words.isNotEmpty) {
+        return (surahNumber: surahNumber, ayahNumber: ayahNumber - 1);
+      }
+    } catch (e) {
+      // Ayah doesn't exist, continue to previous surah
+    }
+  }
+
+  // If at first ayah and not in first surah, go to previous surah
+  if (surahNumber > 1) {
+    // Try to find the last ayah of previous surah by checking backwards
+    // Start from a reasonable max (most surahs have less than 300 ayahs)
+    for (int ayah = 300; ayah >= 1; ayah--) {
+      try {
+        final words = await dbService.getWordsForAyah(surahNumber - 1, ayah);
+        if (words.isNotEmpty) {
+          return (surahNumber: surahNumber - 1, ayahNumber: ayah);
+        }
+      } catch (e) {
+        // Continue searching
+        continue;
+      }
+    }
+  }
+
+  return null; // No previous ayah
+}
+
+// --- Next Ayah Provider ---
+@riverpod
+Future<({int surahNumber, int ayahNumber})?> nextAyah(
+  Ref ref,
+  int surahNumber,
+  int ayahNumber,
+) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+
+  // Try next ayah in current surah
+  try {
+    final words = await dbService.getWordsForAyah(surahNumber, ayahNumber + 1);
+    if (words.isNotEmpty) {
+      return (surahNumber: surahNumber, ayahNumber: ayahNumber + 1);
+    }
+  } catch (e) {
+    // Ayah doesn't exist, continue to next surah
+  }
+
+  // If next ayah doesn't exist in current surah, try first ayah of next surah
+  if (surahNumber < 114) {
+    try {
+      final words = await dbService.getWordsForAyah(surahNumber + 1, 1);
+      if (words.isNotEmpty) {
+        return (surahNumber: surahNumber + 1, ayahNumber: 1);
+      }
+    } catch (e) {
+      // Next surah doesn't exist
+    }
+  }
+
+  return null; // No next ayah
 }
 
 // --- Topics for Ayah Provider ---

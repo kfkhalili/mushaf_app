@@ -1789,6 +1789,52 @@ abstract class _$OntologyServiceNotifier
   }
 }
 
+@ProviderFor(TafsirServiceNotifier)
+const tafsirServiceProvider = TafsirServiceNotifierProvider._();
+
+final class TafsirServiceNotifierProvider
+    extends $AsyncNotifierProvider<TafsirServiceNotifier, TafsirService> {
+  const TafsirServiceNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tafsirServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$tafsirServiceNotifierHash();
+
+  @$internal
+  @override
+  TafsirServiceNotifier create() => TafsirServiceNotifier();
+}
+
+String _$tafsirServiceNotifierHash() =>
+    r'facdc970411618aeae936022d2f76ab1cdff80d7';
+
+abstract class _$TafsirServiceNotifier extends $AsyncNotifier<TafsirService> {
+  FutureOr<TafsirService> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<TafsirService>, TafsirService>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<TafsirService>, TafsirService>,
+              AsyncValue<TafsirService>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(topicById)
 const topicByIdProvider = TopicByIdFamily._();
 
@@ -2159,6 +2205,237 @@ final class SurahNameFamily extends $Family
 
   @override
   String toString() => r'surahNameProvider';
+}
+
+@ProviderFor(tafsir)
+const tafsirProvider = TafsirFamily._();
+
+final class TafsirProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  const TafsirProvider._({
+    required TafsirFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'tafsirProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$tafsirHash();
+
+  @override
+  String toString() {
+    return r'tafsirProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return tafsir(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TafsirProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$tafsirHash() => r'9beaadd54a4db02a7de684a0f9f243a2242b268f';
+
+final class TafsirFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, (int, int)> {
+  const TafsirFamily._()
+    : super(
+        retry: null,
+        name: r'tafsirProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TafsirProvider call(int surahNumber, int ayahNumber) =>
+      TafsirProvider._(argument: (surahNumber, ayahNumber), from: this);
+
+  @override
+  String toString() => r'tafsirProvider';
+}
+
+@ProviderFor(previousAyah)
+const previousAyahProvider = PreviousAyahFamily._();
+
+final class PreviousAyahProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<({int ayahNumber, int surahNumber})?>,
+          ({int ayahNumber, int surahNumber})?,
+          FutureOr<({int ayahNumber, int surahNumber})?>
+        >
+    with
+        $FutureModifier<({int ayahNumber, int surahNumber})?>,
+        $FutureProvider<({int ayahNumber, int surahNumber})?> {
+  const PreviousAyahProvider._({
+    required PreviousAyahFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'previousAyahProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$previousAyahHash();
+
+  @override
+  String toString() {
+    return r'previousAyahProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<({int ayahNumber, int surahNumber})?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<({int ayahNumber, int surahNumber})?> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return previousAyah(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PreviousAyahProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$previousAyahHash() => r'4050ce2ed5d8a45b4ccbd9a8bda979cdfc728cd2';
+
+final class PreviousAyahFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<({int ayahNumber, int surahNumber})?>,
+          (int, int)
+        > {
+  const PreviousAyahFamily._()
+    : super(
+        retry: null,
+        name: r'previousAyahProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PreviousAyahProvider call(int surahNumber, int ayahNumber) =>
+      PreviousAyahProvider._(argument: (surahNumber, ayahNumber), from: this);
+
+  @override
+  String toString() => r'previousAyahProvider';
+}
+
+@ProviderFor(nextAyah)
+const nextAyahProvider = NextAyahFamily._();
+
+final class NextAyahProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<({int ayahNumber, int surahNumber})?>,
+          ({int ayahNumber, int surahNumber})?,
+          FutureOr<({int ayahNumber, int surahNumber})?>
+        >
+    with
+        $FutureModifier<({int ayahNumber, int surahNumber})?>,
+        $FutureProvider<({int ayahNumber, int surahNumber})?> {
+  const NextAyahProvider._({
+    required NextAyahFamily super.from,
+    required (int, int) super.argument,
+  }) : super(
+         retry: null,
+         name: r'nextAyahProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$nextAyahHash();
+
+  @override
+  String toString() {
+    return r'nextAyahProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<({int ayahNumber, int surahNumber})?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<({int ayahNumber, int surahNumber})?> create(Ref ref) {
+    final argument = this.argument as (int, int);
+    return nextAyah(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NextAyahProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$nextAyahHash() => r'33ebb9be6bfe90a3ab4080ca84965944e0c14a2f';
+
+final class NextAyahFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<({int ayahNumber, int surahNumber})?>,
+          (int, int)
+        > {
+  const NextAyahFamily._()
+    : super(
+        retry: null,
+        name: r'nextAyahProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  NextAyahProvider call(int surahNumber, int ayahNumber) =>
+      NextAyahProvider._(argument: (surahNumber, ayahNumber), from: this);
+
+  @override
+  String toString() => r'nextAyahProvider';
 }
 
 @ProviderFor(topicsForAyah)

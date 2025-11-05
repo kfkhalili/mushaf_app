@@ -42,6 +42,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   riverpod_annotation: ^3.0.3
+  flutter_html: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +84,7 @@ flutter:
     - assets/db/imlaei-script-ayah-by-ayah.db
     - assets/db/topics.db
     - assets/db/surah-recitation-abdullah-ali-jabir.db
+    - assets/db/ar-tafsir-muyassar.db
 
     - assets/fonts/qpc-v2-page-by-page-fonts/
     - assets/fonts/surah-name-v4.ttf

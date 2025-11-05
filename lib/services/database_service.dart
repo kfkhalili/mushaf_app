@@ -187,6 +187,7 @@ class DatabaseService with InitializationMixin {
       imlaeiAyahDbFileName,
       topicsDbFileName,
       audioDbFileName,
+      tafsirDbFileName,
     ];
     try {
       validateDatabaseFileName(assetFileName, allowedDbNames);
