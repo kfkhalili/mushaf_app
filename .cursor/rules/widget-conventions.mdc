@@ -194,6 +194,7 @@ return Scaffold(
 - [audio_config_screen.dart](mdc:lib/screens/audio_config_screen.dart)
 - [selection_screen.dart](mdc:lib/screens/selection_screen.dart)
 - [statistics_screen.dart](mdc:lib/screens/statistics_screen.dart)
+- [splash_screen.dart](mdc:lib/screens/splash_screen.dart)
 
 **Screens WITHOUT Directionality wrapper (❌ Needs Fixing)**:
 
@@ -202,7 +203,6 @@ return Scaffold(
 **Special Cases**:
 
 - [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart) - Returns Stack containing Scaffold, needs Directionality wrapper around SafeArea inside Stack
-- [splash_screen.dart](mdc:lib/screens/splash_screen.dart) - Simple loading screen (may be acceptable, but should still follow pattern for consistency)
 
 ## RTL Layout
 

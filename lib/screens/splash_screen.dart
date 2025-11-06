@@ -57,6 +57,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     // A simple loading indicator for the splash screen.
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
   }
 }
