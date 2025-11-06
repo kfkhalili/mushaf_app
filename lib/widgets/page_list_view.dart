@@ -59,8 +59,8 @@ class PageListItem extends ConsumerWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      leading: LeadingNumberText(number: pageNumber),
-      trailing: pagePreviewWithFontAsync.when(
+      trailing: LeadingNumberText(number: pageNumber),
+      leading: pagePreviewWithFontAsync.when(
         data: (combined) {
           final (previewText, fontFamilyName) = combined;
           return Text(

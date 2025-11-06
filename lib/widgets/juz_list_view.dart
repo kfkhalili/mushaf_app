@@ -44,14 +44,11 @@ class JuzListItem extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       // WHY: Use a Row similar to SurahListItem to include the Juz' name glyph.
-      leading: Row(
+      trailing: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic, // Align baselines
         children: [
-          // WHY: Use the new reusable LeadingNumberText widget.
-          LeadingNumberText(number: juzInfo.juzNumber),
-          const SizedBox(width: 8),
           // WHY: Add the Juz' name glyph using QuranCommon font.
           Text(
             juzNameGlyph,
@@ -61,9 +58,11 @@ class JuzListItem extends StatelessWidget {
               color: Colors.grey, // Grey color like Meccan/Medinan text
             ),
           ),
+          const SizedBox(width: 8),
+          LeadingNumberText(number: juzInfo.juzNumber),
         ],
       ),
-      trailing: Text(
+      leading: Text(
         juzNumberGlyph, // Display "الجزء الأول", "الجزء الثاني", etc.
         style: TextStyle(
           fontFamily: quranCommonFontFamily, // Use the common font

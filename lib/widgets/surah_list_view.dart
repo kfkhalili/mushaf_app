@@ -42,21 +42,20 @@ class SurahListItem extends StatelessWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      leading: Row(
+      trailing: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          // WHY: Use the new reusable LeadingNumberText widget.
-          LeadingNumberText(number: surah.surahNumber),
-          const SizedBox(width: 8),
           Text(
             surah.revelationPlace == 'makkah' ? 'مكية' : 'مدنية',
             style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
+          const SizedBox(width: 8),
+          LeadingNumberText(number: surah.surahNumber),
         ],
       ),
-      trailing: Text(
+      leading: Text(
         surahNameGlyph,
         style: TextStyle(
           fontFamily: surahNameFontFamily,

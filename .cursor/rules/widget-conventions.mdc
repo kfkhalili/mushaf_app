@@ -191,11 +191,11 @@ return Scaffold(
 - [search_screen.dart](mdc:lib/screens/search_screen.dart)
 - [settings_screen.dart](mdc:lib/screens/settings_screen.dart)
 - [topic_detail_screen.dart](mdc:lib/screens/topic_detail_screen.dart)
+- [audio_config_screen.dart](mdc:lib/screens/audio_config_screen.dart)
+- [selection_screen.dart](mdc:lib/screens/selection_screen.dart)
 
 **Screens WITHOUT Directionality wrapper (❌ Needs Fixing)**:
 
-- [audio_config_screen.dart](mdc:lib/screens/audio_config_screen.dart) - Missing wrapper around SafeArea
-- [selection_screen.dart](mdc:lib/screens/selection_screen.dart) - Missing wrapper around SafeArea
 - [statistics_screen.dart](mdc:lib/screens/statistics_screen.dart) - Missing wrapper around SafeArea (has Directionality only inside Expanded child)
 
 **Special Cases**:

@@ -80,38 +80,40 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppHeader(
-              title: _getScreenTitle(currentIndex),
-              onSearchPressed: () {
-                pushSlideFromRight(context, const SearchScreen());
-              },
-              onBookmarkPressed: () {
-                pushSlideFromRight(context, const BookmarksScreen());
-              },
-              onExplorePressed: () {
-                pushSlideFromRight(context, const ExploreHubScreen());
-              },
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                reverse: true,
-                onPageChanged: (index) {
-                  dev.log(
-                    "SelectionScreen: PageView changed to index=$index",
-                    name: "UI_EVENT",
-                  );
-                  ref
-                      .read(selectionTabIndexProvider.notifier)
-                      .setTabIndex(index);
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppHeader(
+                title: _getScreenTitle(currentIndex),
+                onSearchPressed: () {
+                  pushSlideFromRight(context, const SearchScreen());
                 },
-                children: _preloadedViews,
+                onBookmarkPressed: () {
+                  pushSlideFromRight(context, const BookmarksScreen());
+                },
+                onExplorePressed: () {
+                  pushSlideFromRight(context, const ExploreHubScreen());
+                },
               ),
-            ),
-          ],
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    dev.log(
+                      "SelectionScreen: PageView changed to index=$index",
+                      name: "UI_EVENT",
+                    );
+                    ref
+                        .read(selectionTabIndexProvider.notifier)
+                        .setTabIndex(index);
+                  },
+                  children: _preloadedViews,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: AppBottomNavigation(

@@ -84,7 +84,8 @@ void main() {
       );
 
       expect(find.byIcon(Icons.chevron_left), findsOneWidget);
-      expect(find.byIcon(Icons.settings), findsNothing);
+      // Settings icon is now shown on the left side when back button is shown
+      expect(find.byIcon(Icons.settings), findsOneWidget);
     });
 
     testWidgets('search icon is tappable', (tester) async {
@@ -150,7 +151,9 @@ void main() {
       expect(find.byIcon(Icons.star), findsOneWidget);
     });
 
-    testWidgets('hides bookmark when trailing is provided', (tester) async {
+    testWidgets('hides bookmark and settings when trailing is provided', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -166,7 +169,11 @@ void main() {
         ),
       );
 
+      // All icons (bookmark, explore, search, settings) are hidden when trailing is provided
       expect(find.byIcon(Icons.bookmark), findsNothing);
+      expect(find.byIcon(Icons.explore_outlined), findsNothing);
+      expect(find.byIcon(Icons.search), findsNothing);
+      expect(find.byIcon(Icons.settings), findsNothing);
       expect(find.byIcon(Icons.star), findsOneWidget);
     });
 

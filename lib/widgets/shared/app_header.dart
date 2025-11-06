@@ -58,27 +58,27 @@ class AppHeader extends StatelessWidget {
               ),
             )
           else
-            // Search and Settings icons - appear on the right in RTL when no back button
+          // Explore and Bookmark icons - appear on the right in RTL when no back button
+          if (trailing == null)
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  onPressed: () {
-                    pushSlideFromRight(context, const SettingsScreen());
-                  },
-                  icon: Icon(
-                    Icons.settings,
-                    size: kAppHeaderIconSize,
-                    color: iconColor,
-                  ),
-                ),
-                if (onSearchPressed != null)
+                if (onBookmarkPressed != null)
                   IconButton(
-                    onPressed: () {
-                      pushSlideFromRight(context, const SearchScreen());
-                    },
+                    tooltip: 'العلامات المرجعية',
+                    onPressed: onBookmarkPressed,
                     icon: Icon(
-                      Icons.search,
+                      Icons.bookmark,
+                      size: kAppHeaderIconSize,
+                      color: iconColor,
+                    ),
+                  ),
+                if (onExplorePressed != null)
+                  IconButton(
+                    tooltip: 'استكشاف المواضيع',
+                    onPressed: onExplorePressed,
+                    icon: Icon(
+                      Icons.explore_outlined,
                       size: kAppHeaderIconSize,
                       color: iconColor,
                     ),
@@ -89,8 +89,19 @@ class AppHeader extends StatelessWidget {
           if (showBackButton) const SizedBox(width: 8),
           // Title
           Expanded(child: _buildTitleWithMixedFonts(title, theme, context)),
-          // Search icon (only if back button is shown and search is enabled)
-          if (showBackButton && onSearchPressed != null)
+          // Explore icon (only if back button is shown and explore is enabled)
+          if (showBackButton && onExplorePressed != null && trailing == null)
+            IconButton(
+              tooltip: 'استكشاف المواضيع',
+              onPressed: onExplorePressed,
+              icon: Icon(
+                Icons.explore_outlined,
+                size: kAppHeaderIconSize,
+                color: iconColor,
+              ),
+            ),
+          // Search icon (before settings icon in RTL)
+          if (onSearchPressed != null && trailing == null)
             IconButton(
               onPressed: () {
                 pushSlideFromRight(context, const SearchScreen());
@@ -101,24 +112,15 @@ class AppHeader extends StatelessWidget {
                 color: iconColor,
               ),
             ),
-          // Explore icon (before bookmark icon in RTL)
-          if (onExplorePressed != null && trailing == null)
+          // Settings icon for Selection Screen (left side, separated from Bookmark/Search)
+          if (trailing == null)
             IconButton(
-              tooltip: 'استكشاف المواضيع',
-              onPressed: onExplorePressed,
+              tooltip: 'الإعدادات',
+              onPressed: () {
+                pushSlideFromRight(context, const SettingsScreen());
+              },
               icon: Icon(
-                Icons.explore_outlined,
-                size: kAppHeaderIconSize,
-                color: iconColor,
-              ),
-            ),
-          // Bookmark icon for Selection Screen (right side, separated from Settings/Search)
-          if (onBookmarkPressed != null && trailing == null)
-            IconButton(
-              tooltip: 'العلامات المرجعية',
-              onPressed: onBookmarkPressed,
-              icon: Icon(
-                Icons.bookmark,
+                Icons.settings,
                 size: kAppHeaderIconSize,
                 color: iconColor,
               ),
