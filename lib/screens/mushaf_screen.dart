@@ -279,139 +279,142 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
     return Stack(
       children: [
         Scaffold(
-          body: SafeArea(
-            child: Column(
-              children: [
-                AppHeader(
-                  title: asyncPageData.when(
-                    data: (pageData) {
-                      if (pageData.isLoading) {
-                        return ''; // Don't show title while loading page data
-                      }
-                      final String juzGlyphString =
-                          'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
-                      final String surahNameGlyphString =
-                          (pageData.pageSurahNumber > 0)
-                          ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
-                          : '';
+          body: Directionality(
+            textDirection: TextDirection.rtl,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  AppHeader(
+                    title: asyncPageData.when(
+                      data: (pageData) {
+                        if (pageData.isLoading) {
+                          return ''; // Don't show title while loading page data
+                        }
+                        final String juzGlyphString =
+                            'juz${pageData.juzNumber.toString().padLeft(3, '0')}';
+                        final String surahNameGlyphString =
+                            (pageData.pageSurahNumber > 0)
+                            ? 'surah${pageData.pageSurahNumber.toString().padLeft(3, '0')} surah-icon'
+                            : '';
 
-                      // Build the complete title with juz and surah glyphs only
-                      String title = juzGlyphString;
-                      if (surahNameGlyphString.isNotEmpty) {
-                        title += ' $surahNameGlyphString';
-                      }
-                      return title;
+                        // Build the complete title with juz and surah glyphs only
+                        String title = juzGlyphString;
+                        if (surahNameGlyphString.isNotEmpty) {
+                          title += ' $surahNameGlyphString';
+                        }
+                        return title;
+                      },
+                      loading: () => '',
+                      error: (_, _) => '',
+                    ),
+                    onSearchPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Search functionality coming soon'),
+                        ),
+                      );
                     },
-                    loading: () => '',
-                    error: (_, _) => '',
                   ),
-                  onSearchPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Search functionality coming soon'),
-                      ),
-                    );
-                  },
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: enableMemorizationBeta
-                        ? _handleMemorizationTap
-                        : null,
-                    onHorizontalDragStart: (details) {
-                      final session = ref.read(memorizationSessionProvider);
-                      final int page = ref.read(currentPageProvider);
-                      final bool isBetaMemorizing =
-                          enableMemorizationBeta &&
-                          session != null &&
-                          session.pageNumber == page;
-                      if (isBetaMemorizing) {
-                        // Flash multiple times to reinforce the hint
-                        flashMemorizationIcon(times: 3);
-                      }
-                    },
-                    onHorizontalDragUpdate: (details) {
-                      final session = ref.read(memorizationSessionProvider);
-                      final int page = ref.read(currentPageProvider);
-                      final bool isBetaMemorizing =
-                          enableMemorizationBeta &&
-                          session != null &&
-                          session.pageNumber == page;
-                      if (isBetaMemorizing) {
-                        // absorb gesture by doing nothing and flashing
-                        memorizationIconFlashTick.value =
-                            memorizationIconFlashTick.value + 1;
-                      }
-                    },
-                    child: totalPagesAsync.when(
-                      data: (totalPages) => PageView.builder(
-                        controller: _pageController,
-                        // WHY: Use the total pages from the database for the current layout.
-                        itemCount: totalPages,
-                        reverse: true,
-                        // WHY: Memory management for PageView:
-                        // - Flutter's PageView automatically keeps only a few pages in memory
-                        // - Font loading is managed by LRU cache (maxFontCacheSize = 50)
-                        // - Pages are automatically disposed when out of viewport
-                        physics: (enableMemorizationBeta && isBetaMemorizing)
-                            ? const NeverScrollableScrollPhysics()
-                            : const BouncingScrollPhysics(),
-                        onPageChanged: (index) {
-                          // Don't update provider if we're animating from external change
-                          if (_isAnimating && _externalPageUpdate != null) {
-                            // Clear the external update flag once animation completes
-                            final targetPage = index + 1;
-                            if (targetPage == _externalPageUpdate) {
-                              _isAnimating = false;
-                              _externalPageUpdate = null;
-                              return; // Don't update provider, it's already set
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: enableMemorizationBeta
+                          ? _handleMemorizationTap
+                          : null,
+                      onHorizontalDragStart: (details) {
+                        final session = ref.read(memorizationSessionProvider);
+                        final int page = ref.read(currentPageProvider);
+                        final bool isBetaMemorizing =
+                            enableMemorizationBeta &&
+                            session != null &&
+                            session.pageNumber == page;
+                        if (isBetaMemorizing) {
+                          // Flash multiple times to reinforce the hint
+                          flashMemorizationIcon(times: 3);
+                        }
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        final session = ref.read(memorizationSessionProvider);
+                        final int page = ref.read(currentPageProvider);
+                        final bool isBetaMemorizing =
+                            enableMemorizationBeta &&
+                            session != null &&
+                            session.pageNumber == page;
+                        if (isBetaMemorizing) {
+                          // absorb gesture by doing nothing and flashing
+                          memorizationIconFlashTick.value =
+                              memorizationIconFlashTick.value + 1;
+                        }
+                      },
+                      child: totalPagesAsync.when(
+                        data: (totalPages) => PageView.builder(
+                          controller: _pageController,
+                          // WHY: Use the total pages from the database for the current layout.
+                          itemCount: totalPages,
+                          reverse: true,
+                          // WHY: Memory management for PageView:
+                          // - Flutter's PageView automatically keeps only a few pages in memory
+                          // - Font loading is managed by LRU cache (maxFontCacheSize = 50)
+                          // - Pages are automatically disposed when out of viewport
+                          physics: (enableMemorizationBeta && isBetaMemorizing)
+                              ? const NeverScrollableScrollPhysics()
+                              : const BouncingScrollPhysics(),
+                          onPageChanged: (index) {
+                            // Don't update provider if we're animating from external change
+                            if (_isAnimating && _externalPageUpdate != null) {
+                              // Clear the external update flag once animation completes
+                              final targetPage = index + 1;
+                              if (targetPage == _externalPageUpdate) {
+                                _isAnimating = false;
+                                _externalPageUpdate = null;
+                                return; // Don't update provider, it's already set
+                              }
                             }
-                          }
 
-                          // Clear animation flag if it was set
-                          if (_isAnimating) {
-                            _isAnimating = false;
-                          }
+                            // Clear animation flag if it was set
+                            if (_isAnimating) {
+                              _isAnimating = false;
+                            }
 
-                          final int newPageNumber = index + 1;
-                          // WHY: Update the global state provider.
-                          ref
-                              .read(currentPageProvider.notifier)
-                              .setPage(newPageNumber);
-                          _savePageToPrefs(newPageNumber);
+                            final int newPageNumber = index + 1;
+                            // WHY: Update the global state provider.
+                            ref
+                                .read(currentPageProvider.notifier)
+                                .setPage(newPageNumber);
+                            _savePageToPrefs(newPageNumber);
 
-                          // Record reading progress (fire-and-forget, no await needed)
-                          // WHY: Add error handling to prevent silent failures in production
-                          ref
-                              .read(readingProgressServiceProvider.future)
-                              .then(
-                                (service) =>
-                                    service.recordPageView(newPageNumber),
-                              )
-                              .catchError((error, stackTrace) {
-                                // WHY: Log errors for debugging and monitoring
-                                // Silent failures would make statistics inaccurate
-                                if (kDebugMode) {
-                                  debugPrint(
-                                    'Failed to record page view for page $newPageNumber: $error',
-                                  );
-                                }
-                                // TODO: Consider adding crash analytics reporting here
-                                // FirebaseCrashlytics.instance.recordError(error, stackTrace);
-                              });
-                        },
-                        itemBuilder: (context, index) {
-                          return MushafPage(pageNumber: index + 1);
-                        },
+                            // Record reading progress (fire-and-forget, no await needed)
+                            // WHY: Add error handling to prevent silent failures in production
+                            ref
+                                .read(readingProgressServiceProvider.future)
+                                .then(
+                                  (service) =>
+                                      service.recordPageView(newPageNumber),
+                                )
+                                .catchError((error, stackTrace) {
+                                  // WHY: Log errors for debugging and monitoring
+                                  // Silent failures would make statistics inaccurate
+                                  if (kDebugMode) {
+                                    debugPrint(
+                                      'Failed to record page view for page $newPageNumber: $error',
+                                    );
+                                  }
+                                  // TODO: Consider adding crash analytics reporting here
+                                  // FirebaseCrashlytics.instance.recordError(error, stackTrace);
+                                });
+                          },
+                          itemBuilder: (context, index) {
+                            return MushafPage(pageNumber: index + 1);
+                          },
+                        ),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (error, stack) =>
+                            Center(child: Text('Error loading pages: $error')),
                       ),
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) =>
-                          Center(child: Text('Error loading pages: $error')),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           bottomNavigationBar: AppBottomNavigation(

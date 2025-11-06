@@ -195,14 +195,11 @@ return Scaffold(
 - [selection_screen.dart](mdc:lib/screens/selection_screen.dart)
 - [statistics_screen.dart](mdc:lib/screens/statistics_screen.dart)
 - [splash_screen.dart](mdc:lib/screens/splash_screen.dart)
+- [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart) - Returns Stack containing Scaffold, has Directionality wrapper around SafeArea inside Stack
 
 **Screens WITHOUT Directionality wrapper (❌ Needs Fixing)**:
 
 - None (all screens are now compliant)
-
-**Special Cases**:
-
-- [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart) - Returns Stack containing Scaffold, needs Directionality wrapper around SafeArea inside Stack
 
 ## RTL Layout
 
