@@ -8,17 +8,15 @@ class StatisticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppHeader(title: 'إحصائيات القراءة', showBackButton: true),
-            const Expanded(
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: StatisticsListView(),
-              ),
-            ),
-          ],
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppHeader(title: 'إحصائيات القراءة', showBackButton: true),
+              const Expanded(child: StatisticsListView()),
+            ],
+          ),
         ),
       ),
     );
