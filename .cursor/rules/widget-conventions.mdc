@@ -61,6 +61,7 @@ class AppHeader extends StatelessWidget {
 ```
 
 **Benefits of using StatelessWidget when appropriate:**
+
 - Better performance (lighter widget)
 - Clearer dependencies (explicit props vs implicit providers)
 - Easier testing (pure presentation components)
@@ -136,6 +137,71 @@ final fontSize = (baseFontSize * scaleFactor).clamp(
 - `baseFontSize` - Starting font size
 - `min/maxAyahFontSize` - Font size bounds
 - `baseLineHeight` - Line height multiplier
+
+## Screen Structure
+
+**ALL screens MUST wrap their `SafeArea` (or root widget) in a `Directionality` widget** with `textDirection: TextDirection.rtl` to ensure consistent RTL behavior throughout the screen.
+
+### Required Pattern
+
+```dart
+// ✅ CORRECT - Directionality wrapper at root level
+return Scaffold(
+  body: Directionality(
+    textDirection: TextDirection.rtl,
+    child: SafeArea(
+      child: Column(
+        children: [
+          AppHeader(title: 'عنوان', showBackButton: true),
+          Expanded(
+            child: // ... content
+          ),
+        ],
+      ),
+    ),
+  ),
+);
+```
+
+### Common Mistake
+
+```dart
+// ❌ INCORRECT - Missing Directionality wrapper
+return Scaffold(
+  body: SafeArea(
+    child: Column(
+      children: [
+        AppHeader(title: 'عنوان', showBackButton: true),
+        // ... content
+      ],
+    ),
+  ),
+);
+```
+
+**Why**: Without the root-level `Directionality` widget, `AppHeader` and other top-level widgets may not inherit RTL directionality correctly, leading to inconsistent layout and text direction.
+
+### Compliance Status
+
+**Screens WITH Directionality wrapper (✅ Correct)**:
+
+- [ayah_details_screen.dart](mdc:lib/screens/ayah_details_screen.dart)
+- [bookmarks_screen.dart](mdc:lib/screens/bookmarks_screen.dart)
+- [explore_hub_screen.dart](mdc:lib/screens/explore_hub_screen.dart)
+- [search_screen.dart](mdc:lib/screens/search_screen.dart)
+- [settings_screen.dart](mdc:lib/screens/settings_screen.dart)
+- [topic_detail_screen.dart](mdc:lib/screens/topic_detail_screen.dart)
+
+**Screens WITHOUT Directionality wrapper (❌ Needs Fixing)**:
+
+- [audio_config_screen.dart](mdc:lib/screens/audio_config_screen.dart) - Missing wrapper around SafeArea
+- [selection_screen.dart](mdc:lib/screens/selection_screen.dart) - Missing wrapper around SafeArea
+- [statistics_screen.dart](mdc:lib/screens/statistics_screen.dart) - Missing wrapper around SafeArea (has Directionality only inside Expanded child)
+
+**Special Cases**:
+
+- [mushaf_screen.dart](mdc:lib/screens/mushaf_screen.dart) - Returns Stack containing Scaffold, needs Directionality wrapper around SafeArea inside Stack
+- [splash_screen.dart](mdc:lib/screens/splash_screen.dart) - Simple loading screen (may be acceptable, but should still follow pattern for consistency)
 
 ## RTL Layout
 

@@ -447,240 +447,243 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppHeader(title: 'إعدادات التشغيل', showBackButton: true),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    // Reciter Selection
-                    Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppHeader(title: 'إعدادات التشغيل', showBackButton: true),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      // Reciter Selection
+                      Card(
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          title: const Text(
+                            'عبد الله علي جابر',
+                            textDirection: TextDirection.rtl,
+                          ),
+                          onTap: () {
+                            // TODO: Show reciter selection if we have multiple reciters
+                          },
                         ),
-                        leading: const Icon(Icons.chevron_left),
-                        title: const Text(
-                          'عبد الله علي جابر',
-                          textDirection: TextDirection.rtl,
-                        ),
-                        onTap: () {
-                          // TODO: Show reciter selection if we have multiple reciters
-                        },
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Adjust End Verse Section
-                    Text(
-                      'ضبط نهاية الآية حتى نهاية',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
+                      // Adjust End Verse Section
+                      Text(
+                        'ضبط نهاية الآية حتى نهاية',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
+                        textDirection: TextDirection.rtl,
                       ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(height: 8),
-                    // Segmented Control for Juz/Surah/Page (Juz first as default)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildEndVerseOptionButton(
-                            context,
-                            'الجزء',
-                            'juz',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildEndVerseOptionButton(
-                            context,
-                            'السورة',
-                            'surah',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildEndVerseOptionButton(
-                            context,
-                            'الصفحة',
-                            'page',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Playing Verses Section
-                    Text(
-                      'نطاق التشغيل',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(height: 8),
-                    // From/To Container
-                    Card(
-                      child: Column(
+                      const SizedBox(height: 8),
+                      // Segmented Control for Juz/Surah/Page (Juz first as default)
+                      Row(
                         children: [
-                          // From
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                          Expanded(
+                            child: _buildEndVerseOptionButton(
+                              context,
+                              'الجزء',
+                              'juz',
                             ),
-                            leading: const Icon(Icons.chevron_left),
-                            title: Row(
-                              textDirection: TextDirection.rtl,
-                              children: [
-                                const Text(
-                                  'من',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'IBMPlexSansArabic',
-                                  ),
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                const SizedBox(width: 24),
-                                Flexible(
-                                  child: Text(
-                                    _selectedSurah != null &&
-                                            _selectedStartSurahName != null
-                                        ? '$_selectedSurah. $_selectedStartSurahName - آية ${convertToEasternArabicNumerals(_selectedStartAyah?.toString() ?? '1')}'
-                                        : 'اختر السورة والآية',
-                                    style: theme.textTheme.bodyMedium,
-                                    textDirection: TextDirection.rtl,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            onTap: () => _showAyahSelector(isStart: true),
                           ),
-                          const Divider(height: 1),
-                          // To
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildEndVerseOptionButton(
+                              context,
+                              'السورة',
+                              'surah',
                             ),
-                            leading: const Icon(Icons.chevron_left),
-                            title: Row(
-                              textDirection: TextDirection.rtl,
-                              children: [
-                                const Text(
-                                  'إلى',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'IBMPlexSansArabic',
-                                  ),
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                const SizedBox(width: 24),
-                                Flexible(
-                                  child: Text(
-                                    _selectedEndAyah != null
-                                        ? (_selectedSurah != null &&
-                                                  (_selectedEndSurahName !=
-                                                          null ||
-                                                      _selectedStartSurahName !=
-                                                          null)
-                                              ? '$_selectedSurah. ${_selectedEndSurahName ?? _selectedStartSurahName} - آية ${convertToEasternArabicNumerals(_selectedEndAyah.toString())}'
-                                              : 'آية ${convertToEasternArabicNumerals(_selectedEndAyah.toString())}')
-                                        : 'اختر نهاية الآية',
-                                    style: theme.textTheme.bodyMedium,
-                                    textDirection: TextDirection.rtl,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildEndVerseOptionButton(
+                              context,
+                              'الصفحة',
+                              'page',
                             ),
-                            onTap: () => _showAyahSelector(isStart: false),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 24),
 
-                    // Hidden Surah Selection (for initialization)
-                    if (_selectedSurah == null) ...[
-                      const SizedBox(height: 16),
+                      // Playing Verses Section
+                      Text(
+                        'نطاق التشغيل',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                      const SizedBox(height: 8),
+                      // From/To Container
                       Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              Text(
-                                'السورة',
-                                style: theme.textTheme.titleMedium,
+                        child: Column(
+                          children: [
+                            // From
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              title: Row(
                                 textDirection: TextDirection.rtl,
-                              ),
-                              const SizedBox(height: 8),
-                              surahListAsync.when(
-                                data: (surahs) {
-                                  return DropdownButtonFormField<int>(
-                                    initialValue: _selectedSurah,
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      hintText: 'اختر السورة',
+                                children: [
+                                  const Text(
+                                    'من',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'IBMPlexSansArabic',
                                     ),
-                                    items: surahs.map((surah) {
-                                      return DropdownMenuItem<int>(
-                                        value: surah.surahNumber,
-                                        child: Text(
-                                          '${surah.nameArabic} (${convertToEasternArabicNumerals(surah.surahNumber.toString())})',
-                                          textDirection: TextDirection.rtl,
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedSurah = value;
-                                        _selectedStartAyah = 1;
-                                        _selectedEndAyah = null;
-                                        _endVerseOption = null;
-                                      });
-                                      _loadSurahNames();
-                                      // Set default end to juz end
-                                      _setDefaultEndToJuz();
-                                    },
-                                  );
-                                },
-                                loading: () => const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: CircularProgressIndicator(),
+                                    textDirection: TextDirection.rtl,
                                   ),
-                                ),
-                                error: (error, stack) => Text(
-                                  'خطأ في تحميل السور',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.error,
+                                  const SizedBox(width: 24),
+                                  Flexible(
+                                    child: Text(
+                                      _selectedSurah != null &&
+                                              _selectedStartSurahName != null
+                                          ? '$_selectedSurah. $_selectedStartSurahName - آية ${convertToEasternArabicNumerals(_selectedStartAyah?.toString() ?? '1')}'
+                                          : 'اختر السورة والآية',
+                                      style: theme.textTheme.bodyMedium,
+                                      textDirection: TextDirection.rtl,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
                                   ),
-                                  textDirection: TextDirection.rtl,
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
+                              onTap: () => _showAyahSelector(isStart: true),
+                            ),
+                            const Divider(height: 1),
+                            // To
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              title: Row(
+                                textDirection: TextDirection.rtl,
+                                children: [
+                                  const Text(
+                                    'إلى',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'IBMPlexSansArabic',
+                                    ),
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Flexible(
+                                    child: Text(
+                                      _selectedEndAyah != null
+                                          ? (_selectedSurah != null &&
+                                                    (_selectedEndSurahName !=
+                                                            null ||
+                                                        _selectedStartSurahName !=
+                                                            null)
+                                                ? '$_selectedSurah. ${_selectedEndSurahName ?? _selectedStartSurahName} - آية ${convertToEasternArabicNumerals(_selectedEndAyah.toString())}'
+                                                : 'آية ${convertToEasternArabicNumerals(_selectedEndAyah.toString())}')
+                                          : 'اختر نهاية الآية',
+                                      style: theme.textTheme.bodyMedium,
+                                      textDirection: TextDirection.rtl,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              onTap: () => _showAyahSelector(isStart: false),
+                            ),
+                          ],
                         ),
                       ),
+
+                      // Hidden Surah Selection (for initialization)
+                      if (_selectedSurah == null) ...[
+                        const SizedBox(height: 16),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              textDirection: TextDirection.rtl,
+                              children: [
+                                Text(
+                                  'السورة',
+                                  style: theme.textTheme.titleMedium,
+                                  textDirection: TextDirection.rtl,
+                                ),
+                                const SizedBox(height: 8),
+                                surahListAsync.when(
+                                  data: (surahs) {
+                                    return DropdownButtonFormField<int>(
+                                      initialValue: _selectedSurah,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        hintText: 'اختر السورة',
+                                      ),
+                                      items: surahs.map((surah) {
+                                        return DropdownMenuItem<int>(
+                                          value: surah.surahNumber,
+                                          child: Text(
+                                            '${surah.nameArabic} (${convertToEasternArabicNumerals(surah.surahNumber.toString())})',
+                                            textDirection: TextDirection.rtl,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedSurah = value;
+                                          _selectedStartAyah = 1;
+                                          _selectedEndAyah = null;
+                                          _endVerseOption = null;
+                                        });
+                                        _loadSurahNames();
+                                        // Set default end to juz end
+                                        _setDefaultEndToJuz();
+                                      },
+                                    );
+                                  },
+                                  loading: () => const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  ),
+                                  error: (error, stack) => Text(
+                                    'خطأ في تحميل السور',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.error,
+                                    ),
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(
