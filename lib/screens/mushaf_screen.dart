@@ -29,6 +29,8 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
   late final PageController _pageController;
 
   int _currentSurahNumber = 0;
+  int?
+  _lastKnownTotalPages; // Cache last known totalPages to preserve PageView during loading
 
   // Track memorization start page to return user back if they wander
   int? _memorizationStartPage;
@@ -50,7 +52,12 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialPage - 1);
+    // WHY: Use keepPage: true to preserve page position across rebuilds
+    // This ensures the PageController maintains its position when PageView is rebuilt
+    _pageController = PageController(
+      initialPage: widget.initialPage - 1,
+      keepPage: true,
+    );
 
     // WHY: Initialize the global page state provider.
     Future.microtask(
@@ -192,6 +199,31 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
     // WHY: Watch the global page state.
     final int currentPageNumber = ref.watch(currentPageProvider);
 
+    // WHY: After build, verify PageController position matches provider
+    // This ensures the PageController doesn't reset when screen rebuilds
+    // Use post-frame callback to avoid modifying provider during build
+    // NOTE: This is a fallback - the main fix is in the PageView.builder itself
+    if (_pageController.hasClients) {
+      final controllerIndex = _pageController.page?.round() ?? -1;
+      final controllerPage = controllerIndex + 1;
+      if (controllerIndex >= 0 && controllerPage != currentPageNumber) {
+        // Fix the mismatch after build completes to avoid provider modification during build
+        // This prevents the error "Tried to modify a provider while the widget tree was building"
+        final targetIndex = currentPageNumber - 1;
+        if (targetIndex >= 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _pageController.hasClients) {
+              // Check again in case it was already fixed
+              final currentIndex = _pageController.page?.round() ?? -1;
+              if (currentIndex != targetIndex) {
+                _pageController.jumpToPage(targetIndex);
+              }
+            }
+          });
+        }
+      }
+    }
+
     // WHY: Listen to currentPageProvider changes for external updates (e.g., from audio)
     // Only animate if the change came from external source (audio config screen)
     // Don't animate if it's from normal navigation, initial load, or user swiping
@@ -261,6 +293,14 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
 
     final asyncPageData = ref.watch(pageDataProvider(currentPageNumber));
     final totalPagesAsync = ref.watch(totalPagesProvider);
+
+    // WHY: Cache totalPages value when available to use during loading states
+    // This prevents the PageView from being removed from the tree when totalPagesAsync is loading
+    totalPagesAsync.whenData((totalPages) {
+      if (_lastKnownTotalPages != totalPages) {
+        _lastKnownTotalPages = totalPages;
+      }
+    });
 
     // WHY: Combine both whenData callbacks into single callback for better performance.
     // Single callback registration reduces rebuilds and improves code clarity.
@@ -353,68 +393,144 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                         }
                       },
                       child: totalPagesAsync.when(
-                        data: (totalPages) => PageView.builder(
-                          controller: _pageController,
-                          // WHY: Use the total pages from the database for the current layout.
-                          itemCount: totalPages,
-                          reverse: true,
-                          // WHY: Memory management for PageView:
-                          // - Flutter's PageView automatically keeps only a few pages in memory
-                          // - Font loading is managed by LRU cache (maxFontCacheSize = 50)
-                          // - Pages are automatically disposed when out of viewport
-                          physics: (enableMemorizationBeta && isBetaMemorizing)
-                              ? const NeverScrollableScrollPhysics()
-                              : const BouncingScrollPhysics(),
-                          onPageChanged: (index) {
-                            // Don't update provider if we're animating from external change
-                            if (_isAnimating && _externalPageUpdate != null) {
-                              // Clear the external update flag once animation completes
-                              final targetPage = index + 1;
-                              if (targetPage == _externalPageUpdate) {
-                                _isAnimating = false;
-                                _externalPageUpdate = null;
-                                return; // Don't update provider, it's already set
+                        data: (totalPages) {
+                          // WHY: Ensure PageController position matches provider before building PageView
+                          // This prevents the PageController from resetting when PageView is rebuilt
+                          if (_pageController.hasClients) {
+                            final controllerIndex =
+                                _pageController.page?.round() ?? -1;
+                            final controllerPage = controllerIndex + 1;
+                            if (controllerIndex >= 0 &&
+                                controllerPage != currentPageNumber) {
+                              // PageController is at wrong position - fix it immediately
+                              final targetIndex = currentPageNumber - 1;
+                              if (targetIndex >= 0 &&
+                                  targetIndex < totalPages) {
+                                // Use Future.microtask to avoid modifying during build
+                                Future.microtask(() {
+                                  if (mounted && _pageController.hasClients) {
+                                    final currentIndex =
+                                        _pageController.page?.round() ?? -1;
+                                    if (currentIndex != targetIndex) {
+                                      _pageController.jumpToPage(targetIndex);
+                                    }
+                                  }
+                                });
                               }
                             }
+                          }
+                          return PageView.builder(
+                            key: PageStorageKey('mushafPageView'),
+                            controller: _pageController,
+                            // WHY: Use the total pages from the database for the current layout.
+                            itemCount: totalPages,
+                            // WHY: Memory management for PageView:
+                            // - Flutter's PageView automatically keeps only a few pages in memory
+                            // - Font loading is managed by LRU cache (maxFontCacheSize = 50)
+                            // - Pages are automatically disposed when out of viewport
+                            physics:
+                                (enableMemorizationBeta && isBetaMemorizing)
+                                ? const NeverScrollableScrollPhysics()
+                                : const BouncingScrollPhysics(),
+                            onPageChanged: (index) {
+                              // WHY: Handle external updates (from audio) - don't update provider if already set
+                              // This prevents duplicate updates when navigating from external sources
+                              if (_isAnimating && _externalPageUpdate != null) {
+                                // Clear the external update flag once animation completes
+                                final targetPage = index + 1;
+                                if (targetPage == _externalPageUpdate) {
+                                  _isAnimating = false;
+                                  _externalPageUpdate = null;
+                                  return; // Don't update provider, it's already set
+                                }
+                              }
 
-                            // Clear animation flag if it was set
-                            if (_isAnimating) {
-                              _isAnimating = false;
-                            }
+                              // Clear animation flag if it was set
+                              if (_isAnimating) {
+                                _isAnimating = false;
+                              }
 
-                            final int newPageNumber = index + 1;
-                            // WHY: Update the global state provider.
-                            ref
-                                .read(currentPageProvider.notifier)
-                                .setPage(newPageNumber);
-                            _savePageToPrefs(newPageNumber);
+                              final int newPageNumber = index + 1;
+                              // WHY: Update the global state provider when user swipes to change pages.
+                              // This ensures the current page is always in sync with the PageView.
+                              ref
+                                  .read(currentPageProvider.notifier)
+                                  .setPage(newPageNumber);
+                              _savePageToPrefs(newPageNumber);
 
-                            // Record reading progress (fire-and-forget, no await needed)
-                            // WHY: Add error handling to prevent silent failures in production
-                            ref
-                                .read(readingProgressServiceProvider.future)
-                                .then(
-                                  (service) =>
-                                      service.recordPageView(newPageNumber),
-                                )
-                                .catchError((error, stackTrace) {
-                                  // WHY: Log errors for debugging and monitoring
-                                  // Silent failures would make statistics inaccurate
-                                  if (kDebugMode) {
-                                    debugPrint(
-                                      'Failed to record page view for page $newPageNumber: $error',
-                                    );
+                              // Record reading progress (fire-and-forget, no await needed)
+                              // WHY: Add error handling to prevent silent failures in production
+                              ref
+                                  .read(readingProgressServiceProvider.future)
+                                  .then(
+                                    (service) =>
+                                        service.recordPageView(newPageNumber),
+                                  )
+                                  .catchError((error, stackTrace) {
+                                    // WHY: Log errors for debugging and monitoring
+                                    // Silent failures would make statistics inaccurate
+                                    if (kDebugMode) {
+                                      debugPrint(
+                                        'Failed to record page view for page $newPageNumber: $error',
+                                      );
+                                    }
+                                    // TODO: Consider adding crash analytics reporting here
+                                    // FirebaseCrashlytics.instance.recordError(error, stackTrace);
+                                  });
+                            },
+                            itemBuilder: (context, index) {
+                              return MushafPage(pageNumber: index + 1);
+                            },
+                          );
+                        },
+                        loading: () {
+                          // WHY: Show PageView even when loading to preserve PageController position
+                          // Use cached totalPages value to prevent PageController from resetting
+                          // This prevents the PageController from resetting when totalPagesAsync is loading
+                          if (_pageController.hasClients &&
+                              _lastKnownTotalPages != null) {
+                            // Use cached totalPages value to keep PageView in tree
+                            // The PageView will be rebuilt with correct itemCount once totalPagesAsync resolves
+                            return PageView.builder(
+                              key: PageStorageKey('mushafPageView'),
+                              controller: _pageController,
+                              itemCount: _lastKnownTotalPages!,
+                              physics:
+                                  (enableMemorizationBeta && isBetaMemorizing)
+                                  ? const NeverScrollableScrollPhysics()
+                                  : const BouncingScrollPhysics(),
+                              onPageChanged: (index) {
+                                // Same handler as above
+                                if (_isAnimating &&
+                                    _externalPageUpdate != null) {
+                                  final targetPage = index + 1;
+                                  if (targetPage == _externalPageUpdate) {
+                                    _isAnimating = false;
+                                    _externalPageUpdate = null;
+                                    return;
                                   }
-                                  // TODO: Consider adding crash analytics reporting here
-                                  // FirebaseCrashlytics.instance.recordError(error, stackTrace);
-                                });
-                          },
-                          itemBuilder: (context, index) {
-                            return MushafPage(pageNumber: index + 1);
-                          },
-                        ),
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
+                                }
+                                if (_isAnimating) {
+                                  _isAnimating = false;
+                                }
+                                final int newPageNumber = index + 1;
+                                ref
+                                    .read(currentPageProvider.notifier)
+                                    .setPage(newPageNumber);
+                                _savePageToPrefs(newPageNumber);
+                              },
+                              itemBuilder: (context, index) {
+                                // Show loading indicator for each page while totalPages is loading
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                            );
+                          }
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
                         error: (error, stack) =>
                             Center(child: Text('Error loading pages: $error')),
                       ),

@@ -4,6 +4,7 @@ import '../../utils/responsive.dart';
 import '../../utils/navigation.dart';
 import '../../screens/settings_screen.dart';
 import '../../screens/search_screen.dart';
+import '../../screens/selection_screen.dart';
 
 class AppHeader extends StatelessWidget {
   final String title;
@@ -33,6 +34,9 @@ class AppHeader extends StatelessWidget {
         ? Colors.grey.shade400
         : Colors.grey.shade600;
 
+    // WHY: Only show settings icon on SelectionScreen
+    final isSelectionScreen = _isSelectionRoute(context);
+
     return Container(
       height: kAppHeaderHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -48,8 +52,8 @@ class AppHeader extends StatelessWidget {
         ),
       ),
       child: titleOnRight
-          ? _buildReversedLayout(context, theme, iconColor)
-          : _buildNormalLayout(context, theme, iconColor),
+          ? _buildReversedLayout(context, theme, iconColor, isSelectionScreen)
+          : _buildNormalLayout(context, theme, iconColor, isSelectionScreen),
     );
   }
 
@@ -57,6 +61,7 @@ class AppHeader extends StatelessWidget {
     BuildContext context,
     ThemeData theme,
     Color iconColor,
+    bool isSelectionScreen,
   ) {
     return Row(
       children: [
@@ -115,7 +120,8 @@ class AppHeader extends StatelessWidget {
             ),
           ),
         // Search icon (before settings icon in RTL)
-        if (onSearchPressed != null && trailing == null)
+        // WHY: Only show search icon on SelectionScreen
+        if (onSearchPressed != null && trailing == null && isSelectionScreen)
           IconButton(
             onPressed: () {
               pushSlideFromRight(context, const SearchScreen());
@@ -127,7 +133,8 @@ class AppHeader extends StatelessWidget {
             ),
           ),
         // Settings icon for Selection Screen (left side, separated from Bookmark/Search)
-        if (trailing == null)
+        // WHY: Only show settings icon on SelectionScreen
+        if (trailing == null && isSelectionScreen)
           IconButton(
             tooltip: 'الإعدادات',
             onPressed: () {
@@ -149,6 +156,7 @@ class AppHeader extends StatelessWidget {
     BuildContext context,
     ThemeData theme,
     Color iconColor,
+    bool isSelectionScreen,
   ) {
     return Row(
       children: [
@@ -159,7 +167,8 @@ class AppHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (onSearchPressed != null)
+              // WHY: Only show search icon on SelectionScreen
+              if (onSearchPressed != null && isSelectionScreen)
                 IconButton(
                   tooltip: 'البحث',
                   onPressed: () {
@@ -172,17 +181,19 @@ class AppHeader extends StatelessWidget {
                   ),
                 ),
               // Settings icon
-              IconButton(
-                tooltip: 'الإعدادات',
-                onPressed: () {
-                  pushSlideFromRight(context, const SettingsScreen());
-                },
-                icon: Icon(
-                  Icons.settings,
-                  size: kAppHeaderIconSize,
-                  color: iconColor,
+              // WHY: Only show settings icon on SelectionScreen
+              if (isSelectionScreen)
+                IconButton(
+                  tooltip: 'الإعدادات',
+                  onPressed: () {
+                    pushSlideFromRight(context, const SettingsScreen());
+                  },
+                  icon: Icon(
+                    Icons.settings,
+                    size: kAppHeaderIconSize,
+                    color: iconColor,
+                  ),
                 ),
-              ),
             ],
           ),
         // Optional trailing widget
@@ -398,6 +409,15 @@ class AppHeader extends StatelessWidget {
     // Check if the text contains Arabic characters
     // Arabic Unicode range: U+0600 to U+06FF
     return text.runes.any((rune) => rune >= 0x0600 && rune <= 0x06FF);
+  }
+
+  // WHY: Check if the current route is the selection screen
+  // Since AppHeader is used inside SelectionScreen, we can check if SelectionScreen is an ancestor
+  bool _isSelectionRoute(BuildContext context) {
+    // Check if SelectionScreen is in the widget tree above this AppHeader
+    final selectionScreen = context
+        .findAncestorWidgetOfExactType<SelectionScreen>();
+    return selectionScreen != null;
   }
 }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/shared/app_header.dart';
+import 'package:mushaf_app/screens/selection_screen.dart';
 
 void main() {
   group('AppHeader', () {
@@ -19,17 +21,26 @@ void main() {
       expect(find.text('Test Title'), findsOneWidget);
     });
 
-    testWidgets('shows search and settings icons by default', (tester) async {
+    testWidgets('shows search and settings icons only on SelectionScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test', onSearchPressed: () {}),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  AppHeader(title: 'Test', onSearchPressed: () {}),
+                  const Expanded(child: SelectionScreen()),
+                ],
+              ),
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byIcon(Icons.settings), findsOneWidget);
       expect(find.byIcon(Icons.search), findsOneWidget);
@@ -84,26 +95,35 @@ void main() {
       );
 
       expect(find.byIcon(Icons.chevron_left), findsOneWidget);
-      // Settings icon is now shown on the left side when back button is shown
-      expect(find.byIcon(Icons.settings), findsOneWidget);
+      // Settings icon is NOT shown when back button is shown (only on SelectionScreen)
+      expect(find.byIcon(Icons.settings), findsNothing);
     });
 
-    testWidgets('search icon is tappable', (tester) async {
+    testWidgets('search icon is tappable only on SelectionScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(
-                title: 'Test',
-                onSearchPressed: () {
-                  // AppHeader navigates directly but this tests icon presence
-                },
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  AppHeader(
+                    title: 'Test',
+                    onSearchPressed: () {
+                      // AppHeader navigates directly but this tests icon presence
+                    },
+                  ),
+                  const Expanded(child: SelectionScreen()),
+                ],
               ),
             ),
           ),
         ),
       );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byIcon(Icons.search), findsOneWidget);
       // AppHeader navigates directly when tapped, which may timeout in tests
@@ -175,6 +195,25 @@ void main() {
       expect(find.byIcon(Icons.search), findsNothing);
       expect(find.byIcon(Icons.settings), findsNothing);
       expect(find.byIcon(Icons.star), findsOneWidget);
+    });
+
+    testWidgets('hides search and settings icons when not on SelectionScreen', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(56),
+              child: AppHeader(title: 'Test', onSearchPressed: () {}),
+            ),
+          ),
+        ),
+      );
+
+      // Search and settings icons are only shown on SelectionScreen
+      expect(find.byIcon(Icons.search), findsNothing);
+      expect(find.byIcon(Icons.settings), findsNothing);
     });
 
     testWidgets('adapts to dark theme', (tester) async {

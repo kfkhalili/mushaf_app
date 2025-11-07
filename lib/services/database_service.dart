@@ -179,8 +179,10 @@ class DatabaseService with InitializationMixin {
     final allowedDbNames = [
       layoutDbFileName,
       indopakLayoutDbFileName,
+      digitalKhattLayoutDbFileName,
       scriptDbFileName,
       indopakScriptDbFileName,
+      digitalKhattScriptDbFileName,
       metadataDbFileName,
       juzDbFileName,
       hizbDbFileName,
@@ -1474,23 +1476,29 @@ class DatabaseService with InitializationMixin {
         );
       }
       // Default fallback values based on current layout
-      return LayoutInfo(
-        name: _currentLayout == MushafLayout.indopak13Lines
-            ? 'Indopak'
-            : 'Uthmani Hafs',
-        linesPerPage: _currentLayout == MushafLayout.indopak13Lines ? 13 : 15,
-      );
+      switch (_currentLayout) {
+        case MushafLayout.indopak13Lines:
+          return const LayoutInfo(name: 'Indopak', linesPerPage: 13);
+        case MushafLayout.digitalKhatt15Lines:
+          return const LayoutInfo(name: 'Digital Khatt', linesPerPage: 15);
+        case MushafLayout.uthmani15Lines:
+        default:
+          return const LayoutInfo(name: 'Uthmani Hafs', linesPerPage: 15);
+      }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error retrieving layout info from database: $e');
       }
       // Fallback on error
-      return LayoutInfo(
-        name: _currentLayout == MushafLayout.indopak13Lines
-            ? 'Indopak'
-            : 'Uthmani Hafs',
-        linesPerPage: _currentLayout == MushafLayout.indopak13Lines ? 13 : 15,
-      );
+      switch (_currentLayout) {
+        case MushafLayout.indopak13Lines:
+          return const LayoutInfo(name: 'Indopak', linesPerPage: 13);
+        case MushafLayout.digitalKhatt15Lines:
+          return const LayoutInfo(name: 'Digital Khatt', linesPerPage: 15);
+        case MushafLayout.uthmani15Lines:
+        default:
+          return const LayoutInfo(name: 'Uthmani Hafs', linesPerPage: 15);
+      }
     }
   }
 

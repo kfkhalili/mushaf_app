@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 // --- DATABASE FILENAMES ---
 const String layoutDbFileName = 'uthmani-15-lines.db';
 const String indopakLayoutDbFileName = 'indopak-13-lines-layout-qudratullah.db';
+const String digitalKhattLayoutDbFileName = 'digital-khatt-15-lines.db';
 const String scriptDbFileName = 'qpc-v2.db';
 const String indopakScriptDbFileName = 'indopak-nastaleeq.db';
+const String digitalKhattScriptDbFileName = 'digital-khatt-v2.db';
 const String metadataDbFileName = 'quran-metadata-surah-name.sqlite';
 const String juzDbFileName = 'quran-metadata-juz.sqlite';
 const String hizbDbFileName = 'quran-metadata-hizb.sqlite';
@@ -14,7 +16,7 @@ const String audioDbFileName = 'surah-recitation-abdullah-ali-jabir.db';
 const String tafsirDbFileName = 'ar-tafsir-muyassar.db';
 
 // --- MUSHAF LAYOUT OPTIONS ---
-enum MushafLayout { uthmani15Lines, indopak13Lines }
+enum MushafLayout { uthmani15Lines, indopak13Lines, digitalKhatt15Lines }
 
 extension MushafLayoutExtension on MushafLayout {
   String get layoutDatabaseFileName {
@@ -23,6 +25,8 @@ extension MushafLayoutExtension on MushafLayout {
         return layoutDbFileName;
       case MushafLayout.indopak13Lines:
         return indopakLayoutDbFileName;
+      case MushafLayout.digitalKhatt15Lines:
+        return digitalKhattLayoutDbFileName;
     }
   }
 
@@ -32,6 +36,8 @@ extension MushafLayoutExtension on MushafLayout {
         return scriptDbFileName;
       case MushafLayout.indopak13Lines:
         return indopakScriptDbFileName;
+      case MushafLayout.digitalKhatt15Lines:
+        return digitalKhattScriptDbFileName;
     }
   }
 
@@ -41,6 +47,8 @@ extension MushafLayoutExtension on MushafLayout {
         return 'عثماني (١٥ سطر)';
       case MushafLayout.indopak13Lines:
         return 'إندوباك (١٣ سطر)';
+      case MushafLayout.digitalKhatt15Lines:
+        return 'خط رقمي (١٥ سطر)';
     }
   }
 
@@ -50,6 +58,8 @@ extension MushafLayoutExtension on MushafLayout {
         return quranCommonFontFamily;
       case MushafLayout.indopak13Lines:
         return indopakFontFamily;
+      case MushafLayout.digitalKhatt15Lines:
+        return digitalKhattFontFamily;
     }
   }
 }
@@ -61,6 +71,7 @@ const String basmallah = '\uFDFD'; // ﷽
 const String surahNameFontFamily = 'SurahNames';
 const String quranCommonFontFamily = 'QuranCommon';
 const String indopakFontFamily = 'IndopakFont';
+const String digitalKhattFontFamily = 'DigitalKhattV2';
 
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;
@@ -72,12 +83,14 @@ const double maxLineContentWidth = 600.0;
 const Map<MushafLayout, double> layoutMaxFontSizes = {
   MushafLayout.uthmani15Lines: 20.0,
   MushafLayout.indopak13Lines: 24.0,
+  MushafLayout.digitalKhatt15Lines: 20.0,
 };
 
 // Layout-specific line heights
 const Map<MushafLayout, double> layoutLineHeights = {
   MushafLayout.uthmani15Lines: 2.1,
   MushafLayout.indopak13Lines: 2.05, // Tighter to prevent overflow
+  MushafLayout.digitalKhatt15Lines: 2.1,
 };
 
 // --- STYLING CONSTANTS ---

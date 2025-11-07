@@ -300,6 +300,13 @@ class SettingsScreen extends ConsumerWidget {
                                               }).toList(),
                                               onChanged: (MushafLayout? layout) async {
                                                 if (layout != null) {
+                                                  // WHY: Read current page BEFORE layout change to preserve it
+                                                  // Since MushafScreen is typically a fresh instance after layout changes,
+                                                  // we preserve the page in currentPageProvider for the next navigation
+                                                  final currentPage = ref.read(
+                                                    currentPageProvider,
+                                                  );
+
                                                   // WHY: Await setLayout to ensure state updates before invalidating
                                                   await ref
                                                       .read(
@@ -307,6 +314,16 @@ class SettingsScreen extends ConsumerWidget {
                                                             .notifier,
                                                       )
                                                       .setLayout(layout);
+
+                                                  // WHY: Ensure current page is preserved after layout change
+                                                  // This ensures the page is preserved when user navigates to MushafScreen
+                                                  ref
+                                                      .read(
+                                                        currentPageProvider
+                                                            .notifier,
+                                                      )
+                                                      .setPage(currentPage);
+
                                                   // WHY: Invalidate allLayoutsInfoProvider to refresh all layout info
                                                   ref.invalidate(
                                                     allLayoutsInfoProvider,
@@ -360,12 +377,28 @@ class SettingsScreen extends ConsumerWidget {
                                         }).toList(),
                                         onChanged: (MushafLayout? layout) async {
                                           if (layout != null) {
+                                            // WHY: Read current page BEFORE layout change to preserve it
+                                            // Since MushafScreen is typically a fresh instance after layout changes,
+                                            // we preserve the page in currentPageProvider for the next navigation
+                                            final currentPage = ref.read(
+                                              currentPageProvider,
+                                            );
+
                                             await ref
                                                 .read(
                                                   mushafLayoutSettingProvider
                                                       .notifier,
                                                 )
                                                 .setLayout(layout);
+
+                                            // WHY: Ensure current page is preserved after layout change
+                                            // This ensures the page is preserved when user navigates to MushafScreen
+                                            ref
+                                                .read(
+                                                  currentPageProvider.notifier,
+                                                )
+                                                .setPage(currentPage);
+
                                             ref.invalidate(
                                               allLayoutsInfoProvider,
                                             );
@@ -397,12 +430,28 @@ class SettingsScreen extends ConsumerWidget {
                                         }).toList(),
                                         onChanged: (MushafLayout? layout) async {
                                           if (layout != null) {
+                                            // WHY: Read current page BEFORE layout change to preserve it
+                                            // Since MushafScreen is typically a fresh instance after layout changes,
+                                            // we preserve the page in currentPageProvider for the next navigation
+                                            final currentPage = ref.read(
+                                              currentPageProvider,
+                                            );
+
                                             await ref
                                                 .read(
                                                   mushafLayoutSettingProvider
                                                       .notifier,
                                                 )
                                                 .setLayout(layout);
+
+                                            // WHY: Ensure current page is preserved after layout change
+                                            // This ensures the page is preserved when user navigates to MushafScreen
+                                            ref
+                                                .read(
+                                                  currentPageProvider.notifier,
+                                                )
+                                                .setPage(currentPage);
+
                                             ref.invalidate(
                                               allLayoutsInfoProvider,
                                             );

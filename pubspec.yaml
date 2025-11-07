@@ -75,6 +75,8 @@ flutter:
   assets:
     - assets/db/uthmani-15-lines.db
     - assets/db/indopak-13-lines-layout-qudratullah.db
+    - assets/db/digital-khatt-15-lines.db
+    - assets/db/digital-khatt-v2.db
     - assets/db/qpc-v2.db
     - assets/db/indopak-nastaleeq.db
     - assets/db/quran-metadata-surah-name.sqlite
@@ -90,6 +92,7 @@ flutter:
     - assets/fonts/surah-name-v4.ttf
     - assets/fonts/quran-common.ttf
     - assets/fonts/indopak-font.ttf
+    - assets/fonts/DigitalKhattV2.otf
     - assets/fonts/IBMPlexSansArabic-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
