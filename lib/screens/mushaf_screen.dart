@@ -9,6 +9,8 @@ import '../utils/ui_signals.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
+import '../utils/navigation.dart';
+import 'bookmarks_screen.dart';
 import 'dart:collection';
 import '../widgets/countdown_circle.dart';
 // duplicate import removed
@@ -307,6 +309,11 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                       loading: () => '',
                       error: (_, _) => '',
                     ),
+                    titleOnRight:
+                        true, // Title (juz/surah) on right, icons on left
+                    onBookmarkPressed: () {
+                      pushSlideFromRight(context, const BookmarksScreen());
+                    },
                     onSearchPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

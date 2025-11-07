@@ -106,3 +106,49 @@ refactor(ui): extract shared header component
 ## Enforcement
 
 All commit messages in this project MUST follow the Conventional Commits specification. This ensures consistency and enables automated tooling for version management and changelog generation.
+
+## Explicit Commit Instructions
+
+**Git commits MUST only be performed when explicitly instructed by the user.**
+
+### Rules
+
+1. **Explicit instruction required** - NEVER commit changes automatically or without explicit user instruction
+2. **One commit per instruction** - Each explicit commit instruction can only be executed once
+3. **Wait for instruction** - After completing code changes, wait for explicit user instruction before committing
+4. **No assumptions** - Do not assume the user wants to commit, even if changes are complete
+
+### Examples
+
+```bash
+# ✅ CORRECT - User explicitly requests commit
+User: "commit these changes"
+Agent: [executes git commit]
+
+# ❌ FORBIDDEN - Agent commits without explicit instruction
+Agent: [completes changes and automatically commits]
+
+# ❌ FORBIDDEN - Agent commits multiple times from one instruction
+User: "commit these changes"
+Agent: [executes git commit]
+Agent: [executes git commit again]  # FORBIDDEN - only once per instruction
+```
+
+### Workflow
+
+1. **Complete code changes** - Make all requested modifications
+2. **Report completion** - Inform user that changes are complete
+3. **Wait for instruction** - Do not commit until user explicitly requests it
+4. **Execute once** - When user explicitly requests commit, execute it exactly once
+5. **Confirm completion** - Report that the commit was successful
+
+### Rationale
+
+- **User control** - User maintains full control over when commits occur
+- **Prevents accidental commits** - Avoids committing incomplete or unwanted changes
+- **Single execution** - Prevents duplicate commits from the same instruction
+- **Clear communication** - Ensures user is aware of all commits being made
+
+## Remember
+
+**Never commit without explicit user instruction. Each commit instruction can only be executed once.**
