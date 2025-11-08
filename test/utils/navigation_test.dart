@@ -5,7 +5,7 @@ import 'package:mushaf_app/utils/navigation.dart';
 import 'package:mushaf_app/screens/settings_screen.dart';
 
 void main() {
-  group('pushSlideFromLeft', () {
+  group('pushSlideTransition', () {
     testWidgets('navigates to screen with slide animation', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -14,7 +14,11 @@ void main() {
               body: Builder(
                 builder: (context) => ElevatedButton(
                   onPressed: () {
-                    pushSlideFromLeft(context, const SettingsScreen());
+                    pushSlideTransition(
+                      context,
+                      const SettingsScreen(),
+                      direction: SlideDirection.fromLeft,
+                    );
                   },
                   child: const Text('Navigate'),
                 ),
