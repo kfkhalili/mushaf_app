@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../models.dart';
-import '../widgets/shared/app_header.dart';
+import '../widgets/shared/base_screen.dart';
 import '../screens/mushaf_screen.dart';
 import '../utils/helpers.dart';
+import '../utils/post_frame_mixin.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -21,7 +22,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     // Focus on search field when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // WHY: Use PostFrameMixin to reduce code duplication
+    PostFrameMixin.runAfterFrame(this, () {
       _searchFocusNode.requestFocus();
     });
   }
@@ -67,87 +69,60 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final currentQuery = ref.watch(searchQueryProvider);
     final searchHistory = ref.watch(searchHistoryProvider);
 
-    return Scaffold(
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: SafeArea(
-          child: Column(
-            children: [
-              AppHeader(
-                title: 'البحث',
-                onSearchPressed: null, // No search in search screen
-                showBackButton: true,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    // Search Input
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        textDirection: TextDirection.rtl,
-                        textAlign: TextAlign.right,
-                        decoration: InputDecoration(
-                          hintText: 'ابحث في القرآن الكريم...',
-                          hintStyle: TextStyle(
-                            color: theme.hintColor,
-                            fontSize: 16,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: theme.iconTheme.color,
-                          ),
-                          suffixIcon: currentQuery.isNotEmpty
-                              ? IconButton(
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    ref
-                                        .read(searchQueryProvider.notifier)
-                                        .clearQuery();
-                                  },
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: theme.iconTheme.color,
-                                  ),
-                                )
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: theme.cardColor,
-                        ),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                        onSubmitted: _performSearch,
-                        onChanged: (value) {
-                          // Update query as user types for real-time search
-                          if (value.trim().isNotEmpty) {
-                            ref
-                                .read(searchQueryProvider.notifier)
-                                .setQuery(value);
-                          } else {
-                            ref.read(searchQueryProvider.notifier).clearQuery();
-                          }
+    return BaseScreen(
+      title: 'البحث',
+      showBackButton: true,
+      body: Column(
+        children: [
+          // Search Input
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+              decoration: InputDecoration(
+                hintText: 'ابحث في القرآن الكريم...',
+                hintStyle: TextStyle(color: theme.hintColor, fontSize: 16),
+                prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+                suffixIcon: currentQuery.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).clearQuery();
                         },
-                      ),
-                    ),
-                    // Search Results or History
-                    Expanded(
-                      child: currentQuery.isEmpty
-                          ? _buildSearchHistory(searchHistory, theme)
-                          : _buildSearchResults(currentQuery, theme),
-                    ),
-                  ],
+                        icon: Icon(Icons.clear, color: theme.iconTheme.color),
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                filled: true,
+                fillColor: theme.cardColor,
               ),
-            ],
+              style: TextStyle(
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+              onSubmitted: _performSearch,
+              onChanged: (value) {
+                // Update query as user types for real-time search
+                if (value.trim().isNotEmpty) {
+                  ref.read(searchQueryProvider.notifier).setQuery(value);
+                } else {
+                  ref.read(searchQueryProvider.notifier).clearQuery();
+                }
+              },
+            ),
           ),
-        ),
+          // Search Results or History
+          Expanded(
+            child: currentQuery.isEmpty
+                ? _buildSearchHistory(searchHistory, theme)
+                : _buildSearchResults(currentQuery, theme),
+          ),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../utils/helpers.dart';
+import '../utils/post_frame_mixin.dart';
 import '../models.dart';
 import '../widgets/shared/app_header.dart';
 
@@ -435,7 +436,8 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
     final surahListAsync = ref.watch(surahListProvider);
 
     // Initialize from current page if needed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // WHY: Use PostFrameMixin to reduce code duplication
+    PostFrameMixin.runAfterFrame(this, () {
       _initializeFromCurrentPage(ref);
       _loadSurahNames();
       // Set default end to juz end if surah and start ayah are already set

@@ -4,7 +4,6 @@ import '../../utils/responsive.dart';
 import '../../utils/navigation.dart';
 import '../../screens/settings_screen.dart';
 import '../../screens/search_screen.dart';
-import '../../screens/selection_screen.dart';
 
 class AppHeader extends StatelessWidget {
   final String title;
@@ -15,6 +14,7 @@ class AppHeader extends StatelessWidget {
   final Widget? trailing;
   final bool
   titleOnRight; // When true, title appears on right (start of RTL), icons on left (end of RTL)
+  final bool isSelectionScreen; // Whether this header is on SelectionScreen
 
   const AppHeader({
     super.key,
@@ -25,6 +25,7 @@ class AppHeader extends StatelessWidget {
     this.showBackButton = false,
     this.trailing,
     this.titleOnRight = false,
+    this.isSelectionScreen = false,
   });
 
   @override
@@ -33,9 +34,6 @@ class AppHeader extends StatelessWidget {
     final Color iconColor = theme.brightness == Brightness.dark
         ? Colors.grey.shade400
         : Colors.grey.shade600;
-
-    // WHY: Only show settings icon on SelectionScreen
-    final isSelectionScreen = _isSelectionRoute(context);
 
     return Container(
       height: kAppHeaderHeight,
@@ -124,7 +122,11 @@ class AppHeader extends StatelessWidget {
         if (onSearchPressed != null && trailing == null && isSelectionScreen)
           IconButton(
             onPressed: () {
-              pushSlideFromRight(context, const SearchScreen());
+              pushSlideTransition(
+                context,
+                const SearchScreen(),
+                direction: SlideDirection.fromRight,
+              );
             },
             icon: Icon(
               Icons.search,
@@ -138,7 +140,11 @@ class AppHeader extends StatelessWidget {
           IconButton(
             tooltip: 'الإعدادات',
             onPressed: () {
-              pushSlideFromRight(context, const SettingsScreen());
+              pushSlideTransition(
+                context,
+                const SettingsScreen(),
+                direction: SlideDirection.fromRight,
+              );
             },
             icon: Icon(
               Icons.settings,
@@ -172,7 +178,11 @@ class AppHeader extends StatelessWidget {
                 IconButton(
                   tooltip: 'البحث',
                   onPressed: () {
-                    pushSlideFromRight(context, const SearchScreen());
+                    pushSlideTransition(
+                      context,
+                      const SearchScreen(),
+                      direction: SlideDirection.fromRight,
+                    );
                   },
                   icon: Icon(
                     Icons.search,
@@ -186,7 +196,11 @@ class AppHeader extends StatelessWidget {
                 IconButton(
                   tooltip: 'الإعدادات',
                   onPressed: () {
-                    pushSlideFromRight(context, const SettingsScreen());
+                    pushSlideTransition(
+                      context,
+                      const SettingsScreen(),
+                      direction: SlideDirection.fromRight,
+                    );
                   },
                   icon: Icon(
                     Icons.settings,
@@ -409,15 +423,6 @@ class AppHeader extends StatelessWidget {
     // Check if the text contains Arabic characters
     // Arabic Unicode range: U+0600 to U+06FF
     return text.runes.any((rune) => rune >= 0x0600 && rune <= 0x06FF);
-  }
-
-  // WHY: Check if the current route is the selection screen
-  // Since AppHeader is used inside SelectionScreen, we can check if SelectionScreen is an ancestor
-  bool _isSelectionRoute(BuildContext context) {
-    // Check if SelectionScreen is in the widget tree above this AppHeader
-    final selectionScreen = context
-        .findAncestorWidgetOfExactType<SelectionScreen>();
-    return selectionScreen != null;
   }
 }
 

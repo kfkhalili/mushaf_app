@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mushaf_app/widgets/shared/app_bottom_navigation.dart';
+import 'package:mushaf_app/widgets/shared/selection_bottom_nav.dart';
 
 void main() {
-  group('AppBottomNavigation', () {
+  group('SelectionBottomNav', () {
     testWidgets('renders selection navigation correctly', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            bottomNavigationBar: AppBottomNavigation(
-              type: AppBottomNavigationType.selection,
+            bottomNavigationBar: SelectionBottomNav(
               selectedIndex: 0,
               onIndexChanged: (index) {},
             ),
@@ -17,7 +16,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(AppBottomNavigation), findsOneWidget);
+      expect(find.byType(SelectionBottomNav), findsOneWidget);
     });
 
     testWidgets('calls onIndexChanged when tab is tapped', (tester) async {
@@ -25,8 +24,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            bottomNavigationBar: AppBottomNavigation(
-              type: AppBottomNavigationType.selection,
+            bottomNavigationBar: SelectionBottomNav(
               selectedIndex: 0,
               onIndexChanged: (index) {
                 selectedIndex = index;
@@ -49,15 +47,14 @@ void main() {
         expect(selectedIndex, 1); // Juz tab is at index 1
       }
 
-      expect(find.byType(AppBottomNavigation), findsOneWidget);
+      expect(find.byType(SelectionBottomNav), findsOneWidget);
     });
 
     testWidgets('highlights selected index', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            bottomNavigationBar: AppBottomNavigation(
-              type: AppBottomNavigationType.selection,
+            bottomNavigationBar: SelectionBottomNav(
               selectedIndex: 1,
               onIndexChanged: (index) {},
             ),
@@ -65,7 +62,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(AppBottomNavigation), findsOneWidget);
+      expect(find.byType(SelectionBottomNav), findsOneWidget);
     });
   });
 }

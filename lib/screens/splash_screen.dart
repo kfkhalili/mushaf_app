@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'selection_screen.dart';
 import 'mushaf_screen.dart';
 import '../providers.dart';
+import '../utils/navigation.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -33,24 +34,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (lastPage != null && lastPage > 0) {
       // WHY: If a page was saved, we navigate to the MushafScreen directly.
       // However, to ensure the back button on the overlay works, we first
-      // replace the splash screen with the SurahSelectionScreen, then push
+      // replace the splash screen with the SelectionScreen, then push
       // the MushafScreen on top. This creates the correct navigation stack.
-      Navigator.pushReplacement(
+      // WHY: Use centralized navigation helper for consistency
+      pushReplacementAndPush(
         context,
-        MaterialPageRoute(builder: (context) => const SelectionScreen()),
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MushafScreen(initialPage: lastPage),
-        ),
+        const SelectionScreen(),
+        MushafScreen(initialPage: lastPage),
       );
     } else {
-      // WHY: If no page was saved (first launch), we go to the Surah selection screen.
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const SelectionScreen()),
-      );
+      // WHY: If no page was saved (first launch), we go to the selection screen.
+      // WHY: Use centralized navigation helper for consistency
+      pushReplacement(context, const SelectionScreen());
     }
   }
 

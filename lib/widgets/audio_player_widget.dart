@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../utils/helpers.dart';
+import '../utils/post_frame_mixin.dart';
 
 /// Floating audio player widget that appears when audio is playing.
 class AudioPlayerWidget extends ConsumerStatefulWidget {
@@ -22,7 +23,8 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
   void initState() {
     super.initState();
     // Set up listeners when widget is created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // WHY: Use PostFrameMixin to reduce code duplication
+    PostFrameMixin.runAfterFrame(this, () {
       _setupListeners();
     });
   }

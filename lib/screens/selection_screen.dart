@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
 import '../widgets/page_list_view.dart';
-import '../widgets/shared/app_bottom_navigation.dart';
+import '../widgets/shared/selection_bottom_nav.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 import '../screens/bookmarks_screen.dart';
 import 'explore_hub_screen.dart';
 import 'search_screen.dart';
 import '../utils/navigation.dart';
+import '../utils/page_controller_sync_mixin.dart';
 import 'dart:developer' as dev;
 
 class SelectionScreen extends ConsumerStatefulWidget {
@@ -19,7 +20,8 @@ class SelectionScreen extends ConsumerStatefulWidget {
   ConsumerState<SelectionScreen> createState() => _SelectionScreenState();
 }
 
-class _SelectionScreenState extends ConsumerState<SelectionScreen> {
+class _SelectionScreenState extends ConsumerState<SelectionScreen>
+    with PageControllerSyncMixin {
   late PageController _pageController;
   late final List<Widget> _preloadedViews;
 
@@ -68,16 +70,14 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     );
 
     // Sync PageController with current index
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_pageController.hasClients &&
-          _pageController.page?.round() != currentIndex) {
-        _pageController.animateToPage(
-          currentIndex,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+    // WHY: Use PageControllerSyncMixin to reduce code duplication
+    syncPageController(
+      _pageController,
+      currentIndex,
+      animated: true, // Smooth animation for SelectionScreen
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
 
     return Scaffold(
       body: Directionality(
@@ -87,14 +87,27 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             children: [
               AppHeader(
                 title: _getScreenTitle(currentIndex),
+                isSelectionScreen: true,
                 onSearchPressed: () {
-                  pushSlideFromRight(context, const SearchScreen());
+                  pushSlideTransition(
+                    context,
+                    const SearchScreen(),
+                    direction: SlideDirection.fromRight,
+                  );
                 },
                 onBookmarkPressed: () {
-                  pushSlideFromRight(context, const BookmarksScreen());
+                  pushSlideTransition(
+                    context,
+                    const BookmarksScreen(),
+                    direction: SlideDirection.fromRight,
+                  );
                 },
                 onExplorePressed: () {
-                  pushSlideFromRight(context, const ExploreHubScreen());
+                  pushSlideTransition(
+                    context,
+                    const ExploreHubScreen(),
+                    direction: SlideDirection.fromRight,
+                  );
                 },
               ),
               Expanded(
@@ -116,8 +129,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: AppBottomNavigation(
-        type: AppBottomNavigationType.selection,
+      bottomNavigationBar: SelectionBottomNav(
         selectedIndex: currentIndex,
         onIndexChanged: (index) {
           ref.read(selectionTabIndexProvider.notifier).setTabIndex(index);

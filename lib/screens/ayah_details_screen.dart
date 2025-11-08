@@ -8,6 +8,7 @@ import '../providers.dart';
 import '../screens/topic_detail_screen.dart';
 import '../utils/helpers.dart';
 import '../utils/navigation.dart';
+import '../utils/async_value_helpers.dart';
 import '../constants.dart';
 
 /// Screen showing detailed information about a specific ayah
@@ -315,9 +316,10 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
                 children: topicsWithArabic.map((topic) {
                   return InkWell(
                     onTap: () {
-                      pushSlideFromRight(
+                      pushSlideTransition(
                         context,
                         TopicDetailScreen(topicId: topic.topicId),
+                        direction: SlideDirection.fromRight,
                       );
                     },
                     child: Chip(
@@ -401,12 +403,11 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
                     // Title
                     Expanded(
                       child: Text(
-                        surahNameAsync.when(
-                          data: (name) =>
+                        extractString(
+                          surahNameAsync,
+                          (name) =>
                               '$name - آية ${convertToEasternArabicNumerals(widget.ayahNumber.toString())}',
-                          loading: () =>
-                              'آية ${convertToEasternArabicNumerals(widget.ayahNumber.toString())}',
-                          error: (error, stack) =>
+                          defaultValue:
                               'آية ${convertToEasternArabicNumerals(widget.ayahNumber.toString())}',
                         ),
                         textDirection: TextDirection.rtl,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/shared/app_header.dart';
+import '../widgets/shared/base_screen.dart';
 import '../widgets/statistics_list_view.dart';
 
 class StatisticsScreen extends StatelessWidget {
@@ -7,18 +7,10 @@ class StatisticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: SafeArea(
-          child: Column(
-            children: [
-              AppHeader(title: 'إحصائيات القراءة', showBackButton: true),
-              const Expanded(child: StatisticsListView()),
-            ],
-          ),
-        ),
-      ),
+    return BaseScreen(
+      title: 'إحصائيات القراءة',
+      showBackButton: true,
+      body: const StatisticsListView(),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../constants.dart';
 import '../models.dart';
-import '../screens/mushaf_screen.dart';
+import '../utils/navigation.dart';
 import 'shared/async_list_view.dart'; // WHY: Import the new reusable widget
 import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
@@ -64,14 +64,8 @@ class SurahListItem extends StatelessWidget {
         ),
       ),
       onTap: () {
-        // WHY: Use the centralized navigation helper.
-        // For StatelessWidget, we need to get WidgetRef from parent ConsumerWidget
-        // Navigate without clearing last_page (let the user navigate normally)
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => MushafScreen(initialPage: surah.startingPage),
-          ),
-        );
+        // Use centralized navigation helper
+        navigateToMushafScreen(context, surah.startingPage);
       },
     );
   }

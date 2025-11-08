@@ -4,7 +4,7 @@ import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
-import '../screens/mushaf_screen.dart';
+import '../utils/navigation.dart';
 import 'shared/async_list_view.dart'; // WHY: Import the new reusable widget
 import 'shared/leading_number_text.dart'; // WHY: Import the new reusable widget
 
@@ -72,13 +72,8 @@ class JuzListItem extends StatelessWidget {
       ),
       onTap: () {
         if (juzInfo.startingPage > 0) {
-          // WHY: For StatelessWidget, navigate directly without clearing last_page
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) =>
-                  MushafScreen(initialPage: juzInfo.startingPage),
-            ),
-          );
+          // Use centralized navigation helper
+          navigateToMushafScreen(context, juzInfo.startingPage);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

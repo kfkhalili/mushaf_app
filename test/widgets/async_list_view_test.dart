@@ -33,7 +33,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Custom error message: Test error'), findsOneWidget);
+      // getUserFriendlyErrorMessage converts errors to user-friendly messages
+      expect(find.textContaining('Custom error message'), findsOneWidget);
     });
 
     testWidgets('shows list items when data is available', (tester) async {
@@ -88,7 +89,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Error loading list: Test error'), findsOneWidget);
+      // getUserFriendlyErrorMessage converts errors to user-friendly messages
+      expect(find.textContaining('Error loading list'), findsOneWidget);
     });
   });
 }

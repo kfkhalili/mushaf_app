@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../utils/error_helpers.dart';
 
 typedef AsyncItemBuilder<T> = Widget Function(BuildContext context, T item);
 
@@ -28,7 +29,9 @@ class AsyncListView<T> extends StatelessWidget {
             const Divider(height: 1, indent: 24, endIndent: 24),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('$errorText: $err')),
+      error: (err, stack) => Center(
+        child: Text('$errorText: ${getUserFriendlyErrorMessage(err)}'),
+      ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
-import '../utils/helpers.dart'; // For convertToEasternArabicNumerals
+import '../utils/navigation.dart';
 import 'shared/leading_number_text.dart';
 
 class PageListView extends ConsumerStatefulWidget {
@@ -79,11 +79,14 @@ class PageListItem extends ConsumerWidget {
         error: (err, stack) => errorWidget,
       ),
       onTap: () {
-        // WHY: Use the centralized navigation helper.
-        // Capture Navigator and mounted state before async gap
-        final navigator = Navigator.of(context);
-        final isMounted = context.mounted;
-        navigateToMushafPage(navigator, isMounted, pageNumber, ref);
+        // WHY: Use the consolidated navigation helper with clearLastPage option.
+        // This replaces navigateToMushafPage from helpers.dart
+        navigateToMushafScreen(
+          context,
+          pageNumber,
+          clearLastPage: true,
+          ref: ref,
+        );
       },
     );
   }
