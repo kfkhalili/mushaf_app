@@ -16,6 +16,7 @@ import 'services/memorization_storage.dart';
 import 'services/memorization_storage_sqlite.dart';
 import 'services/ontology_service.dart';
 import 'services/tafsir_service.dart';
+import 'services/recitation_range.dart';
 import 'services/audio_service.dart';
 import 'models.dart';
 import 'models/ontology_models.dart';
@@ -294,6 +295,15 @@ class FontSizeSetting extends _$FontSizeSetting {
     final layout = ref.watch(mushafLayoutSettingProvider);
     return layoutMaxFontSizes[layout] ?? 20.0;
   }
+}
+
+// --- Recitation Range Provider ---
+// WHY: Resolves recitation end-ayah boundaries (page/surah/juz) behind a
+// testable seam, instead of inlining the logic in AudioConfigScreen.
+@riverpod
+Future<RecitationRange> recitationRange(Ref ref) async {
+  final dbService = await ref.watch(databaseServiceProvider.future);
+  return RecitationRange(dbService);
 }
 
 // --- Search Service Provider ---

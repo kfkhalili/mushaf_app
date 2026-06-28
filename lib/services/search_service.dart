@@ -1,10 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -14,6 +10,7 @@ import '../utils/lru_cache.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
 import '../utils/rate_limiter.dart';
+import 'bundled_database_store.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -37,7 +34,14 @@ class SearchService with InitializationMixin {
 
   MushafLayout? _currentLayout;
 
-  SearchService(this._databaseService);
+  // WHY: Loads + opens the bundled search databases. Injectable so tests can
+  // substitute a store that opens fixtures instead of bundled assets.
+  final BundledDatabaseStore _store;
+
+  SearchService(
+    this._databaseService, {
+    BundledDatabaseStore store = const BundledDatabaseStore(),
+  }) : _store = store;
 
   /// Initialize the search service with the current layout
   /// Uses InitializationMixin for thread-safe initialization while
@@ -91,17 +95,10 @@ class SearchService with InitializationMixin {
     // Note: layout is stored but not used directly in doInit for SearchService
     // since it uses the same databases regardless of layout
     try {
-      final documentsDirectory = await getApplicationDocumentsDirectory();
-      const dbAssetPath = 'assets/db';
-
-      // Initialize all databases using the same pattern as DatabaseService
+      // WHY: Same databases regardless of layout (search is layout-agnostic).
       final databases = await Future.wait([
-        _initDb(documentsDirectory, dbAssetPath, 'imlaei-simple.db'),
-        _initDb(
-          documentsDirectory,
-          dbAssetPath,
-          'imlaei-script-ayah-by-ayah.db',
-        ),
+        _store.open(imlaeiSimpleDbFileName),
+        _store.open(imlaeiAyahDbFileName),
       ]);
 
       _imlaeiDb = databases[0];
@@ -129,98 +126,6 @@ class SearchService with InitializationMixin {
     );
     _imlaeiDb = null;
     _imlaeiScriptDb = null;
-  }
-
-  Future<Database> _initDb(
-    Directory docsDir,
-    String assetPath,
-    String fileName,
-  ) async {
-    final dbPath = p.join(docsDir.path, fileName);
-    // WHY: Ensure the database file exists in the documents directory before opening.
-    await _copyDbFromAssets(assetFileName: fileName, destinationPath: dbPath);
-
-    // WHY: Configure database with timeout for concurrent access handling
-    // Even read-only databases can experience locks during concurrent access
-    final db = await openDatabase(
-      dbPath,
-      readOnly: true,
-      singleInstance: true, // WHY: Reuse connection for better performance
-    );
-
-    // WHY: Set busy timeout for read-only databases to handle concurrent access.
-    //
-    // PLATFORM-SPECIFIC BEHAVIOR:
-    // On iOS (SqfliteDarwinDatabase), executing PRAGMA statements on read-only
-    // databases throws exceptions even though they're not actual errors (error
-    // message explicitly says "not an error"). This is a platform-specific quirk.
-    //
-    // The FFI implementation used in tests allows PRAGMA on read-only databases,
-    // but the native iOS implementation does not. This difference is why we must
-    // wrap PRAGMA in try-catch to handle platform differences gracefully.
-    //
-    // The database is fully functional without the busy_timeout setting, so it's
-    // safe to ignore these exceptions. The setting is "nice to have" but not
-    // critical for functionality.
-    try {
-      await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
-    } catch (e) {
-      // Ignore exceptions from PRAGMA on read-only databases.
-      // This happens on iOS (SqfliteDarwinDatabase) but not on FFI (tests).
-      // The database remains fully functional without this setting.
-    }
-
-    return db;
-  }
-
-  Future<void> _copyDbFromAssets({
-    required String assetFileName,
-    required String destinationPath,
-  }) async {
-    // Validate database file name against whitelist
-    final allowedDbNames = [
-      imlaeiAyahDbFileName,
-      'imlaei-simple.db',
-      'imlaei-script-ayah-by-ayah.db',
-    ];
-    try {
-      validateDatabaseFileName(assetFileName, allowedDbNames);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Invalid database file name: $e");
-    }
-
-    final dbFile = File(destinationPath);
-
-    // Validate path to prevent path traversal
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    try {
-      validateFilePath(destinationPath, documentsDirectory.path);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Path traversal detected: $e");
-    }
-
-    // WHY: Avoid recopying if the database already exists.
-    if (await dbFile.exists()) {
-      return;
-    }
-    try {
-      // WHY: Load the database from assets and write it to the device's documents directory.
-      final ByteData data = await rootBundle.load(
-        p.join('assets/db', assetFileName),
-      );
-      final List<int> bytes = data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      );
-      await dbFile.parent.create(recursive: true); // Ensure directory exists
-      await dbFile.writeAsBytes(bytes, flush: true);
-    } catch (e, stackTrace) {
-      throw DatabaseConnectionException(
-        "Error copying database '$assetFileName' from assets",
-        originalError: e,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   /// Search for Arabic text in the Quran

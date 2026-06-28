@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
+import '../services/recitation_range.dart';
 import '../utils/helpers.dart';
 import '../utils/post_frame_mixin.dart';
 import '../models.dart';
@@ -112,103 +113,59 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
     }
   }
 
-  /// Sets the default end ayah to the end of the juz containing the start ayah
+  /// Sets the default end ayah to the end of the juz containing the start ayah.
   Future<void> _setDefaultEndToJuz() async {
-    if (_selectedSurah == null || _selectedStartAyah == null) return;
-
-    try {
-      final dbService = await ref.read(databaseServiceProvider.future);
-      // Get juz for the start ayah
-      final juzNumber = await dbService.getJuzForAyah(
-        _selectedSurah!,
-        _selectedStartAyah!,
-      );
-      if (juzNumber == null) return;
-
-      // Get last ayah in that juz
-      final endAyah = await dbService.getLastAyahInJuz(juzNumber);
-      if (endAyah != null && mounted) {
-        final endAyahData = endAyah;
-        setState(() {
-          _selectedEndAyah = endAyahData['ayah'];
-          // Get surah name for end ayah if different surah
-          final endAyahSurah = endAyahData['surah'];
-          if (endAyahSurah != null && endAyahSurah != _selectedSurah) {
-            dbService.getSurahName(endAyahSurah).then((name) {
-              if (mounted) {
-                setState(() {
-                  _selectedEndSurahName = name;
-                });
-              }
-            });
-          } else {
-            _selectedEndSurahName = _selectedStartSurahName;
-          }
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error setting default end to juz: $e');
-      }
-    }
+    await _resolveAndApplyEnd(RecitationEndOption.juz);
   }
 
   Future<void> _handleEndVerseOption(String option) async {
-    if (_selectedSurah == null || _selectedStartAyah == null) return;
-
     setState(() {
       _endVerseOption = option;
     });
+    final endOption = switch (option) {
+      'page' => RecitationEndOption.page,
+      'surah' => RecitationEndOption.surah,
+      _ => RecitationEndOption.juz,
+    };
+    await _resolveAndApplyEnd(endOption);
+  }
+
+  /// Resolves the recitation end ayah for [option] via [RecitationRange] and
+  /// applies it to the selection, fetching the end surah's display name when it
+  /// differs from the start surah.
+  Future<void> _resolveAndApplyEnd(RecitationEndOption option) async {
+    if (_selectedSurah == null || _selectedStartAyah == null) return;
 
     try {
-      final dbService = await ref.read(databaseServiceProvider.future);
-      Map<String, int>? endAyah;
+      final recitationRange = await ref.read(recitationRangeProvider.future);
+      final end = await recitationRange.resolveEndAyah(
+        start: (surah: _selectedSurah!, ayah: _selectedStartAyah!),
+        option: option,
+        currentPage: ref.read(currentPageProvider),
+      );
+      if (end == null || !mounted) return;
 
-      if (option == 'page') {
-        // Get last ayah on current page
-        final currentPage = ref.read(currentPageProvider);
-        endAyah = await dbService.getLastAyahOnPage(currentPage);
-      } else if (option == 'surah') {
-        // Get last ayah in current surah
-        final lastAyahNumber = await dbService.getLastAyahInSurah(
-          _selectedSurah!,
-        );
-        if (lastAyahNumber != null) {
-          endAyah = {'surah': _selectedSurah!, 'ayah': lastAyahNumber};
-        }
-      } else if (option == 'juz') {
-        // Get last ayah in current juz
-        final juzNumber = await dbService.getJuzForAyah(
-          _selectedSurah!,
-          _selectedStartAyah!,
-        );
-        if (juzNumber != null) {
-          endAyah = await dbService.getLastAyahInJuz(juzNumber);
-        }
-      }
+      setState(() {
+        _selectedEndAyah = end.ayah;
+      });
 
-      if (endAyah != null && mounted) {
-        final endAyahData = endAyah;
+      // Update the displayed end surah name only when it differs from the start.
+      if (end.surah != _selectedSurah) {
+        final dbService = await ref.read(databaseServiceProvider.future);
+        final name = await dbService.getSurahName(end.surah);
+        if (mounted) {
+          setState(() {
+            _selectedEndSurahName = name;
+          });
+        }
+      } else if (mounted) {
         setState(() {
-          _selectedEndAyah = endAyahData['ayah'];
-          // Get surah name for end ayah if different surah
-          final endAyahSurah = endAyahData['surah'];
-          if (endAyahSurah != null && endAyahSurah != _selectedSurah) {
-            dbService.getSurahName(endAyahSurah).then((name) {
-              if (mounted) {
-                setState(() {
-                  _selectedEndSurahName = name;
-                });
-              }
-            });
-          } else {
-            _selectedEndSurahName = _selectedStartSurahName;
-          }
+          _selectedEndSurahName = _selectedStartSurahName;
         });
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error setting end verse option: $e');
+        debugPrint('Error resolving recitation end ($option): $e');
       }
     }
   }

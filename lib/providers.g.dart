@@ -898,6 +898,45 @@ abstract class _$FontSizeSetting extends $Notifier<double> {
   }
 }
 
+@ProviderFor(recitationRange)
+const recitationRangeProvider = RecitationRangeProvider._();
+
+final class RecitationRangeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RecitationRange>,
+          RecitationRange,
+          FutureOr<RecitationRange>
+        >
+    with $FutureModifier<RecitationRange>, $FutureProvider<RecitationRange> {
+  const RecitationRangeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'recitationRangeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$recitationRangeHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<RecitationRange> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<RecitationRange> create(Ref ref) {
+    return recitationRange(ref);
+  }
+}
+
+String _$recitationRangeHash() => r'351aa8858987f15c3e21d9e0f07074d8650f9a95';
+
 @ProviderFor(searchService)
 const searchServiceProvider = SearchServiceProvider._();
 

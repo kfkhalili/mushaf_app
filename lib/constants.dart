@@ -14,6 +14,28 @@ const String imlaeiAyahDbFileName = 'imlaei-script-ayah-by-ayah.db';
 const String topicsDbFileName = 'topics.db';
 const String audioDbFileName = 'surah-recitation-abdullah-ali-jabir.db';
 const String tafsirDbFileName = 'ar-tafsir-muyassar.db';
+const String imlaeiSimpleDbFileName = 'imlaei-simple.db';
+
+/// Every read-only SQLite database bundled under `assets/db/`.
+///
+/// WHY: Single source of truth for the whitelist [BundledDatabaseStore] checks
+/// before copying an asset, so a stray name can never load an arbitrary file.
+const List<String> bundledDatabaseFileNames = <String>[
+  layoutDbFileName,
+  indopakLayoutDbFileName,
+  digitalKhattLayoutDbFileName,
+  scriptDbFileName,
+  indopakScriptDbFileName,
+  digitalKhattScriptDbFileName,
+  metadataDbFileName,
+  juzDbFileName,
+  hizbDbFileName,
+  imlaeiAyahDbFileName,
+  imlaeiSimpleDbFileName,
+  topicsDbFileName,
+  audioDbFileName,
+  tafsirDbFileName,
+];
 
 // --- MUSHAF LAYOUT OPTIONS ---
 enum MushafLayout { uthmani15Lines, indopak13Lines, digitalKhatt15Lines }

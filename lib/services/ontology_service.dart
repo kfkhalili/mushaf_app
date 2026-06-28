@@ -1,30 +1,26 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/ontology_models.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/validation_helpers.dart';
+import 'bundled_database_store.dart';
 
 class OntologyService with InitializationMixin {
   Database? _topicsDb;
 
+  // WHY: Loads + opens the bundled topics database. Injectable so tests can
+  // substitute a store that opens fixtures instead of bundled assets.
+  final BundledDatabaseStore _store;
+
+  OntologyService({BundledDatabaseStore store = const BundledDatabaseStore()})
+    : _store = store;
+
   @override
   Future<void> doInit() async {
     try {
-      final documentsDirectory = await getApplicationDocumentsDirectory();
-      const dbAssetPath = 'assets/db';
-
-      // Use existing _initDb pattern from DatabaseService
-      _topicsDb = await _initDb(
-        documentsDirectory,
-        dbAssetPath,
-        topicsDbFileName,
-      );
+      _topicsDb = await _store.open(topicsDbFileName);
 
       markInitialized();
     } catch (e, stackTrace) {
@@ -39,99 +35,6 @@ class OntologyService with InitializationMixin {
     await _topicsDb?.close();
     _topicsDb = null;
     resetInitializationState();
-  }
-
-  /// Initializes a database by copying from assets if not already present.
-  /// WHY: Reuse pattern from DatabaseService for consistency.
-  Future<Database> _initDb(
-    Directory documentsDirectory,
-    String assetPath,
-    String assetFileName,
-  ) async {
-    final destinationPath = p.join(documentsDirectory.path, assetFileName);
-
-    await _copyDatabaseIfNeeded(
-      assetFileName: assetFileName,
-      destinationPath: destinationPath,
-    );
-
-    try {
-      final db = await openDatabase(
-        destinationPath,
-        readOnly: true,
-        singleInstance: true,
-      );
-
-      // WHY: Don't set PRAGMA busy_timeout on read-only databases.
-      // busy_timeout is for write locks and not needed for read-only databases.
-      // On iOS (SqfliteDarwinDatabase), attempting PRAGMA on read-only databases
-      // throws exceptions even though they're not errors. The database works
-      // perfectly fine without this setting for read-only operations.
-
-      return db;
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('Error opening topics database: $e\n$stackTrace');
-      }
-      throw DatabaseConnectionException(
-        "Error opening database '$assetFileName'",
-        originalError: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  /// Copies database from assets to documents directory if it doesn't exist.
-  /// WHY: Reuse pattern from DatabaseService for consistency.
-  Future<void> _copyDatabaseIfNeeded({
-    required String assetFileName,
-    required String destinationPath,
-  }) async {
-    // Validate database file name against whitelist
-    final allowedDbNames = [topicsDbFileName];
-    try {
-      validateDatabaseFileName(assetFileName, allowedDbNames);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Invalid database file name: $e");
-    }
-
-    final dbFile = File(destinationPath);
-
-    // Validate path to prevent path traversal
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    try {
-      validateFilePath(destinationPath, documentsDirectory.path);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Path traversal detected: $e");
-    }
-
-    // WHY: Avoid recopying if the database already exists.
-    if (await dbFile.exists()) {
-      return;
-    }
-    try {
-      if (kDebugMode) {
-        debugPrint('Copying topics database from assets: $assetFileName');
-      }
-      // WHY: Load the database from assets and write it to the device's documents directory.
-      final assetPath = p.join('assets/db', assetFileName);
-      final ByteData data = await rootBundle.load(assetPath);
-      final List<int> bytes = data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      );
-      await dbFile.parent.create(recursive: true); // Ensure directory exists
-      await dbFile.writeAsBytes(bytes, flush: true);
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('Error copying database: $e\n$stackTrace');
-      }
-      throw DatabaseConnectionException(
-        "Error copying database '$assetFileName' from assets",
-        originalError: e,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   /// Fetches a specific topic by its ID.

@@ -1,9 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart'; // For kDebugMode and debugPrint
-import 'package:flutter/services.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -11,6 +7,7 @@ import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
+import 'bundled_database_store.dart';
 
 class DatabaseService with InitializationMixin {
   Database? _layoutDb;
@@ -25,6 +22,13 @@ class DatabaseService with InitializationMixin {
   List<Map<String, dynamic>> _hizbCache = const [];
 
   MushafLayout? _currentLayout;
+
+  // WHY: Loads + opens bundled read-only databases. Injectable so tests can
+  // substitute a store that opens fixtures instead of bundled assets.
+  final BundledDatabaseStore _store;
+
+  DatabaseService({BundledDatabaseStore store = const BundledDatabaseStore()})
+    : _store = store;
 
   // WHY: This is the public 'init' method. It uses InitializationMixin for
   // thread-safe initialization while supporting layout parameterization.
@@ -71,17 +75,15 @@ class DatabaseService with InitializationMixin {
       );
     }
     final layout = _currentLayout!;
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    const dbAssetPath = 'assets/db';
 
     final databases = await Future.wait([
-      _initDb(documentsDirectory, dbAssetPath, layout.layoutDatabaseFileName),
-      _initDb(documentsDirectory, dbAssetPath, layout.scriptDatabaseFileName),
-      _initDb(documentsDirectory, dbAssetPath, metadataDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, juzDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, hizbDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, imlaeiAyahDbFileName),
-      _initDb(documentsDirectory, dbAssetPath, audioDbFileName),
+      _store.open(layout.layoutDatabaseFileName),
+      _store.open(layout.scriptDatabaseFileName),
+      _store.open(metadataDbFileName),
+      _store.open(juzDbFileName),
+      _store.open(hizbDbFileName),
+      _store.open(imlaeiAyahDbFileName),
+      _store.open(audioDbFileName),
     ]);
 
     _layoutDb = databases[0];
@@ -127,110 +129,6 @@ class DatabaseService with InitializationMixin {
         _audioDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
-  }
-
-  Future<Database> _initDb(
-    Directory docsDir,
-    String assetPath,
-    String fileName,
-  ) async {
-    final dbPath = p.join(docsDir.path, fileName);
-    // WHY: Ensure the database file exists in the documents directory before opening.
-    await _copyDbFromAssets(assetFileName: fileName, destinationPath: dbPath);
-
-    // WHY: Configure database with timeout for concurrent access handling
-    // Even read-only databases can experience locks during concurrent access
-    final db = await openDatabase(
-      dbPath,
-      readOnly: true,
-      singleInstance: true, // WHY: Reuse connection for better performance
-    );
-
-    // WHY: Set busy timeout for read-only databases to handle concurrent access.
-    //
-    // PLATFORM-SPECIFIC BEHAVIOR:
-    // On iOS (SqfliteDarwinDatabase), executing PRAGMA statements on read-only
-    // databases throws exceptions even though they're not actual errors (error
-    // message explicitly says "not an error"). This is a platform-specific quirk.
-    //
-    // The FFI implementation used in tests allows PRAGMA on read-only databases,
-    // but the native iOS implementation does not. This difference is why we must
-    // wrap PRAGMA in try-catch to handle platform differences gracefully.
-    //
-    // The database is fully functional without the busy_timeout setting, so it's
-    // safe to ignore these exceptions. The setting is "nice to have" but not
-    // critical for functionality.
-    try {
-      await db.execute('PRAGMA busy_timeout=5000'); // 5 second timeout
-    } catch (e) {
-      // Ignore exceptions from PRAGMA on read-only databases.
-      // This happens on iOS (SqfliteDarwinDatabase) but not on FFI (tests).
-      // The database remains fully functional without this setting.
-    }
-
-    return db;
-  }
-
-  Future<void> _copyDbFromAssets({
-    required String assetFileName,
-    required String destinationPath,
-  }) async {
-    // Validate database file name against whitelist
-    final allowedDbNames = [
-      layoutDbFileName,
-      indopakLayoutDbFileName,
-      digitalKhattLayoutDbFileName,
-      scriptDbFileName,
-      indopakScriptDbFileName,
-      digitalKhattScriptDbFileName,
-      metadataDbFileName,
-      juzDbFileName,
-      hizbDbFileName,
-      imlaeiAyahDbFileName,
-      topicsDbFileName,
-      audioDbFileName,
-      tafsirDbFileName,
-    ];
-    try {
-      validateDatabaseFileName(assetFileName, allowedDbNames);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Invalid database file name: $e");
-    }
-
-    final dbFile = File(destinationPath);
-
-    // Validate path to prevent path traversal
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    try {
-      validateFilePath(destinationPath, documentsDirectory.path);
-    } on ArgumentError catch (e) {
-      throw DatabaseConnectionException("Path traversal detected: $e");
-    }
-
-    // WHY: In debug mode, always recopy databases to pick up changes during development.
-    // In release mode, avoid recopying if the database already exists for performance.
-    final shouldRecopy = kDebugMode || !await dbFile.exists();
-    if (!shouldRecopy) {
-      return;
-    }
-    try {
-      // WHY: Load the database from assets and write it to the device's documents directory.
-      final ByteData data = await rootBundle.load(
-        p.join('assets/db', assetFileName),
-      );
-      final List<int> bytes = data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      );
-      await dbFile.parent.create(recursive: true); // Ensure directory exists
-      await dbFile.writeAsBytes(bytes, flush: true);
-    } catch (e, stackTrace) {
-      throw DatabaseConnectionException(
-        "Error copying database '$assetFileName' from assets",
-        originalError: e,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   /// Fetches the text for a specific ayah.
@@ -1531,13 +1429,7 @@ class DatabaseService with InitializationMixin {
 
     // For other layouts, open the database temporarily
     try {
-      final documentsDirectory = await getApplicationDocumentsDirectory();
-      const dbAssetPath = 'assets/db';
-      final db = await _initDb(
-        documentsDirectory,
-        dbAssetPath,
-        layout.layoutDatabaseFileName,
-      );
+      final db = await _store.open(layout.layoutDatabaseFileName);
 
       try {
         final List<Map<String, dynamic>> result = await db.query(
