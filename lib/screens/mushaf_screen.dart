@@ -5,7 +5,6 @@ import '../widgets/mushaf_page.dart';
 import '../widgets/shared/mushaf_bottom_nav.dart';
 import '../widgets/shared/app_header.dart';
 import '../providers.dart';
-import '../utils/ui_signals.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
@@ -453,7 +452,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                             session.pageNumber == page;
                         if (isBetaMemorizing) {
                           // Flash multiple times to reinforce the hint
-                          flashMemorizationIcon(times: 3);
+                          ref
+                              .read(memorizationIconFlashProvider.notifier)
+                              .flash(times: 3);
                         }
                       },
                       onHorizontalDragUpdate: (details) {
@@ -465,8 +466,9 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                             session.pageNumber == page;
                         if (isBetaMemorizing) {
                           // absorb gesture by doing nothing and flashing
-                          memorizationIconFlashTick.value =
-                              memorizationIconFlashTick.value + 1;
+                          ref
+                              .read(memorizationIconFlashProvider.notifier)
+                              .pulse();
                         }
                       },
                       child: totalPagesAsync.when(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers.dart';
 import '../../constants.dart';
-import '../../utils/ui_signals.dart';
 import 'bottom_nav_helpers.dart';
 import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 
@@ -20,12 +19,13 @@ class MemorizationButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(memorizationSessionProvider);
+    // Watch the flash counter so the icon pulses when it changes.
+    final int flashTick = ref.watch(memorizationIconFlashProvider);
     final unselectedIconColor = BottomNavHelpers.getUnselectedIconColor(
       context,
     );
     final selectedIconColor = BottomNavHelpers.getSelectedIconColor(context);
 
-    // Listen to global flash tick to animate icon briefly
     final bool active = session != null && session.pageNumber == pageNumber;
 
     final String tooltip = enableMemorizationBeta
@@ -37,19 +37,13 @@ class MemorizationButton extends ConsumerWidget {
       padding: const EdgeInsets.only(left: 8.0),
       child: SizedBox(
         height: kBottomNavBarHeight,
-        child: ValueListenableBuilder<int>(
-          valueListenable: memorizationIconFlashTick,
-          builder: (context, tick, child) {
-            return TweenAnimationBuilder<double>(
-              key: ValueKey(tick),
-              tween: Tween(begin: 1.15, end: 1.0),
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              builder: (context, scale, child) =>
-                  Transform.scale(scale: scale, child: child),
-              child: child,
-            );
-          },
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey(flashTick),
+          tween: Tween(begin: 1.15, end: 1.0),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          builder: (context, scale, child) =>
+              Transform.scale(scale: scale, child: child),
           child: BottomNavHelpers.buildNavIconButton(
             context: context,
             icon: Icon(
