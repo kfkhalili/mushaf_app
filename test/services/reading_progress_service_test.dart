@@ -120,9 +120,13 @@ void main() {
     test(
       'recordPageView throws ArgumentError for invalid page numbers',
       () async {
+        // WHY: This service is constructed without a DatabaseService, so only
+        // the layout-independent bounds apply. Page counts are layout-specific
+        // (Uthmani 604, Indopak 849, Indopak 9-line 1890), so 605 is no longer
+        // universally invalid; only <1 and beyond the absolute ceiling are.
         expect(() => service.recordPageView(0), throwsA(isA<ArgumentError>()));
         expect(
-          () => service.recordPageView(605),
+          () => service.recordPageView(maxSupportedPages + 1),
           throwsA(isA<ArgumentError>()),
         );
       },

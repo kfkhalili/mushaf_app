@@ -1,5 +1,7 @@
 import 'package:path/path.dart' as p;
 
+import '../constants.dart';
+
 // WHY: Shared validation utilities for input sanitization and security.
 //
 // This provides consistent validation across the app to prevent:
@@ -73,13 +75,18 @@ void validateSurahAyah(int surahNumber, int ayahNumber) {
   validateAyahNumber(ayahNumber);
 }
 
-/// Validates a page number (1-604).
+/// Validates a page number against the current layout's page count.
 ///
-/// Throws [ArgumentError] if page number is out of range.
-void validatePageNumber(int pageNumber) {
-  if (pageNumber < 1 || pageNumber > 604) {
+/// Page counts are layout-specific (Uthmani 604, Indopak 849, Indopak 9-line
+/// 1890), so callers that know the active layout's total should pass it via
+/// [maxPage]. When unknown, [maxSupportedPages] is used as a generous upper
+/// bound so larger layouts are not wrongly rejected.
+///
+/// Throws [ArgumentError] if the page number is out of range.
+void validatePageNumber(int pageNumber, {int maxPage = maxSupportedPages}) {
+  if (pageNumber < 1 || pageNumber > maxPage) {
     throw ArgumentError(
-      'Page number must be between 1 and 604, got: $pageNumber',
+      'Page number must be between 1 and $maxPage, got: $pageNumber',
     );
   }
 }

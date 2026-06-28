@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `mushaf_app` is a Flutter Quran (Mushaf) reader supporting iOS, Android, web, macOS, Windows, and Linux. It renders the Quran page-by-page (604 pages) with authentic typography, plus search, bookmarks, reading-progress stats, audio recitation, tafsir, a topic/ontology explorer, and a memorization mode. All Quran data ships as bundled read-only SQLite databases; no backend.
 
-Fixed configuration constants: 604 total pages, multiple bundled DBs, 604 page-specific Uthmani fonts, 3 themes (light/dark/sepia), portrait-only orientation, RTL by default.
+Fixed configuration constants: multiple bundled DBs, 604 page-specific Uthmani fonts, 3 themes (light/dark/sepia), portrait-only orientation, RTL by default. Total page count is layout-specific — read at runtime from each layout's `info` table via `getTotalPages()` (Uthmani 604, Indopak 849, Indopak 9-line 1890); `totalPages = 604` is only a fallback.
 
 ## Commands
 
@@ -62,7 +62,7 @@ final ByteData data = await rootBundle.load('assets/db/$assetFileName');
 await dbFile.writeAsBytes(data.buffer.asUint8List(), flush: true);
 ```
 
-Two render layouts (`MushafLayout.uthmani15Lines`, `indopak13Lines`) each have their own layout + script DB. User-generated data (bookmarks, reading progress, memorization) lives in a separate writable `app_data.db` via `AppDataService`.
+Four render layouts (`MushafLayout.uthmani15Lines`, `indopak13Lines`, `digitalKhatt15Lines`, `indopak9Lines`) each map to a layout DB (+ a script DB for word text); `indopak9Lines` reuses the Digital Khatt script DB and font. User-generated data (bookmarks, reading progress, memorization) lives in a separate writable `app_data.db` via `AppDataService`.
 
 **Service initialization.** Services mix in `InitializationMixin` (from `utils/initialization_mixin.dart`) for thread-safe lazy init — never use ad-hoc init flags. Implement `doInit()` (copy/open DBs, warm static caches like Juz/Hizb once) and call `markInitialized()`; **every public method starts with `await ensureInitialized()`**.
 

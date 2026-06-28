@@ -72,16 +72,22 @@ class SqliteReadingProgressService implements ReadingProgressService {
     validatePageNumber(pageNumber);
 
     // Additional validation: Check against actual total pages from database if available
-    // WHY: validatePageNumber() checks against 604, but we should respect actual layout
+    // WHY: validatePageNumber() bounds against a generic ceiling; this tightens
+    // it to the active layout's real page count (604 / 849 / 1890).
     if (_databaseService != null) {
+      int? layoutTotalPages;
       try {
-        final totalPages = await _databaseService.getTotalPages();
-        if (pageNumber > totalPages) {
-          throw ArgumentError('Page number must be between 1 and $totalPages');
-        }
+        layoutTotalPages = await _databaseService.getTotalPages();
       } catch (e) {
-        // If we can't get total pages, validatePageNumber() already validated against 604
-        // This is acceptable fallback behavior
+        // If we can't get the layout total, the generic validatePageNumber()
+        // bound above still applies. This is acceptable fallback behavior.
+      }
+      // WHY: kept outside the try so this bound rejection propagates rather than
+      // being swallowed by the getTotalPages() fallback catch.
+      if (layoutTotalPages != null && pageNumber > layoutTotalPages) {
+        throw ArgumentError(
+          'Page number must be between 1 and $layoutTotalPages',
+        );
       }
     }
 

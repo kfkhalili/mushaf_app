@@ -23,6 +23,10 @@ void main() {
                   name: 'Indopak',
                   linesPerPage: 13,
                 ),
+                MushafLayout.indopak9Lines: const LayoutInfo(
+                  name: 'Indopak 9 lines',
+                  linesPerPage: 9,
+                ),
               }),
             ),
           ],
@@ -52,6 +56,10 @@ void main() {
                   name: 'Indopak',
                   linesPerPage: 13,
                 ),
+                MushafLayout.indopak9Lines: const LayoutInfo(
+                  name: 'Indopak 9 lines',
+                  linesPerPage: 9,
+                ),
               }),
             ),
           ],
@@ -78,6 +86,10 @@ void main() {
           MushafLayout.indopak13Lines: const LayoutInfo(
             name: 'Indopak',
             linesPerPage: 13,
+          ),
+          MushafLayout.indopak9Lines: const LayoutInfo(
+            name: 'Indopak 9 lines',
+            linesPerPage: 9,
           ),
         }),
       ),
