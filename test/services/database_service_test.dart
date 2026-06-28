@@ -76,6 +76,36 @@ void main() {
       }
     });
 
+    test(
+      'getPageLayout works beyond page 604 for layouts larger than Uthmani',
+      () async {
+        // WHY: regression for the validatePageNumber 604 hard-cap, which
+        // previously threw on Indopak pages 605-849 (real page count 849).
+        await service.init(layout: MushafLayout.indopak13Lines);
+
+        final layout = await service.getPageLayout(700);
+        expect(layout.pageNumber, 700);
+        expect(layout.lines, isNotEmpty);
+      },
+    );
+
+    test('indopak9Lines reports 1890 pages and renders a high page', () async {
+      await service.init(layout: MushafLayout.indopak9Lines);
+
+      final totalPages = await service.getTotalPages();
+      expect(totalPages, 1890);
+
+      // A page well past every other layout's range must render with words.
+      final layout = await service.getPageLayout(1500);
+      expect(layout.pageNumber, 1500);
+      expect(layout.lines, isNotEmpty);
+      expect(
+        layout.lines.any((line) => line.words.isNotEmpty),
+        isTrue,
+        reason: 'Word text should resolve from the shared digital-khatt script',
+      );
+    });
+
     test('getPageHeaderInfo returns correct structure', () async {
       await service.init(layout: MushafLayout.uthmani15Lines);
 

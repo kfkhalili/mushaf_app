@@ -44,6 +44,11 @@ class FontService {
         pageFontFamily = digitalKhattFontFamily;
         fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
         break;
+      case MushafLayout.indopak9Lines:
+        // Reuses the Digital Khatt font (single font for all pages)
+        pageFontFamily = digitalKhattFontFamily;
+        fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
+        break;
     }
 
     try {
@@ -89,6 +94,10 @@ class FontService {
         fontAssetPath = 'assets/fonts/indopak-font.ttf';
         break;
       case MushafLayout.digitalKhatt15Lines:
+        fontFamily = digitalKhattFontFamily;
+        fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
+        break;
+      case MushafLayout.indopak9Lines:
         fontFamily = digitalKhattFontFamily;
         fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
         break;

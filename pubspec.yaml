@@ -77,6 +77,7 @@ flutter:
     - assets/db/uthmani-15-lines.db
     - assets/db/indopak-13-lines-layout-qudratullah.db
     - assets/db/digital-khatt-15-lines.db
+    - assets/db/indopak-9-lines-gaba.db
     - assets/db/digital-khatt-v2.db
     - assets/db/qpc-v2.db
     - assets/db/indopak-nastaleeq.db

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 const String layoutDbFileName = 'uthmani-15-lines.db';
 const String indopakLayoutDbFileName = 'indopak-13-lines-layout-qudratullah.db';
 const String digitalKhattLayoutDbFileName = 'digital-khatt-15-lines.db';
+const String indopak9LinesLayoutDbFileName = 'indopak-9-lines-gaba.db';
 const String scriptDbFileName = 'qpc-v2.db';
 const String indopakScriptDbFileName = 'indopak-nastaleeq.db';
 const String digitalKhattScriptDbFileName = 'digital-khatt-v2.db';
@@ -24,6 +25,7 @@ const List<String> bundledDatabaseFileNames = <String>[
   layoutDbFileName,
   indopakLayoutDbFileName,
   digitalKhattLayoutDbFileName,
+  indopak9LinesLayoutDbFileName,
   scriptDbFileName,
   indopakScriptDbFileName,
   digitalKhattScriptDbFileName,
@@ -38,7 +40,12 @@ const List<String> bundledDatabaseFileNames = <String>[
 ];
 
 // --- MUSHAF LAYOUT OPTIONS ---
-enum MushafLayout { uthmani15Lines, indopak13Lines, digitalKhatt15Lines }
+enum MushafLayout {
+  uthmani15Lines,
+  indopak13Lines,
+  digitalKhatt15Lines,
+  indopak9Lines,
+}
 
 extension MushafLayoutExtension on MushafLayout {
   String get layoutDatabaseFileName {
@@ -49,6 +56,8 @@ extension MushafLayoutExtension on MushafLayout {
         return indopakLayoutDbFileName;
       case MushafLayout.digitalKhatt15Lines:
         return digitalKhattLayoutDbFileName;
+      case MushafLayout.indopak9Lines:
+        return indopak9LinesLayoutDbFileName;
     }
   }
 
@@ -59,6 +68,10 @@ extension MushafLayoutExtension on MushafLayout {
       case MushafLayout.indopak13Lines:
         return indopakScriptDbFileName;
       case MushafLayout.digitalKhatt15Lines:
+        return digitalKhattScriptDbFileName;
+      // WHY: The QUL 9-line layout references the same global word ids
+      // (1..83668) as the Digital Khatt script, so it reuses that word source.
+      case MushafLayout.indopak9Lines:
         return digitalKhattScriptDbFileName;
     }
   }
@@ -71,6 +84,8 @@ extension MushafLayoutExtension on MushafLayout {
         return 'إندوباك (١٣ سطر)';
       case MushafLayout.digitalKhatt15Lines:
         return 'خط رقمي (١٥ سطر)';
+      case MushafLayout.indopak9Lines:
+        return 'إندوباك (٩ سطر)';
     }
   }
 
@@ -81,6 +96,10 @@ extension MushafLayoutExtension on MushafLayout {
       case MushafLayout.indopak13Lines:
         return indopakFontFamily;
       case MushafLayout.digitalKhatt15Lines:
+        return digitalKhattFontFamily;
+      // WHY: Rendered with the Digital Khatt font (per product decision to
+      // reuse the existing font rather than bundle a separate Indopak one).
+      case MushafLayout.indopak9Lines:
         return digitalKhattFontFamily;
     }
   }
@@ -106,6 +125,7 @@ const Map<MushafLayout, double> layoutMaxFontSizes = {
   MushafLayout.uthmani15Lines: 20.0,
   MushafLayout.indopak13Lines: 24.0,
   MushafLayout.digitalKhatt15Lines: 20.0,
+  MushafLayout.indopak9Lines: 28.0, // Fewer lines/page ⇒ larger glyphs
 };
 
 // Layout-specific line heights
@@ -113,6 +133,7 @@ const Map<MushafLayout, double> layoutLineHeights = {
   MushafLayout.uthmani15Lines: 2.1,
   MushafLayout.indopak13Lines: 2.05, // Tighter to prevent overflow
   MushafLayout.digitalKhatt15Lines: 2.1,
+  MushafLayout.indopak9Lines: 2.2,
 };
 
 // --- STYLING CONSTANTS ---
@@ -284,7 +305,14 @@ class DateCalculations {
 // --- APP CONSTANTS (Newly Added) ---
 
 // WHY: Centralize the total page count for use in PageView builders and ListViews.
+// Layout-specific page counts come from each layout's `info` table via
+// DatabaseService.getTotalPages(); this is only a safe fallback (Uthmani size).
 const int totalPages = 604;
+
+// WHY: Upper bound for page-number validation across ALL layouts. Layouts vary
+// in length (Uthmani 604, Indopak 849, Indopak 9-line 1890), so a per-layout
+// total is passed to validatePageNumber when known; this is the absolute ceiling.
+const int maxSupportedPages = 2000;
 
 /// WHY: Centralizes all database table and column names as constants
 /// to prevent typos and make schema changes easier to manage.

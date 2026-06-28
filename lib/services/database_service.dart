@@ -23,6 +23,11 @@ class DatabaseService with InitializationMixin {
 
   MushafLayout? _currentLayout;
 
+  // WHY: Page counts are layout-specific (604 / 849 / 1890). Cached once at init
+  // from the layout's `info` table so page-number validation is accurate per
+  // layout instead of relying on a hardcoded 604 ceiling.
+  int? _totalPages;
+
   // WHY: Loads + opens bundled read-only databases. Injectable so tests can
   // substitute a store that opens fixtures instead of bundled assets.
   final BundledDatabaseStore _store;
@@ -93,6 +98,26 @@ class DatabaseService with InitializationMixin {
     _metadataDb = databases[2];
     _ayahTextDb = databases[3];
 
+    // WHY: Cache the layout's page count once so validatePageNumber() can bound
+    // against the real per-layout total (not a hardcoded 604). Falls back to the
+    // generic ceiling if the info table is missing/unreadable.
+    try {
+      final List<Map<String, dynamic>> infoResult = await _layoutDb!.query(
+        DbConstants.infoTable,
+        columns: [DbConstants.numberOfPagesCol],
+        limit: QueryLimits.singleResult,
+      );
+      if (infoResult.isNotEmpty &&
+          infoResult.first[DbConstants.numberOfPagesCol] != null) {
+        _totalPages = parseInt(infoResult.first[DbConstants.numberOfPagesCol]);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Could not cache total pages from info table: $e');
+      }
+      _totalPages = null;
+    }
+
     // WHY: Audio metadata and the Juz'/Hizb index own their own connections.
     // JuzHizbIndex opens its two databases just long enough to read their range
     // tables; AudioMetadata keeps the audio connection open for runtime queries.
@@ -109,6 +134,7 @@ class DatabaseService with InitializationMixin {
   }
 
   Future<void> _closeDatabases() async {
+    _totalPages = null;
     await _audioMetadata.close();
     await Future.wait(
       [
@@ -402,7 +428,7 @@ class DatabaseService with InitializationMixin {
   /// Public method for use by bookmarks service migration.
   Future<Map<String, int>> getFirstAyahOnPage(int pageNumber) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
     return await _getFirstAyahOnPage(pageNumber);
   }
 
@@ -485,7 +511,7 @@ class DatabaseService with InitializationMixin {
   /// Retrieves a list of all ayahs (surah and ayah numbers) on a given page.
   Future<List<Map<String, int>>> getAyahsOnPage(int pageNumber) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
 
     await init();
     if (_layoutDb == null || _scriptDb == null) {
@@ -554,7 +580,7 @@ class DatabaseService with InitializationMixin {
   /// Retrieves header information (Juz', Hizb, Surah Name, Surah Number) for a given page.
   Future<Map<String, dynamic>> getPageHeaderInfo(int pageNumber) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
 
     await init();
     try {
@@ -584,7 +610,7 @@ class DatabaseService with InitializationMixin {
   /// Retrieves the complete layout (lines and words) for a given page number.
   Future<PageLayout> getPageLayout(int pageNumber) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
 
     await init();
     if (_layoutDb == null || _scriptDb == null) {
@@ -904,7 +930,7 @@ class DatabaseService with InitializationMixin {
   /// Gets the last ayah on a specific page.
   Future<Map<String, int>?> getLastAyahOnPage(int pageNumber) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
 
     await init();
     try {
@@ -1059,6 +1085,8 @@ class DatabaseService with InitializationMixin {
           return const LayoutInfo(name: 'Indopak', linesPerPage: 13);
         case MushafLayout.digitalKhatt15Lines:
           return const LayoutInfo(name: 'Digital Khatt', linesPerPage: 15);
+        case MushafLayout.indopak9Lines:
+          return const LayoutInfo(name: 'Indopak 9 lines', linesPerPage: 9);
         case MushafLayout.uthmani15Lines:
         default:
           return const LayoutInfo(name: 'Uthmani Hafs', linesPerPage: 15);
@@ -1073,6 +1101,8 @@ class DatabaseService with InitializationMixin {
           return const LayoutInfo(name: 'Indopak', linesPerPage: 13);
         case MushafLayout.digitalKhatt15Lines:
           return const LayoutInfo(name: 'Digital Khatt', linesPerPage: 15);
+        case MushafLayout.indopak9Lines:
+          return const LayoutInfo(name: 'Indopak 9 lines', linesPerPage: 9);
         case MushafLayout.uthmani15Lines:
         default:
           return const LayoutInfo(name: 'Uthmani Hafs', linesPerPage: 15);
@@ -1136,16 +1166,22 @@ class DatabaseService with InitializationMixin {
     }
 
     // Fallback values
-    return LayoutInfo(
-      name: layout == MushafLayout.indopak13Lines ? 'Indopak' : 'Uthmani Hafs',
-      linesPerPage: layout == MushafLayout.indopak13Lines ? 13 : 15,
-    );
+    switch (layout) {
+      case MushafLayout.indopak13Lines:
+        return const LayoutInfo(name: 'Indopak', linesPerPage: 13);
+      case MushafLayout.digitalKhatt15Lines:
+        return const LayoutInfo(name: 'Digital Khatt', linesPerPage: 15);
+      case MushafLayout.indopak9Lines:
+        return const LayoutInfo(name: 'Indopak 9 lines', linesPerPage: 9);
+      case MushafLayout.uthmani15Lines:
+        return const LayoutInfo(name: 'Uthmani Hafs', linesPerPage: 15);
+    }
   }
 
   /// Retrieves the text of the first 'count' words appearing on a specific page.
   Future<String> getFirstWordsOfPage(int pageNumber, {int count = 3}) async {
     // Validate input parameter
-    validatePageNumber(pageNumber);
+    validatePageNumber(pageNumber, maxPage: _totalPages ?? totalPages);
 
     await init();
     if (_layoutDb == null || _scriptDb == null) {

@@ -74,6 +74,16 @@ void main() {
       // Value depends on what's in the indopak database
     });
 
+    test('reads 1890 pages for the Indopak 9-line layout', () async {
+      final dbService = await container.read(databaseServiceProvider.future);
+
+      await dbService.init(layout: MushafLayout.indopak9Lines);
+
+      final totalPages = await container.read(totalPagesProvider.future);
+
+      expect(totalPages, 1890);
+    });
+
     test('updates when layout changes', () async {
       // Wait for database service to initialize
       final dbService = await container.read(databaseServiceProvider.future);
