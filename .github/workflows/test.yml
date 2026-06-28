@@ -251,6 +251,13 @@ jobs:
           fi
 
       - name: Run integration tests
+        # WHY: Integration tests are non-blocking by design (the script swallows
+        # test failures via `|| TEST_FAILED=1`; correctness is gated by the
+        # unit/widget + golden jobs). The in-script swallow can't catch a
+        # step-level timeout/hang, which on a newer CI runner (slower iOS build
+        # due to the CocoaPods->SPM migration) was hard-failing all of CI.
+        # continue-on-error keeps the documented non-blocking intent even then.
+        continue-on-error: true
         timeout-minutes: 15  # WHY: Reduced timeout to save minutes
         run: |
           echo "Waiting for Flutter to detect iOS simulator..."
