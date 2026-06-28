@@ -376,7 +376,11 @@ jobs:
 
       - name: Run unit/widget tests
         timeout-minutes: 10
-        run: flutter test --no-pub
+        # WHY: Exclude golden tests here (matching the "Run Tests" job). Goldens
+        # are verified by the dedicated "Verify Golden Tests" job in isolation;
+        # run in-suite they pick up font/render state from earlier tests and
+        # produce sub-pixel diffs that fail only in this combined invocation.
+        run: flutter test --no-pub --exclude-tags=golden
 
       - name: Cache CocoaPods
         uses: actions/cache@v4
