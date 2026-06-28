@@ -927,15 +927,38 @@ class DatabaseService with InitializationMixin {
     }
   }
 
-  /// Gets the last ayah number in a specific surah.
+  /// Gets the last ayah number in a specific surah — i.e. its ayah count.
+  ///
+  /// WHY: Sourced from the surah metadata (`verses_count`), not the recitation
+  /// segments. The ayah count is an intrinsic property of the surah and must
+  /// not depend on whether audio exists for it (the old segment-based lookup
+  /// returned null for any surah lacking recitation data).
   Future<int?> getLastAyahInSurah(int surahNumber) async {
-    await init();
     try {
-      final segments = await getSurahSegments(surahNumber);
-      if (segments.isEmpty) return null;
+      validateSurahNumber(surahNumber);
+    } catch (_) {
+      return null;
+    }
 
-      // Segments are already ordered by ayah number ASC, so get the last one
-      return segments.last.ayahNumber;
+    await init();
+    if (_metadataDb == null) {
+      throw DatabaseNotInitializedException(
+        "Metadata database is not initialized",
+      );
+    }
+
+    try {
+      final List<Map<String, dynamic>> result = await _metadataDb!.query(
+        DbConstants.chaptersTable,
+        columns: [DbConstants.versesCountCol],
+        where: '${DbConstants.idCol} = ?',
+        whereArgs: [surahNumber.toString()],
+        limit: QueryLimits.singleResult,
+      );
+      if (result.isEmpty) return null;
+
+      final int count = parseInt(result.first[DbConstants.versesCountCol]);
+      return count > 0 ? count : null;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error getting last ayah in surah $surahNumber: $e');

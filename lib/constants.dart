@@ -318,6 +318,7 @@ class DbConstants {
   // --- Chapters Table ---
   static const String nameArabicCol = 'name_arabic';
   static const String revelationPlaceCol = 'revelation_place';
+  static const String versesCountCol = 'verses_count';
 
   // --- Juz & Hizb Tables ---
   static const String juzNumberCol = 'juz_number';

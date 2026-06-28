@@ -210,6 +210,24 @@ void main() {
       expect(text, isA<String>());
     });
 
+    test(
+      'getLastAyahInSurah returns the surah ayah count from metadata',
+      () async {
+        await service.init(layout: MushafLayout.uthmani15Lines);
+
+        expect(await service.getLastAyahInSurah(1), 7); // Al-Fatiha
+        expect(await service.getLastAyahInSurah(2), 286); // Al-Baqarah
+        expect(await service.getLastAyahInSurah(114), 6); // An-Nas
+      },
+    );
+
+    test('getLastAyahInSurah returns null for an invalid surah', () async {
+      await service.init(layout: MushafLayout.uthmani15Lines);
+
+      expect(await service.getLastAyahInSurah(0), isNull);
+      expect(await service.getLastAyahInSurah(999), isNull);
+    });
+
     // WHY: Test that PRAGMA exceptions are handled gracefully.
     // On iOS, PRAGMA statements on read-only databases may throw exceptions
     // even though they're not actual errors. This test verifies that the
