@@ -1,8 +1,9 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 // --- Search Result Model ---
 @immutable
-class SearchResult {
+class SearchResult extends Equatable {
   final String text;
   final int surahNumber;
   final int ayahNumber;
@@ -22,21 +23,15 @@ class SearchResult {
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SearchResult &&
-          runtimeType == other.runtimeType &&
-          text == other.text &&
-          surahNumber == other.surahNumber &&
-          ayahNumber == other.ayahNumber &&
-          pageNumber == other.pageNumber;
-
-  @override
-  int get hashCode =>
-      text.hashCode ^
-      surahNumber.hashCode ^
-      ayahNumber.hashCode ^
-      pageNumber.hashCode;
+  List<Object?> get props => [
+    text,
+    surahNumber,
+    ayahNumber,
+    pageNumber,
+    surahName,
+    context,
+    wordPosition,
+  ];
 }
 
 // --- New Model for Surah List ---
@@ -57,7 +52,7 @@ class SurahInfo {
 
 // --- Existing Models ---
 @immutable
-class Word {
+class Word extends Equatable {
   final String text;
   // WHY: We must know the surah/ayah for each word to control visibility.
   final int surahNumber;
@@ -70,19 +65,11 @@ class Word {
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Word &&
-          text == other.text &&
-          surahNumber == other.surahNumber &&
-          ayahNumber == other.ayahNumber;
-
-  @override
-  int get hashCode => Object.hash(text, surahNumber, ayahNumber);
+  List<Object?> get props => [text, surahNumber, ayahNumber];
 }
 
 @immutable
-class LineInfo {
+class LineInfo extends Equatable {
   final int lineNumber;
   final String lineType;
   final bool isCentered;
@@ -100,46 +87,28 @@ class LineInfo {
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LineInfo &&
-          lineNumber == other.lineNumber &&
-          lineType == other.lineType &&
-          isCentered == other.isCentered &&
-          surahNumber == other.surahNumber &&
-          surahName == other.surahName &&
-          listEquals(words, other.words);
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     lineNumber,
     lineType,
     isCentered,
     surahNumber,
     surahName,
-    Object.hashAll(words),
-  );
+    words,
+  ];
 }
 
 @immutable
-class PageLayout {
+class PageLayout extends Equatable {
   final int pageNumber;
   final List<LineInfo> lines;
   const PageLayout({required this.pageNumber, required this.lines});
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PageLayout &&
-          pageNumber == other.pageNumber &&
-          listEquals(lines, other.lines);
-
-  @override
-  int get hashCode => Object.hash(pageNumber, Object.hashAll(lines));
+  List<Object?> get props => [pageNumber, lines];
 }
 
 @immutable
-class PageData {
+class PageData extends Equatable {
   final PageLayout layout;
   final String pageFontFamily;
   final String pageSurahName;
@@ -192,19 +161,7 @@ class PageData {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PageData &&
-          layout == other.layout &&
-          pageFontFamily == other.pageFontFamily &&
-          pageSurahName == other.pageSurahName &&
-          pageSurahNumber == other.pageSurahNumber &&
-          juzNumber == other.juzNumber &&
-          hizbNumber == other.hizbNumber &&
-          isLoading == other.isLoading;
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     layout,
     pageFontFamily,
     pageSurahName,
@@ -212,7 +169,7 @@ class PageData {
     juzNumber,
     hizbNumber,
     isLoading,
-  );
+  ];
 }
 
 @immutable
@@ -226,7 +183,7 @@ class JuzInfo {
 
 // --- Bookmark Model ---
 @immutable
-class Bookmark {
+class Bookmark extends Equatable {
   final int id; // Primary key (auto-increment)
   final int surahNumber; // Universal - Surah number (1-114)
   final int ayahNumber; // Universal - Ayah number within surah
@@ -270,21 +227,20 @@ class Bookmark {
   String get verseReference => '$surahNumber:$ayahNumber';
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Bookmark &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          surahNumber == other.surahNumber &&
-          ayahNumber == other.ayahNumber;
-
-  @override
-  int get hashCode => Object.hash(id, surahNumber, ayahNumber);
+  List<Object?> get props => [
+    id,
+    surahNumber,
+    ayahNumber,
+    cachedPageNumber,
+    createdAt,
+    note,
+    ayahText,
+  ];
 }
 
 // --- Reading Session Model ---
 @immutable
-class ReadingSession {
+class ReadingSession extends Equatable {
   final int id; // Primary key (auto-increment)
   final DateTime sessionDate; // Date of reading session
   final int pageNumber; // Page that was read
@@ -316,16 +272,13 @@ class ReadingSession {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ReadingSession &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          pageNumber == other.pageNumber &&
-          sessionDate == other.sessionDate;
-
-  @override
-  int get hashCode => Object.hash(id, pageNumber, sessionDate);
+  List<Object?> get props => [
+    id,
+    sessionDate,
+    pageNumber,
+    timestamp,
+    durationSeconds,
+  ];
 }
 
 // --- Reading Statistics Model ---
@@ -373,7 +326,7 @@ class ReadingStatistics {
 
 // --- Audio Models ---
 @immutable
-class SurahAudio {
+class SurahAudio extends Equatable {
   final int surahNumber;
   final String audioUrl;
   final int duration; // Duration in seconds
@@ -385,20 +338,11 @@ class SurahAudio {
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SurahAudio &&
-          runtimeType == other.runtimeType &&
-          surahNumber == other.surahNumber &&
-          audioUrl == other.audioUrl &&
-          duration == other.duration;
-
-  @override
-  int get hashCode => Object.hash(surahNumber, audioUrl, duration);
+  List<Object?> get props => [surahNumber, audioUrl, duration];
 }
 
 @immutable
-class AyahSegment {
+class AyahSegment extends Equatable {
   final int surahNumber;
   final int ayahNumber;
   final int durationSec;
@@ -416,31 +360,19 @@ class AyahSegment {
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AyahSegment &&
-          runtimeType == other.runtimeType &&
-          surahNumber == other.surahNumber &&
-          ayahNumber == other.ayahNumber &&
-          durationSec == other.durationSec &&
-          timestampFrom == other.timestampFrom &&
-          timestampTo == other.timestampTo &&
-          segments == other.segments;
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     surahNumber,
     ayahNumber,
     durationSec,
     timestampFrom,
     timestampTo,
     segments,
-  );
+  ];
 }
 
 // --- Audio State Model ---
 @immutable
-class AudioState {
+class AudioState extends Equatable {
   final bool isPlaying;
   final int? currentSurahNumber;
   final int? currentAyahNumber;
@@ -476,44 +408,24 @@ class AudioState {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AudioState &&
-          runtimeType == other.runtimeType &&
-          isPlaying == other.isPlaying &&
-          currentSurahNumber == other.currentSurahNumber &&
-          currentAyahNumber == other.currentAyahNumber &&
-          endAyahNumber == other.endAyahNumber &&
-          position == other.position &&
-          duration == other.duration;
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     isPlaying,
     currentSurahNumber,
     currentAyahNumber,
     endAyahNumber,
     position,
     duration,
-  );
+  ];
 }
 
 // --- Layout Info Model ---
 @immutable
-class LayoutInfo {
+class LayoutInfo extends Equatable {
   final String name;
   final int linesPerPage;
 
   const LayoutInfo({required this.name, required this.linesPerPage});
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LayoutInfo &&
-          runtimeType == other.runtimeType &&
-          name == other.name &&
-          linesPerPage == other.linesPerPage;
-
-  @override
-  int get hashCode => Object.hash(name, linesPerPage);
+  List<Object?> get props => [name, linesPerPage];
 }

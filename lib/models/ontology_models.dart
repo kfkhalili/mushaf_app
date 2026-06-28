@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import '../constants.dart';
 import '../utils/parsing_helpers.dart';
@@ -6,7 +7,7 @@ import '../utils/helpers.dart';
 // --- Ontology Models ---
 
 @immutable
-class Topic {
+class Topic extends Equatable {
   const Topic({
     required this.topicId,
     this.name,
@@ -56,19 +57,15 @@ class Topic {
     );
   }
 
+  // WHY: Topic is an entity keyed by its primary key — two rows with the same
+  // topicId are the same topic. Identity is intentionally topicId only, not a
+  // value comparison of every field.
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Topic &&
-          runtimeType == other.runtimeType &&
-          topicId == other.topicId;
-
-  @override
-  int get hashCode => topicId.hashCode;
+  List<Object?> get props => [topicId];
 }
 
 @immutable
-class VerseReference {
+class VerseReference extends Equatable {
   const VerseReference({required this.surahNumber, required this.ayahNumber});
 
   final int surahNumber;
@@ -85,13 +82,5 @@ class VerseReference {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is VerseReference &&
-          runtimeType == other.runtimeType &&
-          surahNumber == other.surahNumber &&
-          ayahNumber == other.ayahNumber;
-
-  @override
-  int get hashCode => Object.hash(surahNumber, ayahNumber);
+  List<Object?> get props => [surahNumber, ayahNumber];
 }

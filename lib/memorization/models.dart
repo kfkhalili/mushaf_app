@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 /// The result of applying a memorization tap: whether the reader has finished
@@ -6,7 +7,7 @@ import 'package:flutter/foundation.dart';
 enum MemorizationTapOutcome { stay, advanceToNextPage }
 
 @immutable
-class MemorizationConfig {
+class MemorizationConfig extends Equatable {
   final int visibleWindowSize; // usually 3
   final double fadeStepPerTap; // e.g., 0.15
   final int tapsPerReveal; // fixed taps required before revealing next ayah
@@ -40,28 +41,17 @@ class MemorizationConfig {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MemorizationConfig &&
-          runtimeType == other.runtimeType &&
-          visibleWindowSize == other.visibleWindowSize &&
-          fadeStepPerTap == other.fadeStepPerTap &&
-          tapsPerReveal == other.tapsPerReveal &&
-          revealThresholdNext == other.revealThresholdNext &&
-          revealThresholdSecondNext == other.revealThresholdSecondNext;
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     visibleWindowSize,
     fadeStepPerTap,
     tapsPerReveal,
     revealThresholdNext,
     revealThresholdSecondNext,
-  );
+  ];
 }
 
 @immutable
-class AyahWindowState {
+class AyahWindowState extends Equatable {
   final List<int> ayahIndices; // absolute indices within the page
   final List<double> opacities; // aligned 0.0–1.0 per ayah
   final List<int> tapsSinceReveal; // aligned counters
@@ -85,24 +75,11 @@ class AyahWindowState {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AyahWindowState &&
-          runtimeType == other.runtimeType &&
-          listEquals(ayahIndices, other.ayahIndices) &&
-          listEquals(opacities, other.opacities) &&
-          listEquals(tapsSinceReveal, other.tapsSinceReveal);
-
-  @override
-  int get hashCode => Object.hash(
-    Object.hashAll(ayahIndices),
-    Object.hashAll(opacities),
-    Object.hashAll(tapsSinceReveal),
-  );
+  List<Object?> get props => [ayahIndices, opacities, tapsSinceReveal];
 }
 
 @immutable
-class MemorizationSessionState {
+class MemorizationSessionState extends Equatable {
   final int pageNumber;
   final AyahWindowState window;
   final int lastAyahIndexShown; // absolute within page
@@ -134,22 +111,11 @@ class MemorizationSessionState {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MemorizationSessionState &&
-          runtimeType == other.runtimeType &&
-          pageNumber == other.pageNumber &&
-          window == other.window &&
-          lastAyahIndexShown == other.lastAyahIndexShown &&
-          lastUpdatedAt == other.lastUpdatedAt &&
-          passCount == other.passCount;
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     pageNumber,
     window,
     lastAyahIndexShown,
     lastUpdatedAt,
     passCount,
-  );
+  ];
 }

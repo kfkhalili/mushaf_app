@@ -98,18 +98,22 @@ When registering assets in `pubspec.yaml`, directory entries must end in `/` to 
 
 - Target Dart SDK `^3.9.2`. Key deps: `flutter_riverpod ^3.0.3`, `sqflite ^2.4.2`, `path_provider ^2.1.5`, `shared_preferences ^2.5.3`, `just_audio` (recitation), `flutter_html` (tafsir rendering), plus `build_runner`/`riverpod_generator`/`riverpod_lint` for codegen. Consult `pubspec.yaml` for current versions.
 - **Null safety:** nullable types (`Database? _db`), explicit null checks before dereferencing, null-aware operators (`?.`, `??`). Use `late final` for non-nullable fields initialized in `initState`.
-- **Immutable data classes:** annotate `@immutable`, `const` constructors, `final` fields. Implement value equality:
+- **Immutable data classes:** annotate `@immutable`, use `const` constructors and `final` fields. Get value equality from **`Equatable`** — `extends Equatable` and list every field in `props`; this is the single source of truth for `==`/`hashCode`, so a field can never silently drop out of equality (hand-rolling `==`/`hashCode` previously shipped four such bugs). `Equatable` deep-compares collection fields, so no manual `listEquals`. Add a `copyWith()` for state updates rather than mutating.
 
   ```dart
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Word && text == other.text && surahNumber == other.surahNumber;
-  @override
-  int get hashCode => Object.hash(text, surahNumber);
+  @immutable
+  class Word extends Equatable {
+    final String text;
+    final int surahNumber;
+    final int ayahNumber;
+    const Word({required this.text, required this.surahNumber, required this.ayahNumber});
+
+    @override
+    List<Object?> get props => [text, surahNumber, ayahNumber];
+  }
   ```
 
-  Use `listEquals` (from `package:flutter/foundation.dart`) for list fields. Add a `copyWith()` for state updates rather than mutating.
+  An **entity** keyed by a primary key may intentionally list only its id in `props` (e.g. `Topic` → `[topicId]`); say so in a comment. For richer needs (generated `copyWith`/JSON), `freezed` is the next step, but `Equatable` is the default.
 - **`const` constructors wherever possible.** Use `const` and collection literals (`<String>[]`, `<String, int>{}`) over constructor calls.
 - **Color opacity:** use `withValues(alpha: …)`, never the deprecated `withOpacity()` — better precision, no deprecation warnings.
   ```dart
