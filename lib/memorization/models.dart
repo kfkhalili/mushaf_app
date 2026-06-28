@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 
+/// The result of applying a memorization tap: whether the reader has finished
+/// the current page (last ayah revealed and faded away) and should advance to
+/// the next page, or stay on the current one.
+enum MemorizationTapOutcome { stay, advanceToNextPage }
+
 @immutable
 class MemorizationConfig {
   final int visibleWindowSize; // usually 3

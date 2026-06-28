@@ -1758,7 +1758,7 @@ final class MemorizationSessionNotifierProvider
 }
 
 String _$memorizationSessionNotifierHash() =>
-    r'e0123a73bff395aea168ab0dbabb443423052c25';
+    r'7c69dd070ebbe321fa1d84985ae85402c54d9547';
 
 abstract class _$MemorizationSessionNotifier
     extends $Notifier<MemorizationSessionState?> {

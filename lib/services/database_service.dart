@@ -8,18 +8,18 @@ import '../utils/initialization_mixin.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
 import 'bundled_database_store.dart';
+import 'juz_hizb_index.dart';
+import 'audio_metadata.dart';
 
 class DatabaseService with InitializationMixin {
   Database? _layoutDb;
   Database? _scriptDb;
   Database? _metadataDb;
-  Database? _juzDb;
-  Database? _hizbDb;
   Database? _ayahTextDb;
-  Database? _audioDb;
 
-  List<Map<String, dynamic>> _juzCache = const [];
-  List<Map<String, dynamic>> _hizbCache = const [];
+  // WHY: Layout-independent Juz'/Hizb range lookups live behind their own
+  // module; built once and reused across layout switches.
+  JuzHizbIndex? _juzHizbIndex;
 
   MushafLayout? _currentLayout;
 
@@ -27,8 +27,13 @@ class DatabaseService with InitializationMixin {
   // substitute a store that opens fixtures instead of bundled assets.
   final BundledDatabaseStore _store;
 
+  // WHY: Recitation audio metadata is the only user of the audio database; it
+  // lives behind its own module that owns that connection.
+  final AudioMetadata _audioMetadata;
+
   DatabaseService({BundledDatabaseStore store = const BundledDatabaseStore()})
-    : _store = store;
+    : _store = store,
+      _audioMetadata = AudioMetadata(store: store);
 
   // WHY: This is the public 'init' method. It uses InitializationMixin for
   // thread-safe initialization while supporting layout parameterization.
@@ -80,33 +85,19 @@ class DatabaseService with InitializationMixin {
       _store.open(layout.layoutDatabaseFileName),
       _store.open(layout.scriptDatabaseFileName),
       _store.open(metadataDbFileName),
-      _store.open(juzDbFileName),
-      _store.open(hizbDbFileName),
       _store.open(imlaeiAyahDbFileName),
-      _store.open(audioDbFileName),
     ]);
 
     _layoutDb = databases[0];
     _scriptDb = databases[1];
     _metadataDb = databases[2];
-    _juzDb = databases[3];
-    _hizbDb = databases[4];
-    _ayahTextDb = databases[5];
-    _audioDb = databases[6];
+    _ayahTextDb = databases[3];
 
-    // WHY: Load Juz and Hizb data into cache upon initialization for faster lookups later.
-    if (_juzCache.isEmpty && _juzDb != null) {
-      _juzCache = await _juzDb!.query(
-        DbConstants.juzTable,
-        orderBy: '${DbConstants.juzNumberCol} ASC',
-      );
-    }
-    if (_hizbCache.isEmpty && _hizbDb != null) {
-      _hizbCache = await _hizbDb!.query(
-        DbConstants.hizbsTable,
-        orderBy: '${DbConstants.hizbNumberCol} ASC',
-      );
-    }
+    // WHY: Audio metadata and the Juz'/Hizb index own their own connections.
+    // JuzHizbIndex opens its two databases just long enough to read their range
+    // tables; AudioMetadata keeps the audio connection open for runtime queries.
+    await _audioMetadata.init();
+    _juzHizbIndex ??= await JuzHizbIndex.load(_store);
 
     markInitialized();
   }
@@ -118,15 +109,13 @@ class DatabaseService with InitializationMixin {
   }
 
   Future<void> _closeDatabases() async {
+    await _audioMetadata.close();
     await Future.wait(
       [
         _layoutDb?.close(),
         _scriptDb?.close(),
         _metadataDb?.close(),
-        _juzDb?.close(),
-        _hizbDb?.close(),
         _ayahTextDb?.close(),
-        _audioDb?.close(),
       ].where((future) => future != null).cast<Future<void>>(),
     );
   }
@@ -562,127 +551,6 @@ class DatabaseService with InitializationMixin {
         .toList();
   }
 
-  /// Checks if a given ayah (s:a) falls within a range (sFirst:aFirst to sLast:aLast).
-  bool _isAyahInRange(
-    int s,
-    int a,
-    int sFirst,
-    int aFirst,
-    int sLast,
-    int aLast,
-  ) {
-    if (s < sFirst || s > sLast) return false; // Surah out of range
-    if (s == sFirst && a < aFirst) return false; // Ayah before range start
-    if (s == sLast && a > aLast) return false; // Ayah after range end
-    return true;
-  }
-
-  /// Finds the Juz' number containing a specific Surah and Ayah using the cached Juz' data.
-  int _findJuz(int pageSurah, int pageAyah) {
-    if (_juzCache.isEmpty) return 0; // Cache not loaded
-    // Iterate through cached Juz' ranges.
-    for (final row in _juzCache) {
-      final firstKey = row[DbConstants.firstVerseKeyCol] as String?;
-      final lastKey = row[DbConstants.lastVerseKeyCol] as String?;
-      if (firstKey == null || lastKey == null) continue; // Skip invalid data
-
-      try {
-        // Parse the start and end Surah:Ayah keys.
-        // WHY: Validate split results before parsing
-        final firstParts = firstKey.split(':');
-        final lastParts = lastKey.split(':');
-        if (firstParts.length != 2 ||
-            lastParts.length != 2 ||
-            firstParts[0].isEmpty ||
-            firstParts[1].isEmpty ||
-            lastParts[0].isEmpty ||
-            lastParts[1].isEmpty) {
-          continue; // Skip invalid keys
-        }
-
-        final int sFirst = parseInt(firstParts[0]);
-        final int aFirst = parseInt(firstParts[1]);
-        final int sLast = parseInt(lastParts[0]);
-        final int aLast = parseInt(lastParts[1]);
-
-        // Validate parsed surah/ayah numbers before use
-        // WHY: Defense in depth - validate even trusted database data
-        try {
-          validateSurahNumber(sFirst);
-          validateAyahNumber(aFirst);
-          validateSurahNumber(sLast);
-          validateAyahNumber(aLast);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('Invalid surah/ayah in Juz keys: $firstKey, $lastKey');
-          }
-          continue; // Skip invalid entries
-        }
-
-        // Check if the target ayah falls within this Juz' range.
-        if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return parseInt(row[DbConstants.juzNumberCol]); // Found it
-        }
-      } catch (_) {
-        continue; // Ignore errors parsing keys
-      }
-    }
-    return 0; // Not found
-  }
-
-  /// Finds the Hizb number containing a specific Surah and Ayah using the cached Hizb data.
-  int _findHizb(int pageSurah, int pageAyah) {
-    if (_hizbCache.isEmpty) return 0; // Cache not loaded
-    // Iterate through cached Hizb ranges.
-    for (final row in _hizbCache) {
-      final firstKey = row[DbConstants.firstVerseKeyCol] as String?;
-      final lastKey = row[DbConstants.lastVerseKeyCol] as String?;
-      if (firstKey == null || lastKey == null) continue; // Skip invalid data
-
-      try {
-        // Parse the start and end Surah:Ayah keys.
-        // WHY: Validate split results before parsing
-        final firstParts = firstKey.split(':');
-        final lastParts = lastKey.split(':');
-        if (firstParts.length != 2 ||
-            lastParts.length != 2 ||
-            firstParts[0].isEmpty ||
-            firstParts[1].isEmpty ||
-            lastParts[0].isEmpty ||
-            lastParts[1].isEmpty) {
-          continue; // Skip invalid keys
-        }
-
-        final int sFirst = parseInt(firstParts[0]);
-        final int aFirst = parseInt(firstParts[1]);
-        final int sLast = parseInt(lastParts[0]);
-        final int aLast = parseInt(lastParts[1]);
-
-        // Validate parsed surah/ayah numbers before use
-        // WHY: Defense in depth - validate even trusted database data
-        try {
-          validateSurahNumber(sFirst);
-          validateAyahNumber(aFirst);
-          validateSurahNumber(sLast);
-          validateAyahNumber(aLast);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('Invalid surah/ayah in Hizb keys: $firstKey, $lastKey');
-          }
-          continue; // Skip invalid entries
-        }
-
-        // Check if the target ayah falls within this Hizb range.
-        if (_isAyahInRange(pageSurah, pageAyah, sFirst, aFirst, sLast, aLast)) {
-          return parseInt(row[DbConstants.hizbNumberCol]); // Found it
-        }
-      } catch (_) {
-        continue; // Ignore errors parsing keys
-      }
-    }
-    return 0; // Not found
-  }
-
   /// Retrieves header information (Juz', Hizb, Surah Name, Surah Number) for a given page.
   Future<Map<String, dynamic>> getPageHeaderInfo(int pageNumber) async {
     // Validate input parameter
@@ -695,9 +563,9 @@ class DatabaseService with InitializationMixin {
       final pageSurah = firstAyah['surah']!;
       final pageAyah = firstAyah['ayah']!;
 
-      // Use cached lookups for Juz' and Hizb.
-      final juzNumber = _findJuz(pageSurah, pageAyah);
-      final hizbNumber = _findHizb(pageSurah, pageAyah);
+      // Use the Juz'/Hizb index for cached range lookups.
+      final juzNumber = _juzHizbIndex?.juzForAyah(pageSurah, pageAyah) ?? 0;
+      final hizbNumber = _juzHizbIndex?.hizbForAyah(pageSurah, pageAyah) ?? 0;
       // Fetch Surah name if applicable.
       final surahName = (pageSurah > 0) ? await getSurahName(pageSurah) : "";
 
@@ -859,143 +727,19 @@ class DatabaseService with InitializationMixin {
   /// Gets audio information for a specific surah.
   Future<SurahAudio?> getSurahAudio(int surahNumber) async {
     await init();
-    if (_audioDb == null) {
-      throw DatabaseNotInitializedException(
-        "Audio database is not initialized",
-      );
-    }
-
-    try {
-      final List<Map<String, dynamic>> result = await _audioDb!.query(
-        DbConstants.surahListTable,
-        where: '${DbConstants.surahNumberCol} = ?',
-        whereArgs: [surahNumber.toString()],
-        limit: QueryLimits.singleResult,
-      );
-
-      if (result.isEmpty) {
-        return null;
-      }
-
-      final row = result.first;
-      // Use nullable cast and check for null
-      // WHY: Type safety - database data may be corrupted
-      final String? audioUrl = row[DbConstants.audioUrlCol] as String?;
-      if (audioUrl == null) {
-        throw DatabaseNotFoundException(
-          "Surah audio URL not found for surah $surahNumber",
-        );
-      }
-      return SurahAudio(
-        surahNumber: parseInt(row[DbConstants.surahNumberCol]),
-        audioUrl: audioUrl,
-        duration: parseInt(row[DbConstants.durationCol]),
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint("Error fetching surah audio for $surahNumber: $e");
-      }
-      return null;
-    }
+    return _audioMetadata.surahAudio(surahNumber);
   }
 
   /// Gets segment information for a specific ayah.
   Future<AyahSegment?> getAyahSegment(int surahNumber, int ayahNumber) async {
     await init();
-    if (_audioDb == null) {
-      throw DatabaseNotInitializedException(
-        "Audio database is not initialized",
-      );
-    }
-
-    try {
-      final List<Map<String, dynamic>> result = await _audioDb!.query(
-        DbConstants.segmentsTable,
-        where:
-            '${DbConstants.surahNumberCol} = ? AND ${DbConstants.audioAyahNumberCol} = ?',
-        whereArgs: [surahNumber.toString(), ayahNumber.toString()],
-        limit: QueryLimits.singleResult,
-      );
-
-      if (result.isEmpty) {
-        return null;
-      }
-
-      final row = result.first;
-      // Use nullable cast and check for null
-      // WHY: Type safety - database data may be corrupted
-      final String? segments = row[DbConstants.segmentsCol] as String?;
-      if (segments == null) {
-        throw DatabaseNotFoundException(
-          "Ayah segment data not found for $surahNumber:$ayahNumber",
-        );
-      }
-      return AyahSegment(
-        surahNumber: parseInt(row[DbConstants.surahNumberCol]),
-        ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
-        durationSec: parseInt(row[DbConstants.durationSecCol]),
-        timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
-        timestampTo: parseInt(row[DbConstants.timestampToCol]),
-        segments: segments,
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint(
-          "Error fetching ayah segment for $surahNumber:$ayahNumber: $e",
-        );
-      }
-      return null;
-    }
+    return _audioMetadata.ayahSegment(surahNumber, ayahNumber);
   }
 
   /// Gets all segments for a specific surah.
   Future<List<AyahSegment>> getSurahSegments(int surahNumber) async {
     await init();
-    if (_audioDb == null) {
-      throw DatabaseNotInitializedException(
-        "Audio database is not initialized",
-      );
-    }
-
-    try {
-      final List<Map<String, dynamic>> results = await _audioDb!.query(
-        DbConstants.segmentsTable,
-        where: '${DbConstants.surahNumberCol} = ?',
-        whereArgs: [surahNumber.toString()],
-        orderBy: '${DbConstants.audioAyahNumberCol} ASC',
-      );
-
-      return results
-          .map((row) {
-            // Use nullable cast and check for null
-            // WHY: Type safety - database data may be corrupted
-            final String? segments = row[DbConstants.segmentsCol] as String?;
-            if (segments == null) {
-              // Skip invalid entries - database data may be corrupted
-              if (kDebugMode) {
-                debugPrint(
-                  'Missing segments data for surah ${row[DbConstants.surahNumberCol]}:${row[DbConstants.audioAyahNumberCol]}',
-                );
-              }
-              return null;
-            }
-            return AyahSegment(
-              surahNumber: parseInt(row[DbConstants.surahNumberCol]),
-              ayahNumber: parseInt(row[DbConstants.audioAyahNumberCol]),
-              durationSec: parseInt(row[DbConstants.durationSecCol]),
-              timestampFrom: parseInt(row[DbConstants.timestampFromCol]),
-              timestampTo: parseInt(row[DbConstants.timestampToCol]),
-              segments: segments,
-            );
-          })
-          .whereType<AyahSegment>() // Filter out null values
-          .toList();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint("Error fetching surah segments for $surahNumber: $e");
-      }
-      return [];
-    }
+    return _audioMetadata.surahSegments(surahNumber);
   }
 
   /// Finds the page number containing the start of a specific ayah.
@@ -1133,65 +877,27 @@ class DatabaseService with InitializationMixin {
   /// Retrieves information (number and starting page) for all 30 Juz'.
   Future<List<JuzInfo>> getAllJuzInfo() async {
     await init();
-    if (_juzCache.isEmpty) {
-      throw DatabaseNotInitializedException(
-        "Juz' data cache is empty or not initialized",
-      );
+    if (_juzHizbIndex == null) {
+      throw DatabaseNotInitializedException("Juz' index is not initialized");
     }
 
-    List<JuzInfo> juzList = [];
-    // Process each Juz' entry from the cache.
-    for (final juzData in _juzCache) {
-      final int juzNum = parseInt(juzData[DbConstants.juzNumberCol]);
-      final String? firstVerseKey =
-          juzData[DbConstants.firstVerseKeyCol] as String?;
-
-      if (firstVerseKey != null && firstVerseKey.isNotEmpty) {
-        try {
-          // Parse Surah:Ayah from the key.
-          // WHY: Validate split results before parsing
-          final parts = firstVerseKey.split(':');
-          if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
-            if (kDebugMode) {
-              debugPrint(
-                "Warning: Invalid verse key format '$firstVerseKey' for Juz $juzNum",
-              );
-            }
-            continue; // Skip invalid keys
-          }
-
-          final int surah = parseInt(parts[0]);
-          final int ayah = parseInt(parts[1]);
-
-          // Validate parsed surah/ayah numbers before use
-          // WHY: Defense in depth - validate even trusted database data
-          try {
-            validateSurahNumber(surah);
-            validateAyahNumber(ayah);
-          } catch (e) {
-            if (kDebugMode) {
-              debugPrint(
-                "Warning: Invalid surah/ayah in verse key '$firstVerseKey' for Juz $juzNum",
-              );
-            }
-            continue; // Skip invalid entries
-          }
-
-          // Find the page number for the starting ayah of this Juz'.
-          // Safe to use validated surah and ayah
-          final int startPage = await getPageForAyah(surah, ayah);
-          juzList.add(JuzInfo(juzNumber: juzNum, startingPage: startPage));
-        } catch (e) {
-          // Log errors during processing but continue.
-          if (kDebugMode) {
-            debugPrint("Error processing Juz $juzNum start page lookup: $e");
-            // TODO: Include stackTrace when implementing crash analytics
-            // catch (e, stackTrace) { ... debugPrint(stackTrace.toString()); }
-          }
+    final List<JuzInfo> juzList = [];
+    // Resolve each Juz' starting page from its (validated) starting ayah.
+    for (final start in _juzHizbIndex!.juzStarts()) {
+      try {
+        final int startPage = await getPageForAyah(start.surah, start.ayah);
+        juzList.add(
+          JuzInfo(juzNumber: start.juzNumber, startingPage: startPage),
+        );
+      } catch (e) {
+        // Log errors during processing but continue.
+        if (kDebugMode) {
+          debugPrint(
+            "Error processing Juz ${start.juzNumber} start page lookup: $e",
+          );
         }
       }
     }
-    // Return the list of successfully processed Juz' info.
     return juzList;
   }
 
@@ -1241,65 +947,16 @@ class DatabaseService with InitializationMixin {
   /// Gets the last ayah in a specific juz.
   Future<Map<String, int>?> getLastAyahInJuz(int juzNumber) async {
     await init();
-    if (_juzCache.isEmpty) return null;
-
-    try {
-      // Find the juz in cache
-      final juzData = _juzCache.firstWhere(
-        (row) => parseInt(row[DbConstants.juzNumberCol]) == juzNumber,
-        orElse: () => <String, dynamic>{},
-      );
-
-      if (juzData.isEmpty) return null;
-
-      final lastKey = juzData[DbConstants.lastVerseKeyCol] as String?;
-      if (lastKey == null || lastKey.isEmpty) return null;
-
-      // Parse the last verse key (format: "surah:ayah")
-      // WHY: Validate split results before parsing
-      final parts = lastKey.split(':');
-      if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
-        return null; // Invalid format
-      }
-
-      final int surah = parseInt(parts[0]);
-      final int ayah = parseInt(parts[1]);
-
-      // Validate parsed surah/ayah numbers before use
-      // WHY: Defense in depth - validate even trusted database data
-      try {
-        validateSurahNumber(surah);
-        validateAyahNumber(ayah);
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('Invalid surah/ayah in last key: $lastKey');
-        }
-        return null; // Invalid values
-      }
-
-      return {'surah': surah, 'ayah': ayah};
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error getting last ayah in juz $juzNumber: $e');
-      }
-      return null;
-    }
+    final end = _juzHizbIndex?.lastAyahInJuz(juzNumber);
+    if (end == null) return null;
+    return {'surah': end.surah, 'ayah': end.ayah};
   }
 
   /// Gets the juz number for a specific surah and ayah.
   Future<int?> getJuzForAyah(int surahNumber, int ayahNumber) async {
     await init();
-    try {
-      final juzNumber = _findJuz(surahNumber, ayahNumber);
-      return juzNumber > 0 ? juzNumber : null;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint(
-          'Error getting juz for surah $surahNumber, ayah $ayahNumber: $e',
-        );
-      }
-      return null;
-    }
+    final juzNumber = _juzHizbIndex?.juzForAyah(surahNumber, ayahNumber) ?? 0;
+    return juzNumber > 0 ? juzNumber : null;
   }
 
   /// Retrieves the total number of pages for the current layout.

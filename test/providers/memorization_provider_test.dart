@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:mushaf_app/providers.dart';
+import 'package:mushaf_app/memorization/models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -155,6 +156,44 @@ void main() {
 
       final afterSecondTap = container.read(memorizationSessionProvider);
       expect(afterSecondTap, isNot(afterFirstTap));
+    });
+
+    test('onTap reports stay while the page is incomplete', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(memorizationSessionProvider.notifier);
+      await notifier.startSession(pageNumber: 1, firstAyahIndex: 0);
+
+      final outcome = await notifier.onTap(totalAyatOnPage: 7);
+      expect(outcome, MemorizationTapOutcome.stay);
+    });
+
+    test(
+      'onTap reports advanceToNextPage once the last ayah fades away',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(memorizationSessionProvider.notifier);
+        // Full-fade config: one tap empties the window on a single-ayah page,
+        // which is also the last ayah — so the page is complete.
+        notifier.setConfig(const MemorizationConfig(fadeStepPerTap: 1.0));
+        await notifier.startSession(pageNumber: 1, firstAyahIndex: 0);
+
+        final outcome = await notifier.onTap(totalAyatOnPage: 1);
+        expect(outcome, MemorizationTapOutcome.advanceToNextPage);
+      },
+    );
+
+    test('onTap reports stay when there is no session', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final outcome = await container
+          .read(memorizationSessionProvider.notifier)
+          .onTap(totalAyatOnPage: 7);
+      expect(outcome, MemorizationTapOutcome.stay);
     });
   });
 }

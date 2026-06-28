@@ -69,3 +69,48 @@ computeMemorizationVisibility(
 
   return (visibleWords: visible, ayahOpacity: opacity);
 }
+
+/// Computes the memorization "center label" shown in the countdown circle: the
+/// reader's current ayah position within its surah on [layout], as eastern
+/// Arabic numerals — either "m" (when at the surah's first shown ayah) or
+/// "m–n".
+///
+/// Returns null when there is nothing to label: no active [session], or the
+/// page has no Quran ayat. The caller is responsible for only passing a session
+/// that belongs to the page currently being displayed.
+String? computeMemorizationLabel(
+  PageLayout layout,
+  MemorizationSessionState? session,
+) {
+  if (session == null) return null;
+
+  final allQuranWordsOnPage = extractQuranWordsFromPage(layout);
+  final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
+    groupWordsByAyahKey(allQuranWordsOnPage),
+  );
+  final List<String> orderedKeys = ayahsOnPageMap.keys.toList();
+  if (orderedKeys.isEmpty) return null;
+
+  final int idx = session.lastAyahIndexShown.clamp(0, orderedKeys.length - 1);
+  final List<String> parts = orderedKeys[idx].split(':'); // format: sss:aaa
+  final int currentSurah = int.tryParse(parts[0]) ?? 0;
+  final int currentAyahNum = int.tryParse(parts[1]) ?? 1;
+
+  // First ayah index on this page that belongs to the current surah.
+  int firstIndexOfCurrentSurah = 0;
+  for (int i = 0; i < orderedKeys.length; i++) {
+    final int s = int.tryParse(orderedKeys[i].split(':')[0]) ?? -1;
+    if (s == currentSurah) {
+      firstIndexOfCurrentSurah = i;
+      break;
+    }
+  }
+  final int startAyahNumForCurrentSurah =
+      int.tryParse(orderedKeys[firstIndexOfCurrentSurah].split(':')[1]) ?? 1;
+
+  final String m = convertToEasternArabicNumerals(
+    startAyahNumForCurrentSurah.toString(),
+  );
+  final String n = convertToEasternArabicNumerals(currentAyahNum.toString());
+  return currentAyahNum <= startAyahNumForCurrentSurah ? m : '$m–$n';
+}

@@ -9,7 +9,9 @@ import '../utils/ui_signals.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/helpers.dart';
+import '../utils/selectors.dart';
 import '../utils/navigation.dart';
+import '../memorization/models.dart';
 import '../utils/async_value_helpers.dart';
 import '../utils/page_controller_sync_mixin.dart';
 import 'bookmarks_screen.dart';
@@ -144,28 +146,25 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
         ref
             .read(memorizationSessionProvider.notifier)
             .onTap(totalAyatOnPage: totalAyatOnPage)
-            .then((_) async {
+            .then((outcome) async {
+              // The notifier owns the decision; the screen owns the animation.
+              if (outcome != MemorizationTapOutcome.advanceToNextPage) return;
+
               final updated = ref.read(memorizationSessionProvider);
-              if (updated != null && updated.pageNumber == currentPage) {
-                // Advance only when the last ayah has fully faded out and slid away
-                final bool atLastAyah =
-                    updated.lastAyahIndexShown >= (totalAyatOnPage - 1);
-                final bool windowEmpty = updated.window.ayahIndices.isEmpty;
-                if (atLastAyah && windowEmpty) {
-                  final nextPage = currentPage + 1;
-                  final totalPages = await ref.read(totalPagesProvider.future);
-                  if (nextPage <= totalPages) {
-                    _pageController.animateToPage(
-                      nextPage - 1,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                    );
-                    ref.read(currentPageProvider.notifier).setPage(nextPage);
-                    await ref
-                        .read(memorizationSessionProvider.notifier)
-                        .startSession(pageNumber: nextPage, firstAyahIndex: 0);
-                  }
-                }
+              if (updated == null || updated.pageNumber != currentPage) return;
+
+              final nextPage = currentPage + 1;
+              final totalPages = await ref.read(totalPagesProvider.future);
+              if (nextPage <= totalPages) {
+                _pageController.animateToPage(
+                  nextPage - 1,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                );
+                ref.read(currentPageProvider.notifier).setPage(nextPage);
+                await ref
+                    .read(memorizationSessionProvider.notifier)
+                    .startSession(pageNumber: nextPage, firstAyahIndex: 0);
               }
             });
       });
@@ -553,57 +552,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
                 String? centerLabel;
                 asyncPageData.whenData((pageData) {
                   final session = ref.read(memorizationSessionProvider);
+                  // Only label the session that belongs to the displayed page.
                   if (session != null &&
                       session.pageNumber == currentPageNumber) {
-                    // Compute current ayah (n) and starting ayah (m) within the current surah context
-                    final allQuranWordsOnPage = extractQuranWordsFromPage(
+                    centerLabel = computeMemorizationLabel(
                       pageData.layout,
+                      session,
                     );
-                    final ayahsOnPageMap =
-                        SplayTreeMap<String, List<Word>>.from(
-                          groupWordsByAyahKey(allQuranWordsOnPage),
-                        );
-                    final orderedKeys = ayahsOnPageMap.keys.toList();
-
-                    if (orderedKeys.isNotEmpty) {
-                      final int idx = session.lastAyahIndexShown.clamp(
-                        0,
-                        orderedKeys.length - 1,
-                      );
-                      final String currentKey =
-                          orderedKeys[idx]; // format: sss:aaa
-                      final parts = currentKey.split(':');
-                      final int currentSurah = int.tryParse(parts[0]) ?? 0;
-                      final int currentAyahNum = int.tryParse(parts[1]) ?? 1;
-
-                      // Find the first ayah index on this page that belongs to currentSurah
-                      int firstIndexOfCurrentSurah = 0;
-                      for (int i = 0; i < orderedKeys.length; i++) {
-                        final p = orderedKeys[i].split(':');
-                        final s = int.tryParse(p[0]) ?? -1;
-                        if (s == currentSurah) {
-                          firstIndexOfCurrentSurah = i;
-                          break;
-                        }
-                      }
-                      // Compute starting ayah number m for the current surah on this page
-                      final String firstKeyOfCurrentSurah =
-                          orderedKeys[firstIndexOfCurrentSurah];
-                      final int startAyahNumForCurrentSurah =
-                          int.tryParse(firstKeyOfCurrentSurah.split(':')[1]) ??
-                          1;
-
-                      final String m = convertToEasternArabicNumerals(
-                        startAyahNumForCurrentSurah.toString(),
-                      );
-                      final String n = convertToEasternArabicNumerals(
-                        currentAyahNum.toString(),
-                      );
-                      centerLabel =
-                          currentAyahNum <= startAyahNumForCurrentSurah
-                          ? m
-                          : '$m–$n';
-                    }
                   }
                 });
                 return CountdownCircle(

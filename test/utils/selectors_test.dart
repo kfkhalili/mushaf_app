@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mushaf_app/utils/selectors.dart';
+import 'package:mushaf_app/utils/helpers.dart';
 import 'package:mushaf_app/models.dart';
 import 'package:mushaf_app/memorization/models.dart';
 
@@ -236,6 +237,89 @@ void main() {
 
       final result = computeMemorizationVisibility(layout, session);
       expect(result.ayahOpacity['001:001'], 0.0);
+    });
+  });
+
+  group('computeMemorizationLabel', () {
+    // Builds a page where each ayah is one line with one word.
+    PageLayout pageOf(List<({int surah, int ayah})> ayat) => PageLayout(
+      pageNumber: 1,
+      lines: [
+        for (final a in ayat)
+          LineInfo(
+            lineNumber: a.ayah,
+            lineType: 'ayah',
+            isCentered: false,
+            surahNumber: a.surah,
+            words: [Word(text: 't', surahNumber: a.surah, ayahNumber: a.ayah)],
+          ),
+      ],
+    );
+
+    MemorizationSessionState sessionAt(int lastShown, {int page = 1}) =>
+        MemorizationSessionState(
+          pageNumber: page,
+          window: const AyahWindowState(
+            ayahIndices: [],
+            opacities: [],
+            tapsSinceReveal: [],
+          ),
+          lastAyahIndexShown: lastShown,
+          lastUpdatedAt: DateTime.now(),
+          passCount: 0,
+        );
+
+    final one = convertToEasternArabicNumerals('1');
+    final two = convertToEasternArabicNumerals('2');
+    final three = convertToEasternArabicNumerals('3');
+    final seven = convertToEasternArabicNumerals('7');
+    const dash = '–'; // en dash, as used in the implementation
+
+    test('shows a single number at a surah\'s first ayah on the page', () {
+      final label = computeMemorizationLabel(
+        pageOf([(surah: 2, ayah: 1), (surah: 2, ayah: 2), (surah: 2, ayah: 3)]),
+        sessionAt(0),
+      );
+      expect(label, one);
+    });
+
+    test('shows a range once past the surah\'s first ayah', () {
+      final label = computeMemorizationLabel(
+        pageOf([(surah: 2, ayah: 1), (surah: 2, ayah: 2), (surah: 2, ayah: 3)]),
+        sessionAt(2),
+      );
+      expect(label, '$one$dash$three');
+    });
+
+    test('resets the start number per surah on a cross-surah page', () {
+      final page = pageOf([
+        (surah: 1, ayah: 7),
+        (surah: 2, ayah: 1),
+        (surah: 2, ayah: 2),
+      ]);
+      // On the surah-1 ayah: m == n == 7 → single number.
+      expect(computeMemorizationLabel(page, sessionAt(0)), seven);
+      // Two ayat into surah 2: start resets to 1, not the page's first ayah.
+      expect(computeMemorizationLabel(page, sessionAt(2)), '$one$dash$two');
+    });
+
+    test('clamps an out-of-range lastAyahIndexShown', () {
+      final label = computeMemorizationLabel(
+        pageOf([(surah: 2, ayah: 1), (surah: 2, ayah: 2)]),
+        sessionAt(99),
+      );
+      expect(label, '$one$dash$two');
+    });
+
+    test('returns null for a null session', () {
+      expect(
+        computeMemorizationLabel(pageOf([(surah: 2, ayah: 1)]), null),
+        isNull,
+      );
+    });
+
+    test('returns null when the page has no ayat', () {
+      expect(computeMemorizationLabel(pageOf([]), sessionAt(0)), isNull);
     });
   });
 }

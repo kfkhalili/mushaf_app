@@ -706,8 +706,13 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
     }
   }
 
-  Future<void> onTap({required int totalAyatOnPage}) async {
-    if (state == null) return;
+  /// Applies a tap and reports whether the page is now complete.
+  ///
+  /// The page is complete once the last ayah has been reached and the visible
+  /// window has fully faded and slid away — at which point the caller should
+  /// advance to the next page.
+  Future<MemorizationTapOutcome> onTap({required int totalAyatOnPage}) async {
+    if (state == null) return MemorizationTapOutcome.stay;
 
     final next = _service.applyTap(
       state: state!,
@@ -717,6 +722,12 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
 
     state = next;
     await _maybePersist();
+
+    final bool atLastAyah = next.lastAyahIndexShown >= (totalAyatOnPage - 1);
+    final bool windowEmpty = next.window.ayahIndices.isEmpty;
+    return (atLastAyah && windowEmpty)
+        ? MemorizationTapOutcome.advanceToNextPage
+        : MemorizationTapOutcome.stay;
   }
 
   Future<void> _maybePersist() async {
