@@ -44,9 +44,7 @@ This directory contains all security audit reports and security analysis documen
 
 All security audits are complete. All identified issues have been fixed. The application is production-ready with comprehensive security controls.
 
-For current security practices and guidelines, see:
-- `.cursor/rules/security-by-design.mdc`
-- `.cursor/rules/defense-in-depth-type-safety.mdc`
+For current security practices and guidelines, see the "Security & data validation" section of [`CLAUDE.md`](../../../CLAUDE.md).
 
 ---
 
