@@ -33,7 +33,29 @@ Future<SharedPreferences> sharedPreferences(Ref ref) async {
   return SharedPreferences.getInstance();
 }
 
-// (UI signals moved to utils/ui_signals.dart to avoid codegen dependencies.)
+// --- Memorization Icon Flash Provider ---
+// WHY: A "pulse" counter the memorization toggle icon animates on, used to nudge
+// the user when they try to scroll during a session. Replaces a global
+// ValueNotifier with the app's standard state mechanism — scoped and testable.
+@Riverpod(keepAlive: true)
+class MemorizationIconFlash extends _$MemorizationIconFlash {
+  @override
+  int build() => 0;
+
+  /// Emits a single pulse (one icon flash).
+  void pulse() => state = state + 1;
+
+  /// Emits [times] pulses spaced [interval] apart to reinforce a hint.
+  Future<void> flash({
+    int times = 3,
+    Duration interval = const Duration(milliseconds: 120),
+  }) async {
+    for (int i = 0; i < times; i++) {
+      pulse();
+      if (i < times - 1) await Future.delayed(interval);
+    }
+  }
+}
 
 // --- App Data Service Provider (Unified Storage) ---
 // WHY: Provides unified database for all user data (bookmarks, reading progress, memorization)

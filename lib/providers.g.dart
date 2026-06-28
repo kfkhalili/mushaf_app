@@ -50,6 +50,60 @@ final class SharedPreferencesProvider
 
 String _$sharedPreferencesHash() => r'50d46e3f8d9f32715d0f3efabdce724e4b2593b4';
 
+@ProviderFor(MemorizationIconFlash)
+const memorizationIconFlashProvider = MemorizationIconFlashProvider._();
+
+final class MemorizationIconFlashProvider
+    extends $NotifierProvider<MemorizationIconFlash, int> {
+  const MemorizationIconFlashProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memorizationIconFlashProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$memorizationIconFlashHash();
+
+  @$internal
+  @override
+  MemorizationIconFlash create() => MemorizationIconFlash();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$memorizationIconFlashHash() =>
+    r'261594977c16e8eac13d2b38596ff22613275dd0';
+
+abstract class _$MemorizationIconFlash extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(appDataService)
 const appDataServiceProvider = AppDataServiceProvider._();
 
