@@ -24,6 +24,12 @@ on:
       - 'LICENSE'
       - 'docs/**'
       - '.github/workflows/*.md'
+  # WHY: The expensive iOS-simulator E2E job runs nightly and on-demand instead
+  # of gating every push (it's slow and non-blocking). See the integration-test
+  # job's `if:` below.
+  schedule:
+    - cron: '23 5 * * *' # daily ~05:23 UTC (off-peak, non-round minute)
+  workflow_dispatch:
 
 # WHY: Only run expensive jobs on certain conditions to save CI minutes
 # - Unit tests: Always run (cheap, ubuntu)
@@ -179,9 +185,9 @@ jobs:
     # like PRAGMA exceptions on read-only databases that don't appear in FFI-based
     # unit tests. The integration tests verify that database operations work
     # correctly in the actual iOS environment.
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.draft == false)
+    # WHY: E2E is expensive (~20 min) and non-blocking, so it no longer gates
+    # every push/PR. It runs on the nightly schedule and via manual dispatch.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: test  # WHY: Only run if unit tests pass
 
     steps:
@@ -294,10 +300,9 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             flutter test integration_test/critical_user_journeys_test.dart -d "$SIMULATOR_UUID" --reporter expanded --timeout=15m || TEST_FAILED=1
 
-            # WHY: Run other tests only on main branch push to save minutes
-            # By default, only run critical test to save CI minutes
-            # Check if this is a push to main branch
-            if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # WHY: This job only runs nightly / on manual dispatch, so run the
+            # full set of integration test files for thorough coverage.
+            if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               echo ""
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "Test: smoke_journeys_test.dart"
@@ -385,13 +390,9 @@ jobs:
       - name: Analyze code
         run: flutter analyze
 
-      - name: Run unit/widget tests
-        timeout-minutes: 10
-        # WHY: Exclude golden tests here (matching the "Run Tests" job). Goldens
-        # are verified by the dedicated "Verify Golden Tests" job in isolation;
-        # run in-suite they pick up font/render state from earlier tests and
-        # produce sub-pixel diffs that fail only in this combined invocation.
-        run: flutter test --no-pub --exclude-tags=golden
+      # WHY: Unit/widget tests are already run by the "Run Tests" job (ubuntu).
+      # This job only needs to verify the iOS build compiles, so the duplicate
+      # test run was removed to save ~2 min of macOS time per push.
 
       - name: Cache CocoaPods
         uses: actions/cache@v6
