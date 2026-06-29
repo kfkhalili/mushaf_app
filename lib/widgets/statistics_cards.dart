@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
 import '../utils/helpers.dart';
@@ -20,7 +21,7 @@ class _BaseStatCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: theme.dividerColor.withValues(alpha: 0.3),
+          color: theme.dividerColor.withValues(alpha: AppOpacity.faint),
           width: 1,
         ),
       ),
@@ -89,7 +90,7 @@ class OverallProgressCard extends ConsumerWidget {
                       value: overallProgress,
                       minHeight: 8,
                       backgroundColor: theme.dividerColor.withValues(
-                        alpha: 0.3,
+                        alpha: AppOpacity.faint,
                       ),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         theme.colorScheme.primary,
@@ -193,7 +194,9 @@ class ThisWeekCard extends StatelessWidget {
           Text(
             'متوسط: ${formatPagesPerDay(averagePages)}',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+              color: theme.textTheme.bodySmall?.color?.withValues(
+                alpha: AppOpacity.strong,
+              ),
             ),
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
@@ -251,7 +254,9 @@ class ThisMonthCard extends StatelessWidget {
           Text(
             'متوسط: ${formatPagesPerDay(averagePages)}',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+              color: theme.textTheme.bodySmall?.color?.withValues(
+                alpha: AppOpacity.strong,
+              ),
             ),
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
@@ -313,7 +318,7 @@ class StreakCard extends StatelessWidget {
             Text(
               'حافظ على السلسلة!',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.orange.withValues(alpha: 0.8),
+                color: Colors.orange.withValues(alpha: AppOpacity.prominent),
                 fontWeight: FontWeight.w600,
               ),
               textDirection: TextDirection.rtl,

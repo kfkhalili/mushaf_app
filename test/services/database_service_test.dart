@@ -102,7 +102,7 @@ void main() {
       expect(
         layout.lines.any((line) => line.words.isNotEmpty),
         isTrue,
-        reason: 'Word text should resolve from the shared digital-khatt script',
+        reason: 'Word text should resolve from the shared Indopak script',
       );
     });
 

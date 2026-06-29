@@ -130,7 +130,7 @@ class BookmarkItemCard extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: theme.dividerColor.withValues(alpha: 0.3),
+          color: theme.dividerColor.withValues(alpha: AppOpacity.faint),
           width: 1,
         ),
       ),
@@ -185,7 +185,7 @@ class BookmarkItemCard extends ConsumerWidget {
                                   surahNameGlyph,
                                   style: TextStyle(
                                     fontFamily: surahNameFontFamily,
-                                    fontSize: 28,
+                                    fontSize: kSurahGlyphBaseSize,
                                     fontWeight: FontWeight.w500,
                                     color: theme.textTheme.bodyLarge?.color,
                                   ),
@@ -231,7 +231,7 @@ class BookmarkItemCard extends ConsumerWidget {
                         Icons.chevron_right,
                         size: 24,
                         color: theme.textTheme.bodyMedium?.color?.withValues(
-                          alpha: 0.5,
+                          alpha: AppOpacity.soft,
                         ),
                       ),
                       Text(
@@ -240,7 +240,7 @@ class BookmarkItemCard extends ConsumerWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: theme.textTheme.bodySmall?.color?.withValues(
-                            alpha: 0.6,
+                            alpha: AppOpacity.secondary,
                           ),
                         ),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../models.dart';
@@ -136,20 +137,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Icon(
               Icons.search,
               size: 64,
-              color: theme.iconTheme.color?.withValues(alpha: 0.3),
+              color: theme.iconTheme.color?.withValues(alpha: AppOpacity.faint),
             ),
             const SizedBox(height: 16),
             Text(
               'ابدأ بالبحث في القرآن الكريم',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.6),
+                color: theme.textTheme.bodyLarge?.color?.withValues(
+                  alpha: AppOpacity.secondary,
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'ابحث عن كلمة أو آية أو اسم سورة',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.4),
+                color: theme.textTheme.bodyLarge?.color?.withValues(
+                  alpha: AppOpacity.muted,
+                ),
               ),
             ),
           ],
@@ -195,7 +200,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               return ListTile(
                 leading: Icon(
                   Icons.history,
-                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                  color: theme.iconTheme.color?.withValues(
+                    alpha: AppOpacity.secondary,
+                  ),
                   size: 20,
                 ),
                 title: Text(query, style: theme.textTheme.bodyLarge),
@@ -207,7 +214,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   },
                   icon: Icon(
                     Icons.close,
-                    color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                    color: theme.iconTheme.color?.withValues(
+                      alpha: AppOpacity.secondary,
+                    ),
                     size: 18,
                   ),
                 ),
@@ -225,6 +234,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildSearchResults(String query, ThemeData theme) {
     final searchResultsAsync = ref.watch(searchResultsProvider(query));
+    final bool isTruncated =
+        ref.watch(searchTruncatedProvider(query)).value ?? false;
 
     return searchResultsAsync.when(
       data: (results) {
@@ -236,14 +247,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 Icon(
                   Icons.search_off,
                   size: 64,
-                  color: theme.iconTheme.color?.withValues(alpha: 0.3),
+                  color: theme.iconTheme.color?.withValues(
+                    alpha: AppOpacity.faint,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'لم يتم العثور على نتائج',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.textTheme.bodyLarge?.color?.withValues(
-                      alpha: 0.6,
+                      alpha: AppOpacity.secondary,
                     ),
                   ),
                 ),
@@ -252,7 +265,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   'جرب البحث بكلمات مختلفة',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.textTheme.bodyLarge?.color?.withValues(
-                      alpha: 0.4,
+                      alpha: AppOpacity.muted,
                     ),
                   ),
                 ),
@@ -269,11 +282,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 horizontal: 16.0,
                 vertical: 8.0,
               ),
-              child: Text(
-                _formatResultCount(results.length),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatResultCount(results.length),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (isTruncated)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        'يتم عرض أول ${convertToEasternArabicNumerals(results.length.toString())} نتيجة. توجد نتائج أخرى — حدّد بحثك.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodyLarge?.color?.withValues(
+                            alpha: AppOpacity.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Expanded(
@@ -319,7 +349,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Text(
               'يرجى المحاولة مرة أخرى',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.6),
+                color: theme.textTheme.bodyLarge?.color?.withValues(
+                  alpha: AppOpacity.secondary,
+                ),
               ),
             ),
           ],
@@ -368,14 +400,16 @@ class SearchResultItem extends StatelessWidget {
                 Icon(
                   Icons.book,
                   size: 16,
-                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                  color: theme.iconTheme.color?.withValues(
+                    alpha: AppOpacity.secondary,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${result.surahName} - الآية ${convertToEasternArabicNumerals(result.ayahNumber.toString())}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodyLarge?.color?.withValues(
-                      alpha: 0.7,
+                      alpha: AppOpacity.strong,
                     ),
                   ),
                 ),
@@ -387,14 +421,16 @@ class SearchResultItem extends StatelessWidget {
                 Icon(
                   Icons.pageview,
                   size: 16,
-                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                  color: theme.iconTheme.color?.withValues(
+                    alpha: AppOpacity.secondary,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'الصفحة ${convertToEasternArabicNumerals(result.pageNumber.toString())}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.textTheme.bodyLarge?.color?.withValues(
-                      alpha: 0.7,
+                      alpha: AppOpacity.strong,
                     ),
                   ),
                 ),
@@ -405,7 +441,7 @@ class SearchResultItem extends StatelessWidget {
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: theme.iconTheme.color?.withValues(alpha: 0.6),
+          color: theme.iconTheme.color?.withValues(alpha: AppOpacity.secondary),
         ),
         onTap: onTap,
       ),

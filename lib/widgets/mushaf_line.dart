@@ -1,14 +1,19 @@
-import 'dart:math'; // For min()
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models.dart';
 import '../constants.dart';
-import '../providers.dart';
 import '../utils/helpers.dart';
 
 class MushafLine extends ConsumerWidget {
   final LineInfo line;
   final String pageFontFamily;
+  // WHY: The body font size, sized by [MushafPage] to fill the column width
+  // (so word spacing stays tight). Shared by every line on the page.
+  final double bodyFontSize;
+  // WHY: The line-box height as a multiple of the font size — the font's own
+  // natural leading, measured by [MushafPage] (not a hardcoded per-layout
+  // constant). The grid's `Expanded` rows provide the inter-line spacing.
+  final double lineHeight;
   final bool isMemorizationMode;
   // WHY: Accept the set of words that should be visible.
   final Set<Word> wordsToShow;
@@ -26,6 +31,8 @@ class MushafLine extends ConsumerWidget {
     super.key,
     required this.line,
     required this.pageFontFamily,
+    required this.bodyFontSize,
+    required this.lineHeight,
     required this.isMemorizationMode,
     required this.wordsToShow, // Use this set to determine visibility
     this.ayahOpacities,
@@ -58,32 +65,20 @@ class MushafLine extends ConsumerWidget {
     final theme = Theme.of(context);
     final Color baseTextColor =
         theme.textTheme.bodyLarge?.color ?? Colors.black;
+    // WHY: Honor the OS "reduce motion" accessibility setting — skip the
+    // per-word reveal animation when the user has asked to minimize motion.
+    final bool reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    String? fontFamily = quranCommonFontFamily; // For Basmallah
-    TextAlign lineAlignment = line.isCentered
-        ? TextAlign.center
-        : TextAlign.justify;
+    final String basmallahFontFamily = quranCommonFontFamily;
 
-    // --- Responsive Scaling ---
+    // --- Layout-driven sizing ---
+    // WHY: [bodyFontSize] fills the column width; [lineHeight] is the font's own
+    // natural leading (both measured by [MushafPage]). The page's Expanded grid
+    // supplies the inter-line spacing, so there's no per-layout leading constant.
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double widthScale = screenWidth / referenceScreenWidth;
-    final double heightScale = screenHeight / referenceScreenHeight;
-    final double scaleFactor = min(widthScale, heightScale);
-
-    // Get user's preferred font size
-    final double userFontSize = ref.watch(fontSizeSettingProvider);
-    final double unclampedDynamicFontSize = userFontSize * scaleFactor;
-    double defaultDynamicFontSize = unclampedDynamicFontSize.clamp(
-      minAyahFontSize,
-      maxAyahFontSize,
-    );
-    // Get layout-specific line height
-    final layout = ref.watch(mushafLayoutSettingProvider);
-    final double dynamicLineHeight =
-        layoutLineHeights[layout] ?? baseLineHeight;
-    const double tightLineHeight = 1.5;
-    // --- End Responsive Scaling ---
+    final double dynamicLineHeight = lineHeight;
+    const double tightLineHeight = ornamentLineHeight;
+    // --- End Layout-driven sizing ---
 
     // --- Dynamic Padding Calculation ---
     final double availableWidth = screenWidth - (2 * pageHorizontalPadding);
@@ -105,16 +100,10 @@ class MushafLine extends ConsumerWidget {
           final String surahNameText = 'surah$surahNumPadded surah-icon';
           const String headerText = 'header';
 
-          final double surahNameFontSize =
-              (unclampedDynamicFontSize * surahNameScaleFactor).clamp(
-                minSurahNameFontSize,
-                maxSurahNameFontSize,
-              );
-          final double headerFontSize =
-              (unclampedDynamicFontSize * headerScaleFactor).clamp(
-                minSurahHeaderFontSize,
-                maxSurahHeaderFontSize,
-              );
+          final double surahNameFontSize = (bodyFontSize * surahNameScaleFactor)
+              .clamp(minSurahNameFontSize, maxSurahNameFontSize);
+          final double headerFontSize = (bodyFontSize * headerScaleFactor)
+              .clamp(minSurahHeaderFontSize, maxSurahHeaderFontSize);
 
           lineWidget = Stack(
             alignment: Alignment.center,
@@ -147,19 +136,15 @@ class MushafLine extends ConsumerWidget {
       case 'basmallah':
         {
           const String textToShow = basmallah;
-          final double basmallahFontSize =
-              (unclampedDynamicFontSize * basmallahScaleFactor).clamp(
-                minBasmallahFontSize,
-                maxBasmallahFontSize,
-              );
-          lineAlignment = TextAlign.center;
+          final double basmallahFontSize = (bodyFontSize * basmallahScaleFactor)
+              .clamp(minBasmallahFontSize, maxBasmallahFontSize);
 
           lineWidget = Text(
             textToShow,
             textDirection: TextDirection.rtl,
-            textAlign: lineAlignment,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: fontFamily,
+              fontFamily: basmallahFontFamily,
               fontSize: basmallahFontSize,
               height: tightLineHeight,
             ),
@@ -203,7 +188,7 @@ class MushafLine extends ConsumerWidget {
                 "${word.text}-${opacity.toStringAsFixed(2)}-$isSelected-${primaryColor.toARGB32()}",
               ),
               style: _getWordStyle(
-                fontSize: defaultDynamicFontSize,
+                fontSize: bodyFontSize,
                 lineHeight: dynamicLineHeight,
                 baseColor: highlightColor,
                 opacity: opacity,
@@ -231,12 +216,19 @@ class MushafLine extends ConsumerWidget {
             }
 
             return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
+              duration: reduceMotion ? Duration.zero : AppDurations.medium,
               child: widget,
             );
           }).toList();
 
-          // For centered lines, add spaces between words
+          // WHY: Distribute the line's horizontal slack into the inter-word
+          // spaces (word-spacing justification). This keeps every glyph's shape
+          // intact — the priority for Quran calligraphy — while filling both
+          // margins. The alternatives are worse: horizontally scaling the line
+          // to fill distorts the letterforms, and natural spacing leaves a
+          // ragged edge. Flutter can't justify a single line and the fonts' own
+          // kashida isn't reachable via Flutter text shaping, so this is the
+          // least-bad fill. Centered lines (is_centered) center at natural size.
           List<Widget> finalChildren;
           if (line.isCentered) {
             finalChildren = [];
@@ -245,9 +237,9 @@ class MushafLine extends ConsumerWidget {
               if (i < wordWidgets.length - 1) {
                 finalChildren.add(
                   Text(
-                    " ",
+                    ' ',
                     style: _getWordStyle(
-                      fontSize: defaultDynamicFontSize,
+                      fontSize: bodyFontSize,
                       lineHeight: dynamicLineHeight,
                       baseColor: baseTextColor,
                       opacity: 1.0,

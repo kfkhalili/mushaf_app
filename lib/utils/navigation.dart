@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/mushaf_screen.dart';
 import '../providers.dart';
@@ -76,7 +77,7 @@ Future<T?> pushSlideTransition<T>(
         return SlideTransition(position: animation.drive(tween), child: child);
       },
       // When popping, reverse the animation
-      reverseTransitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: AppDurations.medium,
     ),
   );
 }

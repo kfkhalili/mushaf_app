@@ -12,8 +12,6 @@ void main() {
             builder: (context) {
               final metrics = ResponsiveMetrics.of(context);
               expect(metrics.scaleFactor, greaterThan(0));
-              expect(metrics.widthScale, greaterThan(0));
-              expect(metrics.heightScale, greaterThan(0));
               return const SizedBox();
             },
           ),

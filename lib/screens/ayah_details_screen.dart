@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import '../providers.dart';
 import '../screens/topic_detail_screen.dart';
 import '../utils/helpers.dart';
 import '../utils/navigation.dart';
 import '../utils/async_value_helpers.dart';
+import '../utils/responsive.dart';
 import '../constants.dart';
 
 /// Screen showing detailed information about a specific ayah
@@ -57,7 +57,7 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
     // This allows them to swipe back if they change their mind
     _navigationTimer?.cancel();
     _pendingNavigationIndex = pageIndex;
-    _navigationTimer = Timer(const Duration(milliseconds: 400), () {
+    _navigationTimer = Timer(AppDurations.ayahNavDelay, () {
       // Only navigate if still on the same page and widget is mounted
       if (!mounted || _pendingNavigationIndex != pageIndex) return;
 
@@ -149,21 +149,16 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
                     );
                   }
 
-                  // Calculate responsive font size like mushaf screen
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final screenHeight = MediaQuery.of(context).size.height;
-                  final widthScale = screenWidth / referenceScreenWidth;
-                  final heightScale = screenHeight / referenceScreenHeight;
-                  final scaleFactor = math.min(widthScale, heightScale);
-
-                  final userFontSize = ref.watch(fontSizeSettingProvider);
-                  // WHY: Use larger font size for ayah details screen (1.5x multiplier)
-                  final unclampedDynamicFontSize =
-                      userFontSize * scaleFactor * 1.5;
-                  final fontSize = unclampedDynamicFontSize.clamp(
-                    minAyahFontSize,
-                    maxAyahFontSize,
-                  );
+                  // WHY: Use the shared responsive scale (one mechanism for the
+                  // whole app) rather than re-deriving width/height scaling
+                  // inline. The detail view enlarges a single ayah for study.
+                  final scaleFactor = ResponsiveMetrics.of(context).scaleFactor;
+                  final readingBase = ref.watch(fontSizeSettingProvider);
+                  final fontSize =
+                      (readingBase * scaleFactor * ayahDetailsFontScale).clamp(
+                        minAyahFontSize,
+                        maxAyahFontSize,
+                      );
 
                   final layout = ref.watch(mushafLayoutSettingProvider);
                   final lineHeight =
@@ -177,8 +172,8 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
+                      spacing: ayahDetailsWordSpacing,
+                      runSpacing: ayahDetailsRunSpacing,
                       alignment: WrapAlignment.start,
                       textDirection: TextDirection.rtl,
                       children: words.map((word) {
@@ -190,7 +185,9 @@ class _AyahDetailsScreenState extends ConsumerState<AyahDetailsScreen> {
                             height: lineHeight,
                             color: baseTextColor,
                           ),
-                          textScaler: const TextScaler.linear(1.0),
+                          // WHY: This is a reading/study view (not the fixed-grid
+                          // page), so honor the user's OS text-scaling setting
+                          // for accessibility instead of pinning it to 1.0.
                         );
                       }).toList(),
                     ),

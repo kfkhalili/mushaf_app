@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../screens/ayah_details_screen.dart';
@@ -122,7 +123,7 @@ class AyahContextMenu extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.3),
+                  color: theme.dividerColor.withValues(alpha: AppOpacity.faint),
                   width: 1,
                 ),
               ),

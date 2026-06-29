@@ -45,9 +45,11 @@ class FontService {
         fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
         break;
       case MushafLayout.indopak9Lines:
-        // Reuses the Digital Khatt font (single font for all pages)
-        pageFontFamily = digitalKhattFontFamily;
-        fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
+        // WHY: The GABA 9-line layout (info.font_name = "indopak") is authored
+        // for the Indopak font — its line breaks fill the width only with these
+        // glyph metrics. Single font for all pages.
+        pageFontFamily = indopakFontFamily;
+        fontAssetPath = 'assets/fonts/indopak-font.ttf';
         break;
     }
 

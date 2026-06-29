@@ -1009,42 +1009,21 @@ class DatabaseService with InitializationMixin {
   }
 
   /// Retrieves the total number of pages for the current layout.
-  /// Reads from the 'info' table's 'number_of_pages' column in the layout database.
+  ///
+  /// Returns the count cached at init from the layout database's
+  /// `info.number_of_pages` — the real per-layout total (Uthmani 604,
+  /// Indopak 849, Indopak 9-line 1890). Throws [DatabaseNotFoundException] if
+  /// that value was missing/unreadable (a corrupt bundled database) rather than
+  /// silently returning a wrong hardcoded default that breaks non-Uthmani
+  /// layouts. Callers either surface the error or fall back to the generic
+  /// [validatePageNumber] ceiling.
   Future<int> getTotalPages() async {
     await init();
-    if (_layoutDb == null) {
-      throw DatabaseNotInitializedException(
-        "Layout database is not initialized for getTotalPages",
-      );
-    }
-
-    try {
-      final List<Map<String, dynamic>> result = await _layoutDb!.query(
-        DbConstants.infoTable,
-        columns: [DbConstants.numberOfPagesCol],
-        limit: QueryLimits.singleResult,
-      );
-
-      if (result.isNotEmpty &&
-          result.first[DbConstants.numberOfPagesCol] != null) {
-        return parseInt(result.first[DbConstants.numberOfPagesCol]);
-      }
-
-      // Fallback to 604 if info table doesn't exist or has no data
-      // This should never happen with valid databases, but provides safety
-      if (kDebugMode) {
-        debugPrint(
-          'Warning: number_of_pages not found in info table, using fallback value',
-        );
-      }
-      return 604;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error retrieving total pages from database: $e');
-      }
-      // Fallback to 604 on error
-      return 604;
-    }
+    final int? cached = _totalPages;
+    if (cached != null) return cached;
+    throw DatabaseNotFoundException(
+      'number_of_pages unavailable in layout info table',
+    );
   }
 
   /// Retrieves layout information (name and lines_per_page) from the info table.

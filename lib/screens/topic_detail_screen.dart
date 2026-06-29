@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ontology_models.dart';
 import '../providers.dart';
@@ -106,9 +107,8 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       Icon(
                         Icons.info_outline,
                         size: 48,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: AppOpacity.soft),
                       ),
                       const SizedBox(height: 16),
                       Text(

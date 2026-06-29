@@ -193,7 +193,7 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
         _pageController
             .animateToPage(
               targetIndex,
-              duration: const Duration(milliseconds: 300),
+              duration: AppDurations.medium,
               curve: Curves.easeInOut,
             )
             .then((_) {

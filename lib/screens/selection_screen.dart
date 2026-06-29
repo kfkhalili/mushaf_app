@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/juz_list_view.dart';
 import '../widgets/surah_list_view.dart';
@@ -75,7 +76,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen>
       _pageController,
       currentIndex,
       animated: true, // Smooth animation for SelectionScreen
-      duration: const Duration(milliseconds: 300),
+      duration: AppDurations.medium,
       curve: Curves.easeInOut,
     );
 

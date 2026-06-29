@@ -34,6 +34,20 @@ class SearchResult extends Equatable {
   ];
 }
 
+// --- Search Outcome (results + truncation flag) ---
+@immutable
+class SearchOutcome extends Equatable {
+  final List<SearchResult> results;
+  // WHY: true when more matches existed than the capped query returned, so the
+  // UI can tell the user results were truncated rather than silently dropping them.
+  final bool isTruncated;
+
+  const SearchOutcome({required this.results, this.isTruncated = false});
+
+  @override
+  List<Object?> get props => [results, isTruncated];
+}
+
 // --- New Model for Surah List ---
 @immutable
 class SurahInfo {
@@ -307,15 +321,6 @@ class ReadingStatistics {
     required this.daysThisMonth,
     required this.averagePagesPerDay,
   });
-
-  // Deprecated: Use totalPages parameter instead
-  // This getter uses hardcoded 604 which doesn't work for different layouts
-  @Deprecated('Use overallProgressForTotalPages instead')
-  double get overallProgress => totalPagesRead / 604; // 0.0 to 1.0
-
-  // Deprecated: Use totalPages parameter instead
-  @Deprecated('Use overallProgressPercentForTotalPages instead')
-  int get overallProgressPercent => (overallProgress * 100).round();
 
   // Calculate progress for a specific total page count
   double overallProgressForTotalPages(int totalPages) =>

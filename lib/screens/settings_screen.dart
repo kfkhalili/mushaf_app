@@ -148,14 +148,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     border: Border.all(
                                       color: isSelected
                                           ? theme.colorScheme.onPrimary
-                                          : Colors.grey.withValues(alpha: 0.3),
+                                          : Colors.grey.withValues(
+                                              alpha: AppOpacity.faint,
+                                            ),
                                       width: isSelected ? 3 : 1,
                                     ),
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
                                               color: preset.colorValue
-                                                  .withValues(alpha: 0.5),
+                                                  .withValues(
+                                                    alpha: AppOpacity.soft,
+                                                  ),
                                               blurRadius: 8,
                                               spreadRadius: 2,
                                             ),
@@ -193,10 +197,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: currentColor.withValues(alpha: 0.1),
+                                color: currentColor.withValues(
+                                  alpha: AppOpacity.hairline,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: currentColor.withValues(alpha: 0.3),
+                                  color: currentColor.withValues(
+                                    alpha: AppOpacity.faint,
+                                  ),
                                 ),
                               ),
                               child: Row(
@@ -209,7 +217,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.grey.withValues(
-                                          alpha: 0.3,
+                                          alpha: AppOpacity.faint,
                                         ),
                                       ),
                                     ),
@@ -290,7 +298,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   'عدد الأسطر في الصفحة: ${convertToEasternArabicNumerals(currentLayoutInfo.linesPerPage.toString())}',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.7),
+                                        .withValues(alpha: AppOpacity.strong),
                                   ),
                                 ),
                               ],
@@ -424,13 +432,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('المساعدة والدعم'),
-                    trailing: const Icon(Icons.chevron_right),
+                    // WHY: No chevron — there's nothing to navigate to yet; the
+                    // tap is informational, so it doesn't promise a screen.
                     onTap: () {
-                      // TODO: Implement help & support
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Help & support coming soon'),
-                        ),
+                        const SnackBar(content: Text('قريباً إن شاء الله')),
                       );
                     },
                   ),
@@ -552,7 +558,9 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
               decoration: BoxDecoration(
                 color: currentColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: Colors.grey.withValues(alpha: AppOpacity.faint),
+                ),
               ),
             ),
           ],
@@ -588,7 +596,9 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: Colors.grey.withValues(alpha: AppOpacity.faint),
+            ),
           ),
         ),
       ],

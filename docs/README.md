@@ -16,6 +16,7 @@ This directory contains all project documentation organized into **active** (cur
 - [`active/memorization_feature_spec.md`](./active/memorization_feature_spec.md) - Memorization feature specification (beta)
 - [`active/memorization_chaining.md`](./active/memorization_chaining.md) - Memorization chaining design
 - [`active/product_analysis_roadmap.md`](./active/product_analysis_roadmap.md) - Product analysis and roadmap
+- [`active/form-factor-page-layout.md`](./active/form-factor-page-layout.md) - DB-driven page sizing / form-factor layout (Phase 1 landed)
 
 ---
 

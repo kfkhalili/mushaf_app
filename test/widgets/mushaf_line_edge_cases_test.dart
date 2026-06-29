@@ -22,6 +22,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {},
               ),
@@ -49,6 +51,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {},
               ),
@@ -76,6 +80,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {},
               ),
@@ -103,6 +109,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {},
               ),
@@ -131,6 +139,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: true,
                 wordsToShow: {word},
                 ayahOpacities: {'001:001': 0.5},
@@ -161,6 +171,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {word},
               ),
@@ -190,6 +202,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {word},
                 selectedAyahKey: '001:001',
@@ -220,6 +234,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {word},
                 bookmarkedAyahKeys: {'001:001'},

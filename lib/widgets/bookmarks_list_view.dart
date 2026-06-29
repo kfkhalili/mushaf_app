@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../screens/mushaf_screen.dart';
@@ -61,7 +62,9 @@ class _EmptyBookmarksState extends StatelessWidget {
             Icon(
               Icons.bookmark_border,
               size: 64,
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
+              color: theme.textTheme.bodyMedium?.color?.withValues(
+                alpha: AppOpacity.faint,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -80,7 +83,7 @@ class _EmptyBookmarksState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 color: theme.textTheme.bodyMedium?.color?.withValues(
-                  alpha: 0.7,
+                  alpha: AppOpacity.strong,
                 ),
               ),
               textDirection: TextDirection.rtl,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
@@ -419,21 +420,23 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
-                      // Reciter Selection
+                      // Reciter (single bundled reciter — not selectable, so this
+                      // is a static display, not a navigation affordance).
                       Card(
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          leading: const Icon(Icons.record_voice_over),
+                          subtitle: const Text(
+                            'القارئ',
+                            textDirection: TextDirection.rtl,
+                          ),
                           title: const Text(
                             'عبد الله علي جابر',
                             textDirection: TextDirection.rtl,
                           ),
-                          onTap: () {
-                            // TODO: Show reciter selection if we have multiple reciters
-                          },
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -651,7 +654,7 @@ class _AudioConfigScreenState extends ConsumerState<AudioConfigScreen> {
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValues(alpha: AppOpacity.hairline),
               blurRadius: 4,
               offset: const Offset(0, -2),
             ),

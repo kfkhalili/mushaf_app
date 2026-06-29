@@ -43,8 +43,8 @@ class AppHeader extends StatelessWidget {
         border: Border(
           bottom: BorderSide(
             color: theme.brightness == Brightness.dark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withValues(alpha: AppOpacity.hairline)
+                : Colors.black.withValues(alpha: AppOpacity.hairline),
             width: 1.0,
           ),
         ),
@@ -230,9 +230,8 @@ class AppHeader extends StatelessWidget {
       final metrics = ResponsiveMetrics.of(context);
       final double scaleFactor = metrics.scaleFactor;
 
-      final double juzFontSize = 24 * scaleFactor; // Same as juzHizbStyle
-      final double surahFontSize =
-          28 * scaleFactor; // Same as surahNameHeaderStyle
+      final double juzFontSize = kJuzGlyphBaseSize * scaleFactor;
+      final double surahFontSize = kSurahGlyphBaseSize * scaleFactor;
 
       // Find juz and surah parts dynamically
       _TitlePart? juzPart;

@@ -69,10 +69,12 @@ extension MushafLayoutExtension on MushafLayout {
         return indopakScriptDbFileName;
       case MushafLayout.digitalKhatt15Lines:
         return digitalKhattScriptDbFileName;
-      // WHY: The QUL 9-line layout references the same global word ids
-      // (1..83668) as the Digital Khatt script, so it reuses that word source.
+      // WHY: The GABA 9-line layout's info.font_name is "indopak" and its line
+      // breaks are authored for the Indopak font, so it must use the Indopak
+      // script text (same global word ids 1..83668, Indopak orthography) — not
+      // the Digital Khatt text, whose glyph widths don't match the line breaks.
       case MushafLayout.indopak9Lines:
-        return digitalKhattScriptDbFileName;
+        return indopakScriptDbFileName;
     }
   }
 
@@ -97,10 +99,11 @@ extension MushafLayoutExtension on MushafLayout {
         return indopakFontFamily;
       case MushafLayout.digitalKhatt15Lines:
         return digitalKhattFontFamily;
-      // WHY: Rendered with the Digital Khatt font (per product decision to
-      // reuse the existing font rather than bundle a separate Indopak one).
+      // WHY: The GABA 9-line layout is authored for the Indopak font
+      // (info.font_name = "indopak"); rendering it with anything else breaks the
+      // authored line-fill (the cause of the loose word spacing).
       case MushafLayout.indopak9Lines:
-        return digitalKhattFontFamily;
+        return indopakFontFamily;
     }
   }
 }
@@ -120,7 +123,10 @@ const double referenceScreenWidth = 428.0;
 const double referenceScreenHeight = 926.0;
 const double maxLineContentWidth = 600.0;
 
-// Layout-specific maximum font sizes (automatically used)
+// Per-layout base reading size for the single-ayah detail view.
+// WHY: The page body is sized by measurement (see PageFit) and no longer uses
+// these. They remain the *reading base* for AyahDetailsScreen, which shows one
+// ayah enlarged for study (scaled by [ayahDetailsFontScale]).
 const Map<MushafLayout, double> layoutMaxFontSizes = {
   MushafLayout.uthmani15Lines: 20.0,
   MushafLayout.indopak13Lines: 24.0,
@@ -128,12 +134,24 @@ const Map<MushafLayout, double> layoutMaxFontSizes = {
   MushafLayout.indopak9Lines: 28.0, // Fewer lines/page ⇒ larger glyphs
 };
 
-// Layout-specific line heights
+// --- AYAH DETAILS (single-ayah reading view) ---
+// WHY: The detail view shows one ayah larger than the page body for study.
+const double ayahDetailsFontScale =
+    1.5; // multiplies the per-layout reading base
+const double ayahDetailsWordSpacing = 8.0; // horizontal gap between words
+const double ayahDetailsRunSpacing = 4.0; // vertical gap between wrapped lines
+
+// Per-layout line-box height (leading) as a multiple of the body font size.
+// WHY: This is an intentional *typographic design* value — the vertical rhythm
+// (how much breathing room each line gets), chosen per script — NOT a quantity
+// derivable from font ascent/descent (those give ~1.0–1.3; the generous mushaf
+// spacing is deliberate). PageFit divides the page height by the sum of these so
+// the lines fill the page at this rhythm. Tune per layout for the script's feel.
 const Map<MushafLayout, double> layoutLineHeights = {
   MushafLayout.uthmani15Lines: 2.1,
-  MushafLayout.indopak13Lines: 2.05, // Tighter to prevent overflow
+  MushafLayout.indopak13Lines: 2.05, // Nastaliq sits tighter
   MushafLayout.digitalKhatt15Lines: 2.1,
-  MushafLayout.indopak9Lines: 2.2,
+  MushafLayout.indopak9Lines: 2.2, // Fewer lines ⇒ more generous rhythm
 };
 
 // --- STYLING CONSTANTS ---
@@ -155,13 +173,24 @@ const double maxBasmallahFontSize = 28.0;
 
 // Line Height (deprecated - use layoutLineHeights instead)
 const double baseLineHeight = 2.1; // For Ayah text
-// const double tightLineHeight = 1.5; // Used directly in line_widget.dart
+
+// Line-box height (leading) for ornament rows (surah-name frame + header
+// overlay, basmallah) — a typographic design value, tighter than body text.
+// Shared by the renderer (MushafLine) and the page-fit measurement (which needs
+// each row's true height to size the page without overflow). See [PageFit].
+const double ornamentLineHeight = 1.5;
+
+// WHY: One-logical-pixel vertical rounding guard, shaved off the available
+// height in PageFit so an exact-fit page can't overflow by a sub-pixel fraction
+// from TextPainter rounding. An absolute pixel (not a percentage): rounding
+// error is sub-pixel regardless of font size, so a fixed epsilon is the
+// principled guard rather than a blanket shrink.
+const double pageFitVerticalEpsilon = 1.0;
 
 // Padding Values
 const double pageHorizontalPadding = 16.0;
 const double pageBottomPadding = 45.0;
 const double headerHorizontalPadding = 20.0;
-const double headerJuzHizbSpacing = 12.0; // Not currently used but kept
 const double footerBottomPadding = 16.0;
 const double footerRightPadding = 16.0;
 const double footerLeftPadding = 24.0;
@@ -170,12 +199,45 @@ const double footerLeftPadding = 24.0;
 const double kBottomNavBarHeight = 64.0;
 const double kBottomNavLabelFontSize = 22.0;
 const double kBottomNavIconSize = 34.0;
-const double kCountdownCircleDiameter = 56.0;
 
 // --- APP HEADER ---
 const double kAppHeaderHeight = 56.0;
 const double kAppHeaderTitleFontSize = 20.0;
 const double kAppHeaderIconSize = 24.0;
+
+// --- HEADER GLYPH BASE SIZES ---
+// WHY: Base font sizes for the juz/hizb and surah-name glyphs in the app header
+// (scaled by the responsive factor) and the bookmark card. Single source of
+// truth for these two; the list-row glyphs use their own larger sizes by design.
+const double kJuzGlyphBaseSize = 24.0;
+const double kSurahGlyphBaseSize = 28.0;
+
+// --- DESIGN TOKENS: OPACITY ---
+// WHY: Semantic opacity scale replacing scattered `withValues(alpha: …)`
+// literals, so "hairline border" / "muted text" mean one value everywhere.
+class AppOpacity {
+  static const double hairline = 0.1; // borders, faint dividers
+  static const double faint = 0.3; // empty-state icons, disabled glyphs
+  static const double muted = 0.4; // tertiary text/hints
+  static const double soft = 0.5;
+  static const double secondary = 0.6; // secondary text
+  static const double strong = 0.7;
+  static const double prominent = 0.8;
+
+  const AppOpacity._();
+}
+
+// --- DESIGN TOKENS: ANIMATION DURATIONS ---
+// WHY: Named UI animation timings replacing magic Duration literals. Functional
+// timings (audio polling/seek, splash delay, snackbars) stay local to their use.
+class AppDurations {
+  static const Duration micro = Duration(milliseconds: 120);
+  static const Duration short = Duration(milliseconds: 200);
+  static const Duration medium = Duration(milliseconds: 300); // transitions
+  static const Duration ayahNavDelay = Duration(milliseconds: 400);
+
+  const AppDurations._();
+}
 
 // --- MEMORIZATION ---
 // WHY: Number of words to show initially when memorization mode starts.

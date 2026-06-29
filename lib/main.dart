@@ -10,8 +10,11 @@ Future<void> main() async {
   // before we call any platform-specific services like setting orientation.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // WHY: By setting the preferred orientations here, we lock the entire application
-  // to portrait mode only. The user will not be able to rotate it to landscape.
+  // WHY: Portrait-only is a deliberate, current product decision. The reading
+  // surface is form-factor-proof (PageFit measures to any box), but the *chrome*
+  // (headers, nav, dialogs) is not yet landscape/wide adaptive. Unlocking
+  // orientation is gated on that adaptive-chrome work (see WindowSizeClass in
+  // utils/responsive.dart) — not a one-line change, so the lock stays until then.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

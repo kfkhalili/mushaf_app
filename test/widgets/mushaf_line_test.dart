@@ -25,6 +25,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {
                   const Word(text: 'بسم', surahNumber: 1, ayahNumber: 1),
@@ -55,6 +57,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {
                   const Word(text: 'بسم', surahNumber: 1, ayahNumber: 0),
@@ -84,6 +88,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {},
               ),
@@ -111,6 +117,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: true,
                 wordsToShow: {
                   const Word(text: 'بسم', surahNumber: 1, ayahNumber: 1),
@@ -141,6 +149,8 @@ void main() {
               body: MushafLine(
                 line: line,
                 pageFontFamily: 'Uthmani',
+                bodyFontSize: 24.0,
+                lineHeight: 2.0,
                 isMemorizationMode: false,
                 wordsToShow: {
                   const Word(text: 'بسم', surahNumber: 1, ayahNumber: 1),

@@ -21,10 +21,8 @@ class SearchService with InitializationMixin {
 
   // WHY: Use LRU caches to limit memory usage and prevent unbounded growth.
   // Evicts least recently used items when cache is full.
-  final LRUCache<String, List<SearchResult>> _searchCache =
-      LRUCache<String, List<SearchResult>>(
-        SearchCacheLimits.maxSearchCacheSize,
-      );
+  final LRUCache<String, SearchOutcome> _searchCache =
+      LRUCache<String, SearchOutcome>(SearchCacheLimits.maxSearchCacheSize);
   final LRUCache<int, String> _surahNameCache = LRUCache<int, String>(
     SearchCacheLimits.maxSurahNameCacheSize,
   );
@@ -128,8 +126,10 @@ class SearchService with InitializationMixin {
     _imlaeiScriptDb = null;
   }
 
-  /// Search for Arabic text in the Quran
-  Future<List<SearchResult>> searchText(String query) async {
+  /// Search for Arabic text in the Quran. Returns the matches plus a flag
+  /// indicating whether more matches existed than were returned (the result set
+  /// is capped at [SearchLimits.maxSearchResults]).
+  Future<SearchOutcome> searchText(String query) async {
     await init();
 
     // Check rate limit before processing
@@ -142,7 +142,7 @@ class SearchService with InitializationMixin {
         );
       }
       // Return empty results instead of throwing to provide graceful degradation
-      return [];
+      return const SearchOutcome(results: []);
     }
 
     // Validate and sanitize search query
@@ -154,7 +154,7 @@ class SearchService with InitializationMixin {
       if (kDebugMode) {
         developer.log('Invalid search query: $e', name: 'SearchService');
       }
-      return [];
+      return const SearchOutcome(results: []);
     }
 
     // Check cache first
@@ -172,22 +172,27 @@ class SearchService with InitializationMixin {
 
     try {
       // Search in both databases and combine results without duplicates
-      List<SearchResult> results = await _searchInBothDatabases(query);
+      final (List<SearchResult> results, bool truncated) =
+          await _searchInBothDatabases(query);
+      final outcome = SearchOutcome(results: results, isTruncated: truncated);
 
       // Cache results
-      _searchCache.put(cacheKey, results);
+      _searchCache.put(cacheKey, outcome);
 
-      return results;
+      return outcome;
     } catch (e) {
       if (kDebugMode) {
         developer.log('Error searching text', name: 'SearchService', error: e);
       }
-      return [];
+      return const SearchOutcome(results: []);
     }
   }
 
-  /// Search in both imlaei databases and combine results without duplicates
-  Future<List<SearchResult>> _searchInBothDatabases(String query) async {
+  /// Search in both imlaei databases and combine results without duplicates.
+  /// Returns the (deduped, capped) results and whether more matches existed.
+  Future<(List<SearchResult>, bool)> _searchInBothDatabases(
+    String query,
+  ) async {
     final trimmedQuery = query.trim();
     final strippedQuery = _stripDiacritics(trimmedQuery);
 
@@ -198,7 +203,9 @@ class SearchService with InitializationMixin {
       where: 'text LIKE ? OR text LIKE ?',
       whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
       orderBy: 'surah ASC, ayah ASC',
-      limit: SearchLimits.maxSearchResults,
+      // WHY: maxSearchResults + 1 so a full page tells us more matches exist
+      // than we return, letting the UI flag truncation instead of hiding it.
+      limit: SearchLimits.maxSearchResults + 1,
     );
 
     final List<Map<String, dynamic>> scriptResults = await _imlaeiScriptDb!
@@ -208,8 +215,14 @@ class SearchService with InitializationMixin {
           where: 'text LIKE ? OR text LIKE ?',
           whereArgs: ['%$trimmedQuery%', '%$strippedQuery%'],
           orderBy: 'surah ASC, ayah ASC',
-          limit: SearchLimits.maxSearchResults,
+          limit: SearchLimits.maxSearchResults + 1,
         );
+
+    // True when either source returned a full over-limit page — more matches
+    // exist than this result set will contain.
+    final bool truncated =
+        simpleResults.length > SearchLimits.maxSearchResults ||
+        scriptResults.length > SearchLimits.maxSearchResults;
 
     // Step 2: Filter results by stripping diacritics and checking if stripped query matches
     final List<Map<String, dynamic>> filteredSimpleResults = simpleResults
@@ -247,7 +260,7 @@ class SearchService with InitializationMixin {
           .whereType<String>(), // Filter out null values
     );
 
-    if (allFoundVerseKeys.isEmpty) return [];
+    if (allFoundVerseKeys.isEmpty) return (<SearchResult>[], false);
 
     // Step 4: Retrieve results from script database with diacritics using bulk query
     // WHY: Use bulk query with IN clause to avoid N+1 query pattern.
@@ -352,14 +365,18 @@ class SearchService with InitializationMixin {
         developer.log('  Text: $verseText', name: 'SearchService');
       }
 
+      // Get page number for this verse; skip results we cannot place rather
+      // than defaulting them to page 1.
+      final int? pageNumber = await _getPageNumberForVerse(verseKey);
+      if (pageNumber == null) {
+        continue;
+      }
+
       // Get Surah name - safe to use validated surahNumber
       final String surahName = await _getSurahName(surahNumber);
 
-      // Get page number for this verse
-      final int pageNumber = await _getPageNumberForVerse(verseKey);
-
       // Use the verse text (prioritizing script database with diacritics)
-      final String context = _highlightSearchTerm(verseText, trimmedQuery);
+      final String context = verseText;
 
       results.add(
         SearchResult(
@@ -374,11 +391,19 @@ class SearchService with InitializationMixin {
       );
     }
 
-    return results;
+    // Cap the deduped set to the limit; flag truncation if either the raw query
+    // overflowed or the dedup union itself exceeded the cap.
+    if (results.length > SearchLimits.maxSearchResults) {
+      return (results.sublist(0, SearchLimits.maxSearchResults), true);
+    }
+    return (results, truncated);
   }
 
-  /// Get page number for a specific verse using verse_key
-  Future<int> _getPageNumberForVerse(String verseKey) async {
+  /// Resolves the page number for a verse from its `verse_key`, or `null` when
+  /// it cannot be determined — a malformed key, an out-of-range surah/ayah, or a
+  /// database error. Callers skip unplaceable results rather than sending the
+  /// user to page 1, which previously masked corruption as a valid hit.
+  Future<int?> _getPageNumberForVerse(String verseKey) async {
     // Check cache first
     final cachedPage = _verseToPageCache.get(verseKey);
     if (cachedPage != null) {
@@ -389,7 +414,7 @@ class SearchService with InitializationMixin {
     // WHY: Validate split results before parsing
     final parts = verseKey.split(':');
     if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
-      return 1; // Invalid format
+      return null; // Malformed verse key — cannot place
     }
 
     final int surahNumber = parseInt(parts[0]);
@@ -404,7 +429,7 @@ class SearchService with InitializationMixin {
       if (kDebugMode) {
         developer.log('Invalid verse key: $verseKey', name: 'SearchService');
       }
-      return 1; // Safe default
+      return null; // Out of range — cannot place
     }
 
     try {
@@ -424,17 +449,10 @@ class SearchService with InitializationMixin {
           error: e,
         );
       }
-      // Fallback: return page 1
-      _verseToPageCache.put(verseKey, 1);
-      return 1;
+      // WHY: Do NOT cache a guessed page — a transient DB error must not poison
+      // the cache with a wrong mapping. Return null so the caller skips it.
+      return null;
     }
-  }
-
-  /// Highlight the search term in the verse text
-  String _highlightSearchTerm(String verseText, String searchTerm) {
-    // For now, just return the full verse text
-    // In the future, we could add highlighting with special characters
-    return verseText;
   }
 
   /// Strip Arabic diacritics from text for search matching
@@ -585,11 +603,15 @@ class SearchService with InitializationMixin {
         continue; // Skip invalid entries
       }
 
+      // Get page number for this verse; skip results we cannot place rather
+      // than defaulting them to page 1.
+      final int? pageNumber = await _getPageNumberForVerse(verseKey);
+      if (pageNumber == null) {
+        continue;
+      }
+
       // Get Surah name - safe to use validated surahNumber
       final String surahName = await _getSurahName(surahNumber);
-
-      // Get page number for this verse
-      final int pageNumber = await _getPageNumberForVerse(verseKey);
 
       results.add(
         SearchResult(

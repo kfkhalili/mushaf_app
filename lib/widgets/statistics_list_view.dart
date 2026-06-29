@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import 'statistics_cards.dart';
@@ -66,7 +67,9 @@ class _EmptyStatisticsState extends StatelessWidget {
             Icon(
               Icons.bar_chart,
               size: 64,
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
+              color: theme.textTheme.bodyMedium?.color?.withValues(
+                alpha: AppOpacity.faint,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -85,7 +88,7 @@ class _EmptyStatisticsState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 color: theme.textTheme.bodyMedium?.color?.withValues(
-                  alpha: 0.7,
+                  alpha: AppOpacity.strong,
                 ),
               ),
               textDirection: TextDirection.rtl,

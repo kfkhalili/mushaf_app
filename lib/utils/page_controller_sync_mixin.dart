@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 
 /// Mixin that provides PageController synchronization functionality.
 ///
@@ -22,7 +23,7 @@ mixin PageControllerSyncMixin<T extends StatefulWidget> on State<T> {
     PageController controller,
     int targetIndex, {
     bool animated = false,
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = AppDurations.medium,
     Curve curve = Curves.easeInOut,
   }) {
     if (!controller.hasClients) return;
@@ -57,7 +58,7 @@ mixin PageControllerSyncMixin<T extends StatefulWidget> on State<T> {
     PageController controller,
     int targetPage, {
     bool animated = false,
-    Duration duration = const Duration(milliseconds: 300),
+    Duration duration = AppDurations.medium,
     Curve curve = Curves.easeInOut,
   }) {
     if (targetPage < 1) return;

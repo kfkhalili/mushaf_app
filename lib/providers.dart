@@ -308,8 +308,10 @@ class MushafLayoutSetting extends _$MushafLayoutSetting {
   }
 }
 
-// --- Font Size Provider ---
-// WHY: This provider automatically sets font size to maximum for each layout.
+// --- Ayah-Details Reading-Base Font Size ---
+// WHY: Provides the per-layout base reading size for AyahDetailsScreen (the
+// single-ayah study view). The page body is sized by measurement (see PageFit)
+// and does NOT use this — it is purely the detail view's per-layout base.
 @Riverpod(keepAlive: true)
 class FontSizeSetting extends _$FontSizeSetting {
   @override
@@ -355,13 +357,29 @@ class SearchQuery extends _$SearchQuery {
   }
 }
 
-// --- Search Results Provider ---
+// --- Search Outcome Provider (results + truncation flag) ---
 @riverpod
-Future<List<SearchResult>> searchResults(Ref ref, String query) async {
-  if (query.trim().isEmpty) return [];
+Future<SearchOutcome> searchOutcome(Ref ref, String query) async {
+  if (query.trim().isEmpty) return const SearchOutcome(results: []);
 
   final searchService = await ref.watch(searchServiceProvider.future);
   return searchService.searchText(query);
+}
+
+// --- Search Results Provider ---
+@riverpod
+Future<List<SearchResult>> searchResults(Ref ref, String query) async {
+  final outcome = await ref.watch(searchOutcomeProvider(query).future);
+  return outcome.results;
+}
+
+// --- Search Truncation Provider ---
+// WHY: Lets the search screen tell the user results were capped instead of
+// silently dropping matches beyond SearchLimits.maxSearchResults.
+@riverpod
+Future<bool> searchTruncated(Ref ref, String query) async {
+  final outcome = await ref.watch(searchOutcomeProvider(query).future);
+  return outcome.isTruncated;
 }
 
 // (Removed) BreathWordsSetting: UI removed and no remaining references

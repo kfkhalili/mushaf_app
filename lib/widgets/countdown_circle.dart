@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 // Removed Riverpod dependency for beta-only widget
 
 class CountdownCircle extends StatefulWidget {
@@ -59,7 +60,7 @@ class _CountdownCircleState extends State<CountdownCircle>
             border: Border.all(color: foregroundColor, width: 2.0),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withValues(alpha: AppOpacity.faint),
                 spreadRadius: 1,
                 blurRadius: 3,
                 offset: const Offset(0, 1),

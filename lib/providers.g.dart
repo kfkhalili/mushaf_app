@@ -1075,6 +1075,81 @@ abstract class _$SearchQuery extends $Notifier<String> {
   }
 }
 
+@ProviderFor(searchOutcome)
+final searchOutcomeProvider = SearchOutcomeFamily._();
+
+final class SearchOutcomeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SearchOutcome>,
+          SearchOutcome,
+          FutureOr<SearchOutcome>
+        >
+    with $FutureModifier<SearchOutcome>, $FutureProvider<SearchOutcome> {
+  SearchOutcomeProvider._({
+    required SearchOutcomeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'searchOutcomeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchOutcomeHash();
+
+  @override
+  String toString() {
+    return r'searchOutcomeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<SearchOutcome> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SearchOutcome> create(Ref ref) {
+    final argument = this.argument as String;
+    return searchOutcome(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchOutcomeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchOutcomeHash() => r'd095e0d8e0d13c1bf35e7e89cc50ca390e7de88d';
+
+final class SearchOutcomeFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<SearchOutcome>, String> {
+  SearchOutcomeFamily._()
+    : super(
+        retry: null,
+        name: r'searchOutcomeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SearchOutcomeProvider call(String query) =>
+      SearchOutcomeProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'searchOutcomeProvider';
+}
+
 @ProviderFor(searchResults)
 final searchResultsProvider = SearchResultsFamily._();
 
@@ -1132,7 +1207,7 @@ final class SearchResultsProvider
   }
 }
 
-String _$searchResultsHash() => r'd06301fb48730166d9c74332618adbfe4c4ca58c';
+String _$searchResultsHash() => r'de1b6c19d81138c3ffb466f03a54c2641a744329';
 
 final class SearchResultsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<SearchResult>>, String> {
@@ -1150,6 +1225,75 @@ final class SearchResultsFamily extends $Family
 
   @override
   String toString() => r'searchResultsProvider';
+}
+
+@ProviderFor(searchTruncated)
+final searchTruncatedProvider = SearchTruncatedFamily._();
+
+final class SearchTruncatedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  SearchTruncatedProvider._({
+    required SearchTruncatedFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'searchTruncatedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchTruncatedHash();
+
+  @override
+  String toString() {
+    return r'searchTruncatedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return searchTruncated(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchTruncatedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchTruncatedHash() => r'3c373c3653a6101bd8ced6ed1653c415838f7992';
+
+final class SearchTruncatedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  SearchTruncatedFamily._()
+    : super(
+        retry: null,
+        name: r'searchTruncatedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SearchTruncatedProvider call(String query) =>
+      SearchTruncatedProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'searchTruncatedProvider';
 }
 
 @ProviderFor(SearchHistory)
