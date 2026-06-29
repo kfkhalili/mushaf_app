@@ -20,6 +20,16 @@ This directory contains all project documentation organized into **active** (cur
 
 ---
 
+## 🏛️ Architecture Decision Records (ADRs)
+
+Load-bearing architectural decisions — *context, decision, rejected alternatives, and
+consequences* — live in [`adr/`](./adr/README.md). These are the "why is it this way?"
+records (offline-first bundled SQLite, multi-layout abstraction, Riverpod codegen, etc.),
+distinct from the coding conventions in `CLAUDE.md`. See [`adr/README.md`](./adr/README.md)
+for the index and template.
+
+---
+
 ## 📦 Archived Documentation
 
 ### Architecture Reviews (Historical)
@@ -66,7 +76,7 @@ Historical testing analysis and status documents:
 ```
 docs/
 ├── README.md                              # This file
-├── architecture_review_v5.md              # Current architecture review
+├── adr/                                   # Architecture Decision Records (0001+)
 ├── active/                                # Active documentation
 │   ├── testing-guide.md
 │   ├── coverage-status.md
@@ -103,6 +113,8 @@ docs/
 
 ## 🆕 Adding New Documentation
 
+- **Architecture Decision Records:** Add to `adr/` as `NNNN-short-title.md` (next free
+  number) using the template in [`adr/README.md`](./adr/README.md); update its index.
 - **Active documentation:** Add to `active/` subdirectory
 - **Architecture reviews:** New reviews go in `archived/architecture_reviews/` with next version number (v6, v7, etc.). Once completed, they remain archived.
 - **Feature specs:** Add to `active/` until feature is complete, then move to `archived/feature_specs/`
