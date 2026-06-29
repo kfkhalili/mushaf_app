@@ -63,6 +63,17 @@ dev_dependencies:
   golden_toolkit: ^0.15.0
   sqflite_common_ffi: ^2.3.0
 
+# WHY: package:sqlite3 v3 loads SQLite via a build hook that, by default,
+# downloads a precompiled library from GitHub at test/build time. sqlite3 here
+# is test-only (sqflite_common_ffi powers FFI-based unit tests; the app ships
+# native sqflite). Use the OS-provided SQLite via dlopen instead, so tests need
+# no network — robust on CI runners, offline, and behind authenticated proxies.
+# https://pub.dev/documentation/sqlite3/latest/topics/hook-topic.html
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
