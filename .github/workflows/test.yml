@@ -50,13 +50,15 @@ jobs:
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          # WHY: cache only the pub download cache. Caching .dart_tool (the
+          # build_runner entrypoint + build cache) is fragile across codegen-tool
+          # upgrades: a stale entrypoint from build_runner 2.7 broke under 2.15
+          # ("Couldn't resolve build_runner_core"). The -v2- key namespace also
+          # retires the previously poisoned caches that restore-keys would match.
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pubcache-v2-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-pubcache-v2-
 
       - name: Install dependencies
         run: flutter pub get
@@ -144,13 +146,15 @@ jobs:
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          # WHY: cache only the pub download cache. Caching .dart_tool (the
+          # build_runner entrypoint + build cache) is fragile across codegen-tool
+          # upgrades: a stale entrypoint from build_runner 2.7 broke under 2.15
+          # ("Couldn't resolve build_runner_core"). The -v2- key namespace also
+          # retires the previously poisoned caches that restore-keys would match.
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pubcache-v2-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-pubcache-v2-
 
       - name: Install dependencies
         run: flutter pub get
@@ -193,13 +197,15 @@ jobs:
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          # WHY: cache only the pub download cache. Caching .dart_tool (the
+          # build_runner entrypoint + build cache) is fragile across codegen-tool
+          # upgrades: a stale entrypoint from build_runner 2.7 broke under 2.15
+          # ("Couldn't resolve build_runner_core"). The -v2- key namespace also
+          # retires the previously poisoned caches that restore-keys would match.
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pubcache-v2-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-pubcache-v2-
 
       - name: Install dependencies
         run: flutter pub get
@@ -360,13 +366,15 @@ jobs:
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          # WHY: cache only the pub download cache. Caching .dart_tool (the
+          # build_runner entrypoint + build cache) is fragile across codegen-tool
+          # upgrades: a stale entrypoint from build_runner 2.7 broke under 2.15
+          # ("Couldn't resolve build_runner_core"). The -v2- key namespace also
+          # retires the previously poisoned caches that restore-keys would match.
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pubcache-v2-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-pubcache-v2-
 
       - name: Install dependencies
         run: flutter pub get
