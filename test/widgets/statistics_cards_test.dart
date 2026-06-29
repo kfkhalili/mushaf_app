@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/statistics_cards.dart';
 import 'package:mushaf_app/models.dart';
 import 'package:mushaf_app/providers.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('StatisticsCards', () {
@@ -21,18 +22,15 @@ void main() {
         averagePagesPerDay: 10.0,
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            totalPagesProvider.overrideWith((ref) => Future.value(604)),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: OverallProgressCard(stats: stats)),
-          ),
-        ),
+      await pumpScreen(
+        tester,
+        Scaffold(body: OverallProgressCard(stats: stats)),
+        overrides: [
+          totalPagesProvider.overrideWith((ref) => Future.value(604)),
+        ],
       );
 
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('التقدم الإجمالي'), findsOneWidget);
     });
@@ -51,11 +49,7 @@ void main() {
         averagePagesPerDay: 10.0,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: TodayCard(stats: stats)),
-        ),
-      );
+      await pumpScreen(tester, Scaffold(body: TodayCard(stats: stats)));
 
       expect(find.byType(TodayCard), findsOneWidget);
     });
@@ -74,11 +68,7 @@ void main() {
         averagePagesPerDay: 10.0,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: ThisWeekCard(stats: stats)),
-        ),
-      );
+      await pumpScreen(tester, Scaffold(body: ThisWeekCard(stats: stats)));
 
       expect(find.byType(ThisWeekCard), findsOneWidget);
     });
@@ -97,18 +87,15 @@ void main() {
         averagePagesPerDay: 0.0,
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            totalPagesProvider.overrideWith((ref) => Future.value(604)),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: OverallProgressCard(stats: stats)),
-          ),
-        ),
+      await pumpScreen(
+        tester,
+        Scaffold(body: OverallProgressCard(stats: stats)),
+        overrides: [
+          totalPagesProvider.overrideWith((ref) => Future.value(604)),
+        ],
       );
 
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.byType(OverallProgressCard), findsOneWidget);
     });

@@ -1,39 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/mushaf_page.dart';
 import 'package:mushaf_app/providers.dart';
 import 'package:mushaf_app/models.dart';
 
+import '../support/harness.dart';
+
 void main() {
   group('MushafPage', () {
     testWidgets('renders loading state initially', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: const MushafPage(pageNumber: 1)),
-          ),
-        ),
-      );
+      await pumpScreen(tester, Scaffold(body: const MushafPage(pageNumber: 1)));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
     testWidgets('renders error state when page data fails', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          // ignore: argument_type_not_assignable
-          overrides: [
-            pageDataProvider.overrideWith(
-              (ref, pageNumber) => Future<PageData>.error('Error'),
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: const MushafPage(pageNumber: 1)),
+      await pumpScreen(
+        tester,
+        Scaffold(body: const MushafPage(pageNumber: 1)),
+        overrides: [
+          pageDataProvider.overrideWith(
+            (ref, pageNumber) => Future<PageData>.error('Error'),
           ),
-        ),
+        ],
       );
 
+      // WHY pumpAndSettle (not settle): the error propagates through the
+      // chained pageDataWithBookmarksProvider via several microtask turns, which
+      // only zero-duration settling drains — fixed-step pumps never surface it.
       await tester.pumpAndSettle();
       expect(find.textContaining('Error'), findsWidgets);
     });
@@ -61,24 +55,17 @@ void main() {
         hizbNumber: 1,
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          // ignore: argument_type_not_assignable
-          overrides: [
-            pageDataProvider.overrideWith(
-              (ref, pageNumber) => Future.value(pageData),
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: const MushafPage(pageNumber: 1)),
+      await pumpScreen(
+        tester,
+        Scaffold(body: const MushafPage(pageNumber: 1)),
+        overrides: [
+          pageDataProvider.overrideWith(
+            (ref, pageNumber) => Future.value(pageData),
           ),
-        ),
+        ],
       );
 
-      // Use timed pumps instead of pumpAndSettle to avoid timeouts
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
+      await settle(tester);
 
       expect(find.byType(MushafPage), findsOneWidget);
     });

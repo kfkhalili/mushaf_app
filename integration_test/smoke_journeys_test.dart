@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mushaf_app/main.dart';
+
+import '../test/support/pump.dart';
 // ignore_for_file: avoid_redundant_argument_values
 
 void main() {
@@ -14,9 +16,11 @@ void main() {
     // Allow initial frames and any splash navigation timers
     await tester.pump(const Duration(milliseconds: 600));
     // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
-    for (int i = 0; i < 20; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 4000),
+      step: const Duration(milliseconds: 200),
+    );
   }
 
   testWidgets('Launch goes to SelectionScreen and opens Settings & Search', (
@@ -35,9 +39,11 @@ void main() {
     expect(find.byIcon(Icons.settings), findsOneWidget);
     await tester.tap(find.byIcon(Icons.settings));
     // Use timed pumps instead of pumpAndSettle
-    for (int i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 3000),
+      step: const Duration(milliseconds: 200),
+    );
 
     // Settings title in Arabic
     expect(find.text('الإعدادات'), findsOneWidget);
@@ -45,9 +51,11 @@ void main() {
     // Go back using header back button (arrow)
     await tester.tap(find.byIcon(Icons.arrow_forward_ios));
     // Use timed pumps instead of pumpAndSettle
-    for (int i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 3000),
+      step: const Duration(milliseconds: 200),
+    );
 
     // Back on Selection screen
     expect(find.text('السور'), findsOneWidget);
@@ -56,9 +64,11 @@ void main() {
     expect(find.byIcon(Icons.search), findsOneWidget);
     await tester.tap(find.byIcon(Icons.search));
     // Use timed pumps instead of pumpAndSettle
-    for (int i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 3000),
+      step: const Duration(milliseconds: 200),
+    );
 
     // Search title in Arabic
     expect(find.text('البحث'), findsOneWidget);
@@ -66,9 +76,11 @@ void main() {
     // Back again
     await tester.tap(find.byIcon(Icons.arrow_forward_ios));
     // Use timed pumps instead of pumpAndSettle
-    for (int i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 3000),
+      step: const Duration(milliseconds: 200),
+    );
 
     expect(find.text('السور'), findsOneWidget);
   });
@@ -92,9 +104,11 @@ void main() {
     // Tap back to return to Selection screen
     await tester.tap(backIcon.first);
     // Use timed pumps instead of pumpAndSettle
-    for (int i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 3000),
+      step: const Duration(milliseconds: 200),
+    );
 
     // Confirm Selection screen labels
     expect(find.text('السور'), findsOneWidget);

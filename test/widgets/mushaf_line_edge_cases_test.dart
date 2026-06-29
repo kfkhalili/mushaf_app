@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/mushaf_line.dart';
 import 'package:mushaf_app/models.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('MushafLine Edge Cases', () {
@@ -15,19 +16,16 @@ void main() {
         words: [],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {},
           ),
         ),
       );
@@ -44,19 +42,16 @@ void main() {
         words: [],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {},
           ),
         ),
       );
@@ -73,19 +68,16 @@ void main() {
         words: [],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {},
           ),
         ),
       );
@@ -102,19 +94,16 @@ void main() {
         words: [],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {},
           ),
         ),
       );
@@ -132,20 +121,17 @@ void main() {
         words: [word],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: true,
-                wordsToShow: {word},
-                ayahOpacities: {'001:001': 0.5},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: true,
+            wordsToShow: {word},
+            ayahOpacities: {'001:001': 0.5},
           ),
         ),
       );
@@ -164,19 +150,16 @@ void main() {
         words: [word],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {word},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {word},
           ),
         ),
       );
@@ -195,20 +178,17 @@ void main() {
         words: [word],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {word},
-                selectedAyahKey: '001:001',
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {word},
+            selectedAyahKey: '001:001',
           ),
         ),
       );
@@ -227,20 +207,17 @@ void main() {
         words: [word],
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: MushafLine(
-                line: line,
-                pageFontFamily: 'Uthmani',
-                bodyFontSize: 24.0,
-                lineHeight: 2.0,
-                isMemorizationMode: false,
-                wordsToShow: {word},
-                bookmarkedAyahKeys: {'001:001'},
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: MushafLine(
+            line: line,
+            pageFontFamily: 'Uthmani',
+            bodyFontSize: 24.0,
+            lineHeight: 2.0,
+            isMemorizationMode: false,
+            wordsToShow: {word},
+            bookmarkedAyahKeys: {'001:001'},
           ),
         ),
       );

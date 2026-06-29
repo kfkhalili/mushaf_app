@@ -1,62 +1,12 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mushaf_app/services/reading_progress_service.dart';
 import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  // WHY: Create a unique temp directory per test file execution to avoid
-  // database locking when multiple test files run in parallel
-  late Directory testTempDir;
-
-  setUpAll(() async {
-    // Set up mock SharedPreferences for migration service
-    SharedPreferences.setMockInitialValues({});
-
-    // Initialize sqflite for testing (required for non-device tests)
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // WHY: Create a unique temporary directory for this test file execution
-    // This prevents database locking when multiple test files run in parallel
-    testTempDir = await Directory.systemTemp.createTemp(
-      'reading_progress_test_',
-    );
-
-    // Mock path_provider platform channel
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              // WHY: Return unique temp directory per test file to prevent conflicts
-              return testTempDir.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() async {
-    // Clear mock handlers
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-
-    // WHY: Clean up unique temp directory after all tests complete
-    try {
-      await testTempDir.delete(recursive: true);
-    } catch (e) {
-      // Ignore cleanup errors if directory is already deleted
-    }
-  });
+  useDatabaseTestEnv();
 
   group('ReadingProgressService', () {
     late SqliteReadingProgressService service;

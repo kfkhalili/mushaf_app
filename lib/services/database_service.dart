@@ -8,6 +8,7 @@ import '../utils/initialization_mixin.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
 import 'bundled_database_store.dart';
+import 'database_store.dart';
 import 'juz_hizb_index.dart';
 import 'audio_metadata.dart';
 
@@ -28,15 +29,16 @@ class DatabaseService with InitializationMixin {
   // layout instead of relying on a hardcoded 604 ceiling.
   int? _totalPages;
 
-  // WHY: Loads + opens bundled read-only databases. Injectable so tests can
-  // substitute a store that opens fixtures instead of bundled assets.
-  final BundledDatabaseStore _store;
+  // WHY: Loads + opens bundled read-only databases behind the [DatabaseStore]
+  // seam. Injectable so tests can substitute a store that opens fixtures, or
+  // one that reproduces a platform quirk, instead of bundled assets.
+  final DatabaseStore _store;
 
   // WHY: Recitation audio metadata is the only user of the audio database; it
   // lives behind its own module that owns that connection.
   final AudioMetadata _audioMetadata;
 
-  DatabaseService({BundledDatabaseStore store = const BundledDatabaseStore()})
+  DatabaseService({DatabaseStore store = const BundledDatabaseStore()})
     : _store = store,
       _audioMetadata = AudioMetadata(store: store);
 

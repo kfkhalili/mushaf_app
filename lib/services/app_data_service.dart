@@ -10,6 +10,20 @@ import '../utils/initialization_mixin.dart';
 class AppDataService with InitializationMixin {
   Database? _db;
 
+  // WHY: Where the writable user-data database lives. Null means the default
+  // on-disk location (`app_data.db` in the app documents directory) used in
+  // production. Tests pass [inMemoryDatabasePath] for an isolated database with
+  // no shared on-disk state — this is the second adapter that makes the storage
+  // seam real, removing the cross-file `app_data.db` collisions that forced
+  // sequential test execution.
+  final String? _databasePath;
+
+  /// [databasePath] overrides where the database is opened. Defaults to
+  /// `app_data.db` under the app documents directory. Pass
+  /// `inMemoryDatabasePath` (from `package:sqflite`) in tests for an isolated,
+  /// parallel-safe database.
+  AppDataService({String? databasePath}) : _databasePath = databasePath;
+
   /// WHY: Ensures database is initialized. Uses mixin pattern to prevent
   /// concurrent initialization attempts.
   @override
@@ -20,14 +34,17 @@ class AppDataService with InitializationMixin {
 
   @override
   Future<void> doInit() async {
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(documentsDirectory.path, 'app_data.db');
+    final dbPath = _databasePath ?? await _defaultDatabasePath();
+
+    // WHY: An in-memory database needs its own fresh connection per service
+    // instance for test isolation, so singleInstance is disabled for `:memory:`.
+    // On-disk keeps singleInstance to reuse one connection and avoid locking.
+    final bool inMemory = dbPath == inMemoryDatabasePath;
 
     _db = await openDatabase(
       dbPath,
       version: 1,
-      singleInstance: true, // WHY: Ensures only one database connection exists
-      // This prevents concurrent access issues and database locking
+      singleInstance: !inMemory,
       onCreate: (db, version) async {
         // WHY: onCreate is already executed in a transaction by sqflite
         // Create all tables for unified storage
@@ -65,6 +82,14 @@ class AppDataService with InitializationMixin {
     }
 
     markInitialized();
+  }
+
+  /// WHY: Resolves the production on-disk database path. Kept separate from
+  /// [doInit] so the documents-directory lookup is skipped entirely when an
+  /// explicit [_databasePath] (e.g. an in-memory path) is supplied.
+  Future<String> _defaultDatabasePath() async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    return p.join(documentsDirectory.path, 'app_data.db');
   }
 
   /// WHY: Creates memorization_sessions table for persistent storage

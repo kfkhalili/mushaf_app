@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/screens/mushaf_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/harness.dart';
+
 void main() {
   group('MushafScreen', () {
     setUp(() {
@@ -11,11 +13,7 @@ void main() {
     });
 
     testWidgets('renders mushaf screen with initial page', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(home: const MushafScreen(initialPage: 1)),
-        ),
-      );
+      await pumpScreen(tester, const MushafScreen(initialPage: 1));
 
       await tester.pump();
 
@@ -23,11 +21,7 @@ void main() {
     });
 
     testWidgets('displays header and bottom navigation', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(home: const MushafScreen(initialPage: 1)),
-        ),
-      );
+      await pumpScreen(tester, const MushafScreen(initialPage: 1));
 
       await tester.pump();
 
@@ -36,11 +30,7 @@ void main() {
     });
 
     testWidgets('initializes with custom page number', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(home: const MushafScreen(initialPage: 50)),
-        ),
-      );
+      await pumpScreen(tester, const MushafScreen(initialPage: 50));
 
       await tester.pump();
 
@@ -52,7 +42,10 @@ void main() {
         ProviderScope(
           child: MaterialApp(
             theme: ThemeData.light(),
-            home: const MushafScreen(initialPage: 1),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: MushafScreen(initialPage: 1),
+            ),
           ),
         ),
       );
@@ -67,7 +60,10 @@ void main() {
         ProviderScope(
           child: MaterialApp(
             theme: ThemeData.dark(),
-            home: const MushafScreen(initialPage: 1),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: MushafScreen(initialPage: 1),
+            ),
           ),
         ),
       );

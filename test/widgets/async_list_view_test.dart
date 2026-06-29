@@ -3,16 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/shared/async_list_view.dart';
 
+import '../support/harness.dart';
+
 void main() {
   group('AsyncListView', () {
     testWidgets('shows loading indicator when loading', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AsyncListView<String>(
-              asyncValue: AsyncValue.loading(),
-              itemBuilder: (context, item) => ListTile(title: Text(item)),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: AsyncListView<String>(
+            asyncValue: AsyncValue.loading(),
+            itemBuilder: (context, item) => ListTile(title: Text(item)),
           ),
         ),
       );
@@ -21,14 +22,13 @@ void main() {
     });
 
     testWidgets('shows error message when error occurs', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AsyncListView<String>(
-              asyncValue: AsyncValue.error('Test error', StackTrace.empty),
-              itemBuilder: (context, item) => ListTile(title: Text(item)),
-              errorText: 'Custom error message',
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: AsyncListView<String>(
+            asyncValue: AsyncValue.error('Test error', StackTrace.empty),
+            itemBuilder: (context, item) => ListTile(title: Text(item)),
+            errorText: 'Custom error message',
           ),
         ),
       );
@@ -40,18 +40,17 @@ void main() {
     testWidgets('shows list items when data is available', (tester) async {
       final items = ['Item 1', 'Item 2', 'Item 3'];
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AsyncListView<String>(
-              asyncValue: AsyncValue.data(items),
-              itemBuilder: (context, item) => ListTile(title: Text(item)),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: AsyncListView<String>(
+            asyncValue: AsyncValue.data(items),
+            itemBuilder: (context, item) => ListTile(title: Text(item)),
           ),
         ),
       );
 
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('Item 1'), findsOneWidget);
       expect(find.text('Item 2'), findsOneWidget);
@@ -60,31 +59,29 @@ void main() {
     });
 
     testWidgets('shows empty list when data is empty', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AsyncListView<String>(
-              asyncValue: AsyncValue.data([]),
-              itemBuilder: (context, item) => ListTile(title: Text(item)),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: AsyncListView<String>(
+            asyncValue: AsyncValue.data([]),
+            itemBuilder: (context, item) => ListTile(title: Text(item)),
           ),
         ),
       );
 
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.byType(ListView), findsOneWidget);
       expect(find.byType(ListTile), findsNothing);
     });
 
     testWidgets('uses default error text when not provided', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AsyncListView<String>(
-              asyncValue: AsyncValue.error('Test error', StackTrace.empty),
-              itemBuilder: (context, item) => ListTile(title: Text(item)),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: AsyncListView<String>(
+            asyncValue: AsyncValue.error('Test error', StackTrace.empty),
+            itemBuilder: (context, item) => ListTile(title: Text(item)),
           ),
         ),
       );

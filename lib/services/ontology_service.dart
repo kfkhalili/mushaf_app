@@ -6,15 +6,17 @@ import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/validation_helpers.dart';
 import 'bundled_database_store.dart';
+import 'database_store.dart';
 
 class OntologyService with InitializationMixin {
   Database? _topicsDb;
 
-  // WHY: Loads + opens the bundled topics database. Injectable so tests can
-  // substitute a store that opens fixtures instead of bundled assets.
-  final BundledDatabaseStore _store;
+  // WHY: Loads + opens the bundled topics database behind the [DatabaseStore]
+  // seam. Injectable so tests can substitute a store that opens fixtures
+  // instead of bundled assets.
+  final DatabaseStore _store;
 
-  OntologyService({BundledDatabaseStore store = const BundledDatabaseStore()})
+  OntologyService({DatabaseStore store = const BundledDatabaseStore()})
     : _store = store;
 
   @override

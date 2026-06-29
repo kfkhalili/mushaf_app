@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/parsing_helpers.dart';
 import 'bundled_database_store.dart';
+import 'database_store.dart';
 
 /// Read access to the bundled recitation database: per-surah audio URLs and
 /// per-ayah playback segment timings.
@@ -17,10 +18,10 @@ import 'bundled_database_store.dart';
 ///
 /// Throws [DatabaseNotInitializedException] if used before [init].
 class AudioMetadata {
-  final BundledDatabaseStore _store;
+  final DatabaseStore _store;
   Database? _audioDb;
 
-  AudioMetadata({BundledDatabaseStore store = const BundledDatabaseStore()})
+  AudioMetadata({DatabaseStore store = const BundledDatabaseStore()})
     : _store = store;
 
   /// Opens the recitation database (idempotent).

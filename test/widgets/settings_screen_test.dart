@@ -32,7 +32,10 @@ void main() {
           ],
           child: MaterialApp(
             theme: buildLightTheme(PrimaryColorConstants.defaultColor),
-            home: const SettingsScreen(),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: SettingsScreen(),
+            ),
           ),
         ),
       );
@@ -65,7 +68,10 @@ void main() {
           ],
           child: MaterialApp(
             theme: buildLightTheme(PrimaryColorConstants.defaultColor),
-            home: const SettingsScreen(),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: SettingsScreen(),
+            ),
           ),
         ),
       );
@@ -101,7 +107,10 @@ void main() {
           overrides: mockLayoutInfoOverride,
           child: MaterialApp(
             theme: buildLightTheme(PrimaryColorConstants.defaultColor),
-            home: const SettingsScreen(),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: SettingsScreen(),
+            ),
           ),
         ),
       );
@@ -117,7 +126,10 @@ void main() {
           overrides: mockLayoutInfoOverride,
           child: MaterialApp(
             theme: buildDarkTheme(PrimaryColorConstants.defaultColor),
-            home: const SettingsScreen(),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: SettingsScreen(),
+            ),
           ),
         ),
       );
@@ -133,7 +145,10 @@ void main() {
           overrides: mockLayoutInfoOverride,
           child: MaterialApp(
             theme: buildSepiaTheme(PrimaryColorConstants.defaultColor),
-            home: const SettingsScreen(),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: SettingsScreen(),
+            ),
           ),
         ),
       );

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/shared/app_header.dart';
 import 'package:mushaf_app/screens/selection_screen.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('AppHeader', () {
     testWidgets('renders title correctly', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test Title'),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test Title'),
           ),
         ),
       );
@@ -24,23 +24,19 @@ void main() {
     testWidgets('shows search and settings icons only on SelectionScreen', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: Column(
-                children: [
-                  AppHeader(title: 'Test', onSearchPressed: () {}),
-                  const Expanded(child: SelectionScreen()),
-                ],
-              ),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: Column(
+            children: [
+              AppHeader(title: 'Test', onSearchPressed: () {}),
+              const Expanded(child: SelectionScreen()),
+            ],
           ),
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await settle(tester);
 
       expect(find.byIcon(Icons.settings), findsOneWidget);
       expect(find.byIcon(Icons.search), findsOneWidget);
@@ -49,13 +45,12 @@ void main() {
     testWidgets('shows bookmark icon when onBookmarkPressed is provided', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test', onBookmarkPressed: () {}),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test', onBookmarkPressed: () {}),
           ),
         ),
       );
@@ -66,13 +61,12 @@ void main() {
     testWidgets('hides bookmark icon when onBookmarkPressed is null', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test'),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test'),
           ),
         ),
       );
@@ -83,13 +77,12 @@ void main() {
     testWidgets('shows back button when showBackButton is true', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test', showBackButton: true),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test', showBackButton: true),
           ),
         ),
       );
@@ -102,28 +95,24 @@ void main() {
     testWidgets('search icon is tappable only on SelectionScreen', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: Column(
-                children: [
-                  AppHeader(
-                    title: 'Test',
-                    onSearchPressed: () {
-                      // AppHeader navigates directly but this tests icon presence
-                    },
-                  ),
-                  const Expanded(child: SelectionScreen()),
-                ],
+      await pumpScreen(
+        tester,
+        Scaffold(
+          body: Column(
+            children: [
+              AppHeader(
+                title: 'Test',
+                onSearchPressed: () {
+                  // AppHeader navigates directly but this tests icon presence
+                },
               ),
-            ),
+              const Expanded(child: SelectionScreen()),
+            ],
           ),
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await settle(tester);
 
       expect(find.byIcon(Icons.search), findsOneWidget);
       // AppHeader navigates directly when tapped, which may timeout in tests
@@ -134,17 +123,16 @@ void main() {
       tester,
     ) async {
       bool bookmarkPressed = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(
-                title: 'Test',
-                onBookmarkPressed: () {
-                  bookmarkPressed = true;
-                },
-              ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(
+              title: 'Test',
+              onBookmarkPressed: () {
+                bookmarkPressed = true;
+              },
             ),
           ),
         ),
@@ -157,13 +145,12 @@ void main() {
     });
 
     testWidgets('renders trailing widget when provided', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test', trailing: const Icon(Icons.star)),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test', trailing: const Icon(Icons.star)),
           ),
         ),
       );
@@ -174,16 +161,15 @@ void main() {
     testWidgets('hides bookmark and settings when trailing is provided', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(
-                title: 'Test',
-                onBookmarkPressed: () {},
-                trailing: const Icon(Icons.star),
-              ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(
+              title: 'Test',
+              onBookmarkPressed: () {},
+              trailing: const Icon(Icons.star),
             ),
           ),
         ),
@@ -200,13 +186,12 @@ void main() {
     testWidgets('hides search and settings icons when not on SelectionScreen', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test', onSearchPressed: () {}),
-            ),
+      await pumpScreen(
+        tester,
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: AppHeader(title: 'Test', onSearchPressed: () {}),
           ),
         ),
       );
@@ -220,10 +205,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
-          home: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: AppHeader(title: 'Test'),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(56),
+                child: AppHeader(title: 'Test'),
+              ),
             ),
           ),
         ),
