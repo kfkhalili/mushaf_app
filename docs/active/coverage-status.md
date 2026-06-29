@@ -57,11 +57,16 @@ This generates `coverage/lcov.info` file.
 
 ### 2. Check Against Thresholds
 
-**Option A: Using check-coverage.sh (requires lcov)**
+**Option A: Using check-coverage.sh**
 
 ```bash
 ./scripts/check-coverage.sh
 ```
+
+Reads its thresholds from `.coverage_threshold.json` (the single source of
+truth) and computes coverage directly from `coverage/lcov.info` — `lcov` is not
+required. It fails closed: a missing coverage file, unreadable thresholds, or
+coverage below threshold all exit non-zero.
 
 **Option B: Install lcov and check manually**
 

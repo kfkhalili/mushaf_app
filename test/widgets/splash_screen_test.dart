@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mushaf_app/screens/splash_screen.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('SplashScreen', () {
@@ -11,9 +12,7 @@ void main() {
     });
 
     testWidgets('renders splash screen with loading indicator', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(child: MaterialApp(home: const SplashScreen())),
-      );
+      await pumpScreen(tester, const SplashScreen());
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byType(SplashScreen), findsOneWidget);
@@ -29,9 +28,7 @@ void main() {
     testWidgets('renders correctly without navigation', (tester) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(
-        ProviderScope(child: MaterialApp(home: const SplashScreen())),
-      );
+      await pumpScreen(tester, const SplashScreen());
 
       // Just verify the screen renders initially
       expect(find.byType(SplashScreen), findsOneWidget);

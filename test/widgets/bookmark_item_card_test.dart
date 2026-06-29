@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/bookmark_item_card.dart';
 import 'package:mushaf_app/models.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('BookmarkItemCard', () {
@@ -14,15 +15,12 @@ void main() {
         createdAt: DateTime.now(),
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: BookmarkItemCard(bookmark: bookmark)),
-          ),
-        ),
+      await pumpScreen(
+        tester,
+        Scaffold(body: BookmarkItemCard(bookmark: bookmark)),
       );
 
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.byType(BookmarkItemCard), findsOneWidget);
     });
@@ -35,12 +33,9 @@ void main() {
         createdAt: DateTime.now(),
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: BookmarkItemCard(bookmark: bookmark)),
-          ),
-        ),
+      await pumpScreen(
+        tester,
+        Scaffold(body: BookmarkItemCard(bookmark: bookmark)),
       );
 
       await tester.pump();

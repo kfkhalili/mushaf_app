@@ -1,40 +1,11 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:mushaf_app/services/database_service.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    // Initialize sqflite for testing (required for non-device tests)
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // Mock path_provider platform channel
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              // Return a temporary directory for tests
-              return Directory.systemTemp.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() {
-    // Clear mock handlers
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-  });
+  useDatabaseTestEnv();
 
   group('DatabaseService Contract Tests', () {
     late DatabaseService service;

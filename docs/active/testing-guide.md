@@ -484,27 +484,67 @@ git commit -m "feat: update golden files for new header design"
 
 ---
 
-## Test Helpers
+## Test Harness
 
-**Location**: `test/helpers/test_helpers.dart`
+**Location**: `test/support/` (import the barrel `test/support/harness.dart`).
 
-### Available Helpers
+The harness is the single source for the test environment. It replaced the
+~25-line sqflite/`path_provider` setup block that had been copy-pasted (and had
+drifted) across 18 service/provider test files, and the inline
+`ProviderScope(child: MaterialApp(...))` scaffold hand-rolled in every widget
+test.
 
-- `pumpApp()` - Pump widget with ProviderScope for testing
-- `createTestContainer()` - Create test ProviderContainer with overrides
-- `waitForProvider()` - Wait for async provider updates
-- `verifyGolden()` - Verify golden test image matches
+### Available helpers
 
-### Example Usage
+- `useDatabaseTestEnv({prefs})` — call once at the top of `main()` in any
+  database-backed test. Installs the sqflite FFI factory, mocks `path_provider`
+  to a fresh temp directory **per file** (no shared on-disk state), and seeds a
+  clean `SharedPreferences` before each test.
+- `pumpScreen(tester, screen, {overrides, prefs})` — mounts `screen` inside
+  `ProviderScope > MaterialApp > Directionality(rtl)`. Mounts only (no trailing
+  pump), so a test can assert on the loading frame before advancing.
+- `pumpUntilFound(tester, finder, {timeout, step})` — pumps until `finder`
+  matches, else fails. Use instead of `if (finder.evaluate().isNotEmpty)` guards,
+  which silently pass when data never loads.
+- `settle(tester, {duration, step})` — pumps a fixed budget. Use instead of
+  hand-rolled `for (i…) pump()` loops where there is no concrete thing to await
+  (e.g. before a golden capture). `pumpAndSettle()` never settles in this app
+  (the PageView controller and async providers keep scheduling frames).
+- `FakeDatabaseStore` / `ThrowingDatabaseStore` — test adapters for the
+  `DatabaseStore` seam (see below).
+
+### Example usage
 
 ```dart
-import 'package:mushaf_app/test/helpers/test_helpers.dart';
+import '../support/harness.dart';
 
-testWidgets('Example test', (tester) async {
-  await pumpApp(tester, home: const SelectionScreen());
-  // Test assertions...
-});
+void main() {
+  useDatabaseTestEnv();
+
+  testWidgets('shows the surah list', (tester) async {
+    await pumpScreen(
+      tester,
+      Scaffold(body: const SurahListView()),
+      overrides: [surahListProvider.overrideWith((ref) => Future.value(surahs))],
+    );
+    await settle(tester);
+    expect(find.byType(SurahListView), findsOneWidget);
+  });
+}
 ```
+
+### The `DatabaseStore` seam
+
+`DatabaseStore` (in `lib/services/database_store.dart`) is the interface every
+read-only service opens its databases through; `BundledDatabaseStore` is the
+production adapter. Inject a `FakeDatabaseStore`/`ThrowingDatabaseStore` in tests
+to open fixtures or simulate failures. `AppDataService` accepts a
+`databasePath`; pass `inMemoryDatabasePath` for an isolated, parallel-safe
+database with no shared `app_data.db`.
+
+> **Note:** `test/helpers/test_helpers.dart` (the old `pumpApp`/
+> `createTestContainer`/`waitForProvider`/`verifyGolden` helpers) is superseded
+> by this harness and no longer used.
 
 ---
 
@@ -656,69 +696,38 @@ Together, these controls ensure **zero functionality breaks** and **zero UI chan
 
 ## Key Learnings from Implementation
 
-During the implementation of the test suite, several important learnings were documented:
+These mechanics are now owned by the harness (`test/support/`) — tests no longer
+hand-roll them. The learnings are kept here as background on *why* the harness
+does what it does.
 
 ### 1. Provider Mocking (Riverpod 3.0)
 
-Riverpod 3.0 requires careful type handling for provider overrides in tests. The `Override` type is not directly exported, so using `dynamic` with proper ignore comments is necessary:
-
-```dart
-// ignore: avoid_annotating_with_dynamic
-dynamic overrides = <Never>[];
-
-if (mockDatabase) {
-  // ignore: argument_type_not_assignable
-  overrides = [
-    surahListProvider.overrideWith((ref) => Future.value(mockSurahs)),
-    juzListProvider.overrideWith((ref) => Future.value(mockJuzs)),
-  ];
-}
-```
+Riverpod 3's `Override` type is `part` of the framework's internals and not
+publicly nameable, so a typed `List<Override>` parameter will not compile.
+`pumpScreen` takes `overrides` as `dynamic` (defaulting to `const <Never>[]`);
+callers pass a normal list literal of `provider.overrideWith(...)` results,
+whose runtime type is `List<Override>` and so assigns cleanly. This keeps the
+single `// ignore: avoid_annotating_with_dynamic` in one place instead of an
+`// ignore: argument_type_not_assignable` on every test.
 
 ### 2. Platform Channel Mocking
 
-Services using platform channels (like `path_provider`) need to be mocked in unit tests using `TestDefaultBinaryMessenger`:
-
-```dart
-setUpAll(() {
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(
-    const MethodChannel('plugins.flutter.io/path_provider'),
-    (MethodCall methodCall) async {
-      if (methodCall.method == 'getApplicationDocumentsDirectory') {
-        return Directory.systemTemp.path;
-      }
-      throw UnimplementedError();
-    },
-  );
-});
-```
+`path_provider`'s `getApplicationDocumentsDirectory` is mocked once, inside
+`useDatabaseTestEnv()`, pointing at a fresh temp directory **per test file** so
+no writable state leaks between files. Tests just call `useDatabaseTestEnv()`.
 
 ### 3. sqflite Testing
 
-For non-device tests, sqflite requires initialization using `sqflite_common_ffi` package:
+`useDatabaseTestEnv()` performs `sqfliteFfiInit()` and sets
+`databaseFactory = databaseFactoryFfi` for non-device tests. `sqflite_common_ffi`
+remains a dev dependency. For the writable user-data database, pass
+`AppDataService(databasePath: inMemoryDatabasePath)` to avoid disk entirely.
 
-```dart
-setUpAll(() {
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-});
-```
+### 4. Settling async UI (golden + widget tests)
 
-Add to `pubspec.yaml` dev_dependencies:
-```yaml
-dev_dependencies:
-  sqflite_common_ffi: ^2.3.0
-```
-
-### 4. Golden Test Async Loading
-
-Golden tests with async data loading need timed pumps instead of `pumpAndSettle()` to avoid timeouts:
-
-```dart
-// Use timed pump instead of pumpAndSettle to avoid timeouts
-for (int i = 0; i < 10; i++) {
-  await tester.pump(const Duration(milliseconds: 200));
-}
-```
+`pumpAndSettle()` never settles in this app — the PageView controller and async
+providers keep scheduling frames. Use `pumpUntilFound(tester, finder)` when
+there is a concrete thing to await (and to fail when it never appears), or
+`settle(tester)` for a fixed budget before a golden capture. Both replaced the
+48 hand-rolled `for (i…) pump()` loops.
 

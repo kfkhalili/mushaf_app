@@ -1,34 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/services.dart';
 import 'package:mushaf_app/services/search_service.dart';
 import 'package:mushaf_app/services/database_service.dart';
 
+import '../support/harness.dart';
+
 void main() {
+  useDatabaseTestEnv();
+
   group('SearchService', () {
-    setUp(() {
-      TestWidgetsFlutterBinding.ensureInitialized();
-
-      // Mock path_provider to avoid platform channel errors
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'),
-            (call) async {
-              if (call.method == 'getApplicationDocumentsDirectory') {
-                return '/tmp/test_documents';
-              }
-              return null;
-            },
-          );
-    });
-
-    tearDown(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'),
-            null,
-          );
-    });
-
     test('SearchService can be instantiated with DatabaseService', () {
       final databaseService = DatabaseService();
       final searchService = SearchService(databaseService);

@@ -11,6 +11,12 @@ import 'package:mushaf_app/providers.dart';
 import 'package:mushaf_app/models.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
+// WHY: golden frames must be byte-identical, so [settle] is called with the
+// same 200ms step the hand-rolled loops used (2s budget / 200ms = 10 pumps).
+const _goldenStep = Duration(milliseconds: 200);
+
 void main() {
   group('Golden Tests - Visual Regression Testing', () {
     // Mock data for golden tests (empty lists to show loading states or minimal data)
@@ -54,10 +60,9 @@ void main() {
         ),
         surfaceSize: const Size(428, 926), // Reference iPhone size
       );
-      // Use timed pump instead of pumpAndSettle to avoid timeouts with async data loading
-      for (int i = 0; i < 10; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      // WHY: pumpAndSettle never settles here (async data providers); settle a
+      // fixed budget instead. See [settle].
+      await settle(tester, step: _goldenStep);
     }
 
     setUpAll(() async {
@@ -76,10 +81,7 @@ void main() {
       await pumpApp(tester, const SelectionScreen(), mockDatabase: true);
       // Tap Juz tab
       await tester.tap(find.text('الأجزاء'));
-      // Use timed pump instead of pumpAndSettle to avoid timeouts
-      for (int i = 0; i < 10; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(tester, step: _goldenStep);
       await screenMatchesGolden(tester, 'selection_screen_juz_light');
     });
 
@@ -87,10 +89,7 @@ void main() {
       await pumpApp(tester, const SelectionScreen(), mockDatabase: true);
       // Tap Pages tab
       await tester.tap(find.text('الصفحات'));
-      // Use timed pump instead of pumpAndSettle to avoid timeouts
-      for (int i = 0; i < 10; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(tester, step: _goldenStep);
       await screenMatchesGolden(tester, 'selection_screen_pages_light');
     });
 

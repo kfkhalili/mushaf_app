@@ -11,6 +11,7 @@ import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
 import '../utils/rate_limiter.dart';
 import 'bundled_database_store.dart';
+import 'database_store.dart';
 import 'database_service.dart';
 
 /// Service for searching Quranic text
@@ -34,11 +35,11 @@ class SearchService with InitializationMixin {
 
   // WHY: Loads + opens the bundled search databases. Injectable so tests can
   // substitute a store that opens fixtures instead of bundled assets.
-  final BundledDatabaseStore _store;
+  final DatabaseStore _store;
 
   SearchService(
     this._databaseService, {
-    BundledDatabaseStore store = const BundledDatabaseStore(),
+    DatabaseStore store = const BundledDatabaseStore(),
   }) : _store = store;
 
   /// Initialize the search service with the current layout

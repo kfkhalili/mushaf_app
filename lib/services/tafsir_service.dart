@@ -5,16 +5,18 @@ import '../exceptions/database_exceptions.dart';
 import '../utils/initialization_mixin.dart';
 import '../utils/validation_helpers.dart';
 import 'bundled_database_store.dart';
+import 'database_store.dart';
 
 /// Service for accessing tafsir (Quranic commentary) data
 class TafsirService with InitializationMixin {
   Database? _tafsirDb;
 
-  // WHY: Loads + opens the bundled tafsir database. Injectable so tests can
-  // substitute a store that opens fixtures instead of bundled assets.
-  final BundledDatabaseStore _store;
+  // WHY: Loads + opens the bundled tafsir database behind the [DatabaseStore]
+  // seam. Injectable so tests can substitute a store that opens fixtures
+  // instead of bundled assets.
+  final DatabaseStore _store;
 
-  TafsirService({BundledDatabaseStore store = const BundledDatabaseStore()})
+  TafsirService({DatabaseStore store = const BundledDatabaseStore()})
     : _store = store;
 
   @override

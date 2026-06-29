@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 import '../constants.dart';
 import '../exceptions/database_exceptions.dart';
 import '../utils/validation_helpers.dart';
+import 'database_store.dart';
 
 /// Loads the read-only SQLite databases shipped under `assets/db/`.
 ///
@@ -18,14 +19,15 @@ import '../utils/validation_helpers.dart';
 ///
 /// WHY a module: the asset-copy + open logic was previously duplicated across
 /// four services, and the "when to recopy" rule had already drifted between
-/// them. Concentrating it here gives one place to fix copy quirks and one
-/// place to substitute in tests — inject a fake [BundledDatabaseStore] (Dart's
-/// implicit interface) to open fixtures instead of bundled assets.
+/// them. Concentrating it here gives one place to fix copy quirks. It is the
+/// production adapter for the [DatabaseStore] seam; tests inject a different
+/// [DatabaseStore] (a fixture opener or a platform-quirk simulator) to exercise
+/// the read-only services without bundled assets.
 ///
 /// Throws [DatabaseConnectionException] when the asset name is not on the
 /// [bundledDatabaseFileNames] whitelist, when the destination escapes the
 /// documents directory, or when the copy/open fails.
-class BundledDatabaseStore {
+class BundledDatabaseStore implements DatabaseStore {
   const BundledDatabaseStore();
 
   static const String _assetDir = 'assets/db';
@@ -34,6 +36,7 @@ class BundledDatabaseStore {
   /// from bundled assets when needed) and opens it read-only.
   ///
   /// [assetFileName] must be one of [bundledDatabaseFileNames].
+  @override
   Future<Database> open(String assetFileName) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final destinationPath = p.join(documentsDirectory.path, assetFileName);

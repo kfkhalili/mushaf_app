@@ -1,7 +1,7 @@
 import '../constants.dart';
 import '../utils/parsing_helpers.dart';
 import '../utils/validation_helpers.dart';
-import 'bundled_database_store.dart';
+import 'database_store.dart';
 
 /// In-memory index over the Juz' and Hizb range tables: given an ayah it answers
 /// which Juz'/Hizb contains it, and where each Juz' begins and ends.
@@ -27,7 +27,7 @@ class JuzHizbIndex {
   /// Opens the bundled Juz' and Hizb databases via [store] just long enough to
   /// read their range tables, then returns the warmed index. The two
   /// connections are released before returning — they are never queried again.
-  static Future<JuzHizbIndex> load(BundledDatabaseStore store) async {
+  static Future<JuzHizbIndex> load(DatabaseStore store) async {
     final juzDb = await store.open(juzDbFileName);
     final hizbDb = await store.open(hizbDbFileName);
     try {

@@ -1,40 +1,13 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/services/memorization_storage_sqlite.dart';
 import 'package:mushaf_app/memorization/models.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    // Initialize sqflite for testing (required for non-device tests)
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // Mock path_provider platform channel
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              return Directory.systemTemp.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-  });
+  useDatabaseTestEnv();
 
   group('SqliteMemorizationStorage', () {
     late AppDataService appDataService;

@@ -7,22 +7,21 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mushaf_app/main.dart';
 
+import 'support/harness.dart';
+
 void main() {
+  useDatabaseTestEnv();
+
   testWidgets('App builds to Selection screen without crashing', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-
     await tester.pumpWidget(const ProviderScope(child: MushafApp()));
-    // Advance time in chunks instead of pumpAndSettle to avoid timeouts from
-    // ongoing animations (e.g., PageView/controller and header transitions).
-    for (int i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 150));
-    }
+    // WHY: pumpAndSettle never settles here (PageView controller + header
+    // animations keep scheduling frames); settle a fixed budget instead.
+    await settle(tester);
 
     // Basic smoke check: selection tabs are present
     expect(find.text('السور'), findsOneWidget);

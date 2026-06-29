@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mushaf_app/main.dart';
 
+import '../test/support/pump.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -14,9 +16,11 @@ void main() {
     // Allow initial frames and any splash navigation timers
     await tester.pump(const Duration(milliseconds: 600));
     // Use timed pumps instead of pumpAndSettle to avoid timeouts on CI
-    for (int i = 0; i < 20; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await settle(
+      tester,
+      duration: const Duration(milliseconds: 4000),
+      step: const Duration(milliseconds: 200),
+    );
   }
 
   group('Critical User Journeys', () {
@@ -34,28 +38,35 @@ void main() {
 
       // 3. Tap first surah item to open Mushaf
       final surahItems = find.byType(ListTile);
-      if (surahItems.evaluate().isNotEmpty) {
-        await tester.tap(surahItems.first);
+      await pumpUntilFound(
+        tester,
+        surahItems,
+        timeout: const Duration(seconds: 15),
+      );
+      await tester.tap(surahItems.first);
+      // Use timed pumps instead of pumpAndSettle
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
+
+      // 4. Verify Mushaf Screen opened
+      expect(find.byType(PageView), findsOneWidget);
+
+      // 5. Navigate back
+      final backButton = find.byIcon(Icons.arrow_forward_ios);
+      if (backButton.evaluate().isNotEmpty) {
+        await tester.tap(backButton.first);
         // Use timed pumps instead of pumpAndSettle
-        for (int i = 0; i < 15; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
+        await settle(
+          tester,
+          duration: const Duration(milliseconds: 3000),
+          step: const Duration(milliseconds: 200),
+        );
 
-        // 4. Verify Mushaf Screen opened
-        expect(find.byType(PageView), findsOneWidget);
-
-        // 5. Navigate back
-        final backButton = find.byIcon(Icons.arrow_forward_ios);
-        if (backButton.evaluate().isNotEmpty) {
-          await tester.tap(backButton.first);
-          // Use timed pumps instead of pumpAndSettle
-          for (int i = 0; i < 15; i++) {
-            await tester.pump(const Duration(milliseconds: 200));
-          }
-
-          // 6. Verify back on Selection Screen
-          expect(find.text('السور'), findsOneWidget);
-        }
+        // 6. Verify back on Selection Screen
+        expect(find.text('السور'), findsOneWidget);
       }
     });
 
@@ -68,25 +79,31 @@ void main() {
       // Switch to Juz tab
       await tester.tap(find.text('الأجزاء'));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
       expect(find.text('الأجزاء'), findsOneWidget);
 
       // Switch to Pages tab
       await tester.tap(find.text('الصفحات'));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
       expect(find.text('الصفحات'), findsOneWidget);
 
       // Switch back to Surah tab
       await tester.tap(find.text('السور'));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
       expect(find.text('السور'), findsOneWidget);
     });
 
@@ -98,9 +115,11 @@ void main() {
       expect(settingsIcon, findsOneWidget);
       await tester.tap(settingsIcon);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Verify Settings screen title
       expect(find.text('الإعدادات'), findsOneWidget);
@@ -110,9 +129,11 @@ void main() {
       expect(backIcon, findsWidgets);
       await tester.tap(backIcon.first);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Verify back on Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -126,9 +147,11 @@ void main() {
       expect(searchIcon, findsOneWidget);
       await tester.tap(searchIcon);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Verify Search screen title
       expect(find.text('البحث'), findsOneWidget);
@@ -137,9 +160,11 @@ void main() {
       final backIcon = find.byIcon(Icons.arrow_forward_ios);
       await tester.tap(backIcon.first);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Verify back on Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -159,9 +184,11 @@ void main() {
       if (backIcon.evaluate().isNotEmpty) {
         await tester.tap(backIcon.first);
         // Use timed pumps instead of pumpAndSettle
-        for (int i = 0; i < 15; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
+        await settle(
+          tester,
+          duration: const Duration(milliseconds: 3000),
+          step: const Duration(milliseconds: 200),
+        );
 
         // Confirm Selection screen
         expect(find.text('السور'), findsOneWidget);
@@ -174,9 +201,11 @@ void main() {
       // Open Settings
       await tester.tap(find.byIcon(Icons.settings));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Find theme options (if visible)
       // This test verifies theme selection widgets exist
@@ -185,9 +214,11 @@ void main() {
       // Navigate back
       await tester.tap(find.byIcon(Icons.arrow_forward_ios).first);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Verify still on Selection screen
       expect(find.text('السور'), findsOneWidget);
@@ -209,21 +240,27 @@ void main() {
       // Switch tabs
       await tester.tap(find.text('الأجزاء'));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Navigate away and back
       await tester.tap(find.byIcon(Icons.settings));
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
       await tester.tap(find.byIcon(Icons.arrow_forward_ios).first);
       // Use timed pumps instead of pumpAndSettle
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await settle(
+        tester,
+        duration: const Duration(milliseconds: 3000),
+        step: const Duration(milliseconds: 200),
+      );
 
       // Tab state should be preserved
       expect(find.text('الأجزاء'), findsOneWidget);

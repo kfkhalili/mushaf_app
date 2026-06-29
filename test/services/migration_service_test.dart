@@ -1,7 +1,5 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,43 +7,16 @@ import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/services/migration_service.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    // Initialize sqflite for testing (required for non-device tests)
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // Mock path_provider platform channel
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              return Directory.systemTemp.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-  });
+  useDatabaseTestEnv();
 
   group('MigrationService', () {
     late AppDataService appDataService;
     late MigrationService migrationService;
 
     setUp(() async {
-      // Set up mock SharedPreferences
-      SharedPreferences.setMockInitialValues({});
-
       // Clear migration flag for clean test state
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('app_data_migrated_v1');

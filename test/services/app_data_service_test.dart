@@ -1,46 +1,21 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/constants.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    // Initialize sqflite for testing (required for non-device tests)
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // Mock path_provider platform channel
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              // Return a temporary directory for tests
-              return Directory.systemTemp.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() {
-    // Clear mock handlers
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-  });
+  useDatabaseTestEnv();
 
   group('AppDataService', () {
     late AppDataService service;
 
     setUp(() {
-      service = AppDataService();
+      // WHY: In-memory adapter — isolated per instance with no shared on-disk
+      // app_data.db, so this file leaks no state into the next and needs no
+      // sequential-execution guarantee.
+      service = AppDataService(databasePath: inMemoryDatabasePath);
     });
 
     tearDown(() async {

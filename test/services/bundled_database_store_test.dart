@@ -1,39 +1,12 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:mushaf_app/constants.dart';
 import 'package:mushaf_app/exceptions/database_exceptions.dart';
 import 'package:mushaf_app/services/bundled_database_store.dart';
 
+import '../support/harness.dart';
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    // Initialize sqflite for testing (required for non-device tests).
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-
-    // Mock path_provider so the store copies into a temp directory.
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (MethodCall methodCall) async {
-            if (methodCall.method == 'getApplicationDocumentsDirectory') {
-              return Directory.systemTemp.path;
-            }
-            throw UnimplementedError();
-          },
-        );
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          null,
-        );
-  });
+  useDatabaseTestEnv();
 
   group('BundledDatabaseStore', () {
     const store = BundledDatabaseStore();

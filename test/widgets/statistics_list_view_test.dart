@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/widgets/statistics_list_view.dart';
+
+import '../support/harness.dart';
 
 void main() {
   group('StatisticsListView', () {
     testWidgets('renders statistics list view', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(home: Scaffold(body: const StatisticsListView())),
-        ),
-      );
+      await pumpScreen(tester, Scaffold(body: const StatisticsListView()));
 
       await tester.pump();
 
@@ -18,11 +15,7 @@ void main() {
     });
 
     testWidgets('displays statistics cards', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(home: Scaffold(body: const StatisticsListView())),
-        ),
-      );
+      await pumpScreen(tester, Scaffold(body: const StatisticsListView()));
 
       await tester.pump();
 
