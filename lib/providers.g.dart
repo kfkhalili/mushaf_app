@@ -10,7 +10,7 @@ part of 'providers.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(sharedPreferences)
-const sharedPreferencesProvider = SharedPreferencesProvider._();
+final sharedPreferencesProvider = SharedPreferencesProvider._();
 
 final class SharedPreferencesProvider
     extends
@@ -22,7 +22,7 @@ final class SharedPreferencesProvider
     with
         $FutureModifier<SharedPreferences>,
         $FutureProvider<SharedPreferences> {
-  const SharedPreferencesProvider._()
+  SharedPreferencesProvider._()
     : super(
         from: null,
         argument: null,
@@ -51,11 +51,11 @@ final class SharedPreferencesProvider
 String _$sharedPreferencesHash() => r'50d46e3f8d9f32715d0f3efabdce724e4b2593b4';
 
 @ProviderFor(MemorizationIconFlash)
-const memorizationIconFlashProvider = MemorizationIconFlashProvider._();
+final memorizationIconFlashProvider = MemorizationIconFlashProvider._();
 
 final class MemorizationIconFlashProvider
     extends $NotifierProvider<MemorizationIconFlash, int> {
-  const MemorizationIconFlashProvider._()
+  MemorizationIconFlashProvider._()
     : super(
         from: null,
         argument: null,
@@ -89,8 +89,7 @@ abstract class _$MemorizationIconFlash extends $Notifier<int> {
   int build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int, int>;
     final element =
         ref.element
@@ -100,17 +99,17 @@ abstract class _$MemorizationIconFlash extends $Notifier<int> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(appDataService)
-const appDataServiceProvider = AppDataServiceProvider._();
+final appDataServiceProvider = AppDataServiceProvider._();
 
 final class AppDataServiceProvider
     extends $FunctionalProvider<AppDataService, AppDataService, AppDataService>
     with $Provider<AppDataService> {
-  const AppDataServiceProvider._()
+  AppDataServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -146,10 +145,10 @@ final class AppDataServiceProvider
 String _$appDataServiceHash() => r'5ed485b1e634417af75265c61fc7154093588d38';
 
 @ProviderFor(CurrentPage)
-const currentPageProvider = CurrentPageProvider._();
+final currentPageProvider = CurrentPageProvider._();
 
 final class CurrentPageProvider extends $NotifierProvider<CurrentPage, int> {
-  const CurrentPageProvider._()
+  CurrentPageProvider._()
     : super(
         from: null,
         argument: null,
@@ -182,8 +181,7 @@ abstract class _$CurrentPage extends $Notifier<int> {
   int build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int, int>;
     final element =
         ref.element
@@ -193,16 +191,16 @@ abstract class _$CurrentPage extends $Notifier<int> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(DatabaseServiceNotifier)
-const databaseServiceProvider = DatabaseServiceNotifierProvider._();
+final databaseServiceProvider = DatabaseServiceNotifierProvider._();
 
 final class DatabaseServiceNotifierProvider
     extends $AsyncNotifierProvider<DatabaseServiceNotifier, DatabaseService> {
-  const DatabaseServiceNotifierProvider._()
+  DatabaseServiceNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -229,8 +227,7 @@ abstract class _$DatabaseServiceNotifier
   FutureOr<DatabaseService> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<DatabaseService>, DatabaseService>;
     final element =
         ref.element
@@ -240,17 +237,17 @@ abstract class _$DatabaseServiceNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(fontService)
-const fontServiceProvider = FontServiceProvider._();
+final fontServiceProvider = FontServiceProvider._();
 
 final class FontServiceProvider
     extends $FunctionalProvider<FontService, FontService, FontService>
     with $Provider<FontService> {
-  const FontServiceProvider._()
+  FontServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -286,13 +283,13 @@ final class FontServiceProvider
 String _$fontServiceHash() => r'c234dae6c98abe9581202b1937ebf8e4d07480b2';
 
 @ProviderFor(pageData)
-const pageDataProvider = PageDataFamily._();
+final pageDataProvider = PageDataFamily._();
 
 final class PageDataProvider
     extends
         $FunctionalProvider<AsyncValue<PageData>, PageData, FutureOr<PageData>>
     with $FutureModifier<PageData>, $FutureProvider<PageData> {
-  const PageDataProvider._({
+  PageDataProvider._({
     required PageDataFamily super.from,
     required int super.argument,
   }) : super(
@@ -339,7 +336,7 @@ String _$pageDataHash() => r'3cbfb785df106228b99ac4fff7fa50ba22b3cf0f';
 
 final class PageDataFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PageData>, int> {
-  const PageDataFamily._()
+  PageDataFamily._()
     : super(
         retry: null,
         name: r'pageDataProvider',
@@ -356,7 +353,7 @@ final class PageDataFamily extends $Family
 }
 
 @ProviderFor(surahList)
-const surahListProvider = SurahListProvider._();
+final surahListProvider = SurahListProvider._();
 
 final class SurahListProvider
     extends
@@ -366,7 +363,7 @@ final class SurahListProvider
           FutureOr<List<SurahInfo>>
         >
     with $FutureModifier<List<SurahInfo>>, $FutureProvider<List<SurahInfo>> {
-  const SurahListProvider._()
+  SurahListProvider._()
     : super(
         from: null,
         argument: null,
@@ -395,7 +392,7 @@ final class SurahListProvider
 String _$surahListHash() => r'772efb4d154cf1a63d0b740a9277fb8da360b7cc';
 
 @ProviderFor(juzList)
-const juzListProvider = JuzListProvider._();
+final juzListProvider = JuzListProvider._();
 
 final class JuzListProvider
     extends
@@ -405,7 +402,7 @@ final class JuzListProvider
           FutureOr<List<JuzInfo>>
         >
     with $FutureModifier<List<JuzInfo>>, $FutureProvider<List<JuzInfo>> {
-  const JuzListProvider._()
+  JuzListProvider._()
     : super(
         from: null,
         argument: null,
@@ -434,12 +431,12 @@ final class JuzListProvider
 String _$juzListHash() => r'22515260ff8ac16d6e63f46fd1e8067debe78fdc';
 
 @ProviderFor(totalPages)
-const totalPagesProvider = TotalPagesProvider._();
+final totalPagesProvider = TotalPagesProvider._();
 
 final class TotalPagesProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  const TotalPagesProvider._()
+  TotalPagesProvider._()
     : super(
         from: null,
         argument: null,
@@ -467,7 +464,7 @@ final class TotalPagesProvider
 String _$totalPagesHash() => r'bcef078e4b884a0b80697856c948bef2bbbde496';
 
 @ProviderFor(layoutInfo)
-const layoutInfoProvider = LayoutInfoProvider._();
+final layoutInfoProvider = LayoutInfoProvider._();
 
 final class LayoutInfoProvider
     extends
@@ -477,7 +474,7 @@ final class LayoutInfoProvider
           FutureOr<LayoutInfo>
         >
     with $FutureModifier<LayoutInfo>, $FutureProvider<LayoutInfo> {
-  const LayoutInfoProvider._()
+  LayoutInfoProvider._()
     : super(
         from: null,
         argument: null,
@@ -505,7 +502,7 @@ final class LayoutInfoProvider
 String _$layoutInfoHash() => r'38d5ff4d9b5bd8f97e36bd1c34e75d329b302b61';
 
 @ProviderFor(allLayoutsInfo)
-const allLayoutsInfoProvider = AllLayoutsInfoProvider._();
+final allLayoutsInfoProvider = AllLayoutsInfoProvider._();
 
 final class AllLayoutsInfoProvider
     extends
@@ -517,7 +514,7 @@ final class AllLayoutsInfoProvider
     with
         $FutureModifier<Map<MushafLayout, LayoutInfo>>,
         $FutureProvider<Map<MushafLayout, LayoutInfo>> {
-  const AllLayoutsInfoProvider._()
+  AllLayoutsInfoProvider._()
     : super(
         from: null,
         argument: null,
@@ -546,12 +543,12 @@ final class AllLayoutsInfoProvider
 String _$allLayoutsInfoHash() => r'328b77292e0ab322e32929db7d8ab8df8170fe4c';
 
 @ProviderFor(pagePreview)
-const pagePreviewProvider = PagePreviewFamily._();
+final pagePreviewProvider = PagePreviewFamily._();
 
 final class PagePreviewProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  const PagePreviewProvider._({
+  PagePreviewProvider._({
     required PagePreviewFamily super.from,
     required int super.argument,
   }) : super(
@@ -598,7 +595,7 @@ String _$pagePreviewHash() => r'855711048ca7bd04f2bf594db7547ad226945408';
 
 final class PagePreviewFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, int> {
-  const PagePreviewFamily._()
+  PagePreviewFamily._()
     : super(
         retry: null,
         name: r'pagePreviewProvider',
@@ -615,12 +612,12 @@ final class PagePreviewFamily extends $Family
 }
 
 @ProviderFor(pageFontFamily)
-const pageFontFamilyProvider = PageFontFamilyFamily._();
+final pageFontFamilyProvider = PageFontFamilyFamily._();
 
 final class PageFontFamilyProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  const PageFontFamilyProvider._({
+  PageFontFamilyProvider._({
     required PageFontFamilyFamily super.from,
     required int super.argument,
   }) : super(
@@ -667,7 +664,7 @@ String _$pageFontFamilyHash() => r'f562dda973a4542f6996503eabca7e96d3e76f16';
 
 final class PageFontFamilyFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, int> {
-  const PageFontFamilyFamily._()
+  PageFontFamilyFamily._()
     : super(
         retry: null,
         name: r'pageFontFamilyProvider',
@@ -684,12 +681,12 @@ final class PageFontFamilyFamily extends $Family
 }
 
 @ProviderFor(commonFont)
-const commonFontProvider = CommonFontProvider._();
+final commonFontProvider = CommonFontProvider._();
 
 final class CommonFontProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  const CommonFontProvider._()
+  CommonFontProvider._()
     : super(
         from: null,
         argument: null,
@@ -717,7 +714,7 @@ final class CommonFontProvider
 String _$commonFontHash() => r'714b4ac7aed5414952951aab64739d03dd7c80a4';
 
 @ProviderFor(pagePreviewWithFont)
-const pagePreviewWithFontProvider = PagePreviewWithFontFamily._();
+final pagePreviewWithFontProvider = PagePreviewWithFontFamily._();
 
 final class PagePreviewWithFontProvider
     extends
@@ -727,7 +724,7 @@ final class PagePreviewWithFontProvider
           FutureOr<(String, String)>
         >
     with $FutureModifier<(String, String)>, $FutureProvider<(String, String)> {
-  const PagePreviewWithFontProvider._({
+  PagePreviewWithFontProvider._({
     required PagePreviewWithFontFamily super.from,
     required int super.argument,
   }) : super(
@@ -776,7 +773,7 @@ String _$pagePreviewWithFontHash() =>
 
 final class PagePreviewWithFontFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<(String, String)>, int> {
-  const PagePreviewWithFontFamily._()
+  PagePreviewWithFontFamily._()
     : super(
         retry: null,
         name: r'pagePreviewWithFontProvider',
@@ -793,11 +790,11 @@ final class PagePreviewWithFontFamily extends $Family
 }
 
 @ProviderFor(SelectionTabIndex)
-const selectionTabIndexProvider = SelectionTabIndexProvider._();
+final selectionTabIndexProvider = SelectionTabIndexProvider._();
 
 final class SelectionTabIndexProvider
     extends $NotifierProvider<SelectionTabIndex, int> {
-  const SelectionTabIndexProvider._()
+  SelectionTabIndexProvider._()
     : super(
         from: null,
         argument: null,
@@ -830,8 +827,7 @@ abstract class _$SelectionTabIndex extends $Notifier<int> {
   int build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int, int>;
     final element =
         ref.element
@@ -841,16 +837,16 @@ abstract class _$SelectionTabIndex extends $Notifier<int> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(MushafLayoutSetting)
-const mushafLayoutSettingProvider = MushafLayoutSettingProvider._();
+final mushafLayoutSettingProvider = MushafLayoutSettingProvider._();
 
 final class MushafLayoutSettingProvider
     extends $NotifierProvider<MushafLayoutSetting, MushafLayout> {
-  const MushafLayoutSettingProvider._()
+  MushafLayoutSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -884,8 +880,7 @@ abstract class _$MushafLayoutSetting extends $Notifier<MushafLayout> {
   MushafLayout build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<MushafLayout, MushafLayout>;
     final element =
         ref.element
@@ -895,16 +890,16 @@ abstract class _$MushafLayoutSetting extends $Notifier<MushafLayout> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(FontSizeSetting)
-const fontSizeSettingProvider = FontSizeSettingProvider._();
+final fontSizeSettingProvider = FontSizeSettingProvider._();
 
 final class FontSizeSettingProvider
     extends $NotifierProvider<FontSizeSetting, double> {
-  const FontSizeSettingProvider._()
+  FontSizeSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -937,8 +932,7 @@ abstract class _$FontSizeSetting extends $Notifier<double> {
   double build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<double, double>;
     final element =
         ref.element
@@ -948,12 +942,12 @@ abstract class _$FontSizeSetting extends $Notifier<double> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(recitationRange)
-const recitationRangeProvider = RecitationRangeProvider._();
+final recitationRangeProvider = RecitationRangeProvider._();
 
 final class RecitationRangeProvider
     extends
@@ -963,7 +957,7 @@ final class RecitationRangeProvider
           FutureOr<RecitationRange>
         >
     with $FutureModifier<RecitationRange>, $FutureProvider<RecitationRange> {
-  const RecitationRangeProvider._()
+  RecitationRangeProvider._()
     : super(
         from: null,
         argument: null,
@@ -992,7 +986,7 @@ final class RecitationRangeProvider
 String _$recitationRangeHash() => r'351aa8858987f15c3e21d9e0f07074d8650f9a95';
 
 @ProviderFor(searchService)
-const searchServiceProvider = SearchServiceProvider._();
+final searchServiceProvider = SearchServiceProvider._();
 
 final class SearchServiceProvider
     extends
@@ -1002,7 +996,7 @@ final class SearchServiceProvider
           FutureOr<SearchService>
         >
     with $FutureModifier<SearchService>, $FutureProvider<SearchService> {
-  const SearchServiceProvider._()
+  SearchServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -1031,10 +1025,10 @@ final class SearchServiceProvider
 String _$searchServiceHash() => r'0d5b88bfba67f5e1f3f5b9a92d362f8ed7b8e69b';
 
 @ProviderFor(SearchQuery)
-const searchQueryProvider = SearchQueryProvider._();
+final searchQueryProvider = SearchQueryProvider._();
 
 final class SearchQueryProvider extends $NotifierProvider<SearchQuery, String> {
-  const SearchQueryProvider._()
+  SearchQueryProvider._()
     : super(
         from: null,
         argument: null,
@@ -1067,8 +1061,7 @@ abstract class _$SearchQuery extends $Notifier<String> {
   String build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<String, String>;
     final element =
         ref.element
@@ -1078,12 +1071,12 @@ abstract class _$SearchQuery extends $Notifier<String> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(searchResults)
-const searchResultsProvider = SearchResultsFamily._();
+final searchResultsProvider = SearchResultsFamily._();
 
 final class SearchResultsProvider
     extends
@@ -1095,7 +1088,7 @@ final class SearchResultsProvider
     with
         $FutureModifier<List<SearchResult>>,
         $FutureProvider<List<SearchResult>> {
-  const SearchResultsProvider._({
+  SearchResultsProvider._({
     required SearchResultsFamily super.from,
     required String super.argument,
   }) : super(
@@ -1143,7 +1136,7 @@ String _$searchResultsHash() => r'd06301fb48730166d9c74332618adbfe4c4ca58c';
 
 final class SearchResultsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<SearchResult>>, String> {
-  const SearchResultsFamily._()
+  SearchResultsFamily._()
     : super(
         retry: null,
         name: r'searchResultsProvider',
@@ -1160,11 +1153,11 @@ final class SearchResultsFamily extends $Family
 }
 
 @ProviderFor(SearchHistory)
-const searchHistoryProvider = SearchHistoryProvider._();
+final searchHistoryProvider = SearchHistoryProvider._();
 
 final class SearchHistoryProvider
     extends $NotifierProvider<SearchHistory, List<String>> {
-  const SearchHistoryProvider._()
+  SearchHistoryProvider._()
     : super(
         from: null,
         argument: null,
@@ -1197,8 +1190,7 @@ abstract class _$SearchHistory extends $Notifier<List<String>> {
   List<String> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<String>, List<String>>;
     final element =
         ref.element
@@ -1208,12 +1200,12 @@ abstract class _$SearchHistory extends $Notifier<List<String>> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(bookmarksService)
-const bookmarksServiceProvider = BookmarksServiceProvider._();
+final bookmarksServiceProvider = BookmarksServiceProvider._();
 
 final class BookmarksServiceProvider
     extends
@@ -1223,7 +1215,7 @@ final class BookmarksServiceProvider
           FutureOr<BookmarksService>
         >
     with $FutureModifier<BookmarksService>, $FutureProvider<BookmarksService> {
-  const BookmarksServiceProvider._()
+  BookmarksServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -1252,12 +1244,12 @@ final class BookmarksServiceProvider
 String _$bookmarksServiceHash() => r'd98c721dc9efa6326cc9242716e708b58ab3c297';
 
 @ProviderFor(isAyahBookmarked)
-const isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
+final isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
 
 final class IsAyahBookmarkedProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
-  const IsAyahBookmarkedProvider._({
+  IsAyahBookmarkedProvider._({
     required IsAyahBookmarkedFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -1304,7 +1296,7 @@ String _$isAyahBookmarkedHash() => r'62957e968a9a625e4fcc37ecfaf6e954f2d0ee70';
 
 final class IsAyahBookmarkedFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<bool>, (int, int)> {
-  const IsAyahBookmarkedFamily._()
+  IsAyahBookmarkedFamily._()
     : super(
         retry: null,
         name: r'isAyahBookmarkedProvider',
@@ -1324,11 +1316,11 @@ final class IsAyahBookmarkedFamily extends $Family
 }
 
 @ProviderFor(BookmarksNotifier)
-const bookmarksProvider = BookmarksNotifierProvider._();
+final bookmarksProvider = BookmarksNotifierProvider._();
 
 final class BookmarksNotifierProvider
     extends $AsyncNotifierProvider<BookmarksNotifier, List<Bookmark>> {
-  const BookmarksNotifierProvider._()
+  BookmarksNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1353,8 +1345,7 @@ abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
   FutureOr<List<Bookmark>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Bookmark>>, List<Bookmark>>;
     final element =
         ref.element
@@ -1364,12 +1355,12 @@ abstract class _$BookmarksNotifier extends $AsyncNotifier<List<Bookmark>> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(pageDataWithBookmarks)
-const pageDataWithBookmarksProvider = PageDataWithBookmarksFamily._();
+final pageDataWithBookmarksProvider = PageDataWithBookmarksFamily._();
 
 final class PageDataWithBookmarksProvider
     extends
@@ -1381,7 +1372,7 @@ final class PageDataWithBookmarksProvider
     with
         $FutureModifier<(PageData, List<Bookmark>)>,
         $FutureProvider<(PageData, List<Bookmark>)> {
-  const PageDataWithBookmarksProvider._({
+  PageDataWithBookmarksProvider._({
     required PageDataWithBookmarksFamily super.from,
     required int super.argument,
   }) : super(
@@ -1430,7 +1421,7 @@ String _$pageDataWithBookmarksHash() =>
 
 final class PageDataWithBookmarksFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<(PageData, List<Bookmark>)>, int> {
-  const PageDataWithBookmarksFamily._()
+  PageDataWithBookmarksFamily._()
     : super(
         retry: null,
         name: r'pageDataWithBookmarksProvider',
@@ -1447,12 +1438,12 @@ final class PageDataWithBookmarksFamily extends $Family
 }
 
 @ProviderFor(bookmarkPageNumber)
-const bookmarkPageNumberProvider = BookmarkPageNumberFamily._();
+final bookmarkPageNumberProvider = BookmarkPageNumberFamily._();
 
 final class BookmarkPageNumberProvider
     extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
     with $FutureModifier<int?>, $FutureProvider<int?> {
-  const BookmarkPageNumberProvider._({
+  BookmarkPageNumberProvider._({
     required BookmarkPageNumberFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -1500,7 +1491,7 @@ String _$bookmarkPageNumberHash() =>
 
 final class BookmarkPageNumberFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<int?>, (int, int)> {
-  const BookmarkPageNumberFamily._()
+  BookmarkPageNumberFamily._()
     : super(
         retry: null,
         name: r'bookmarkPageNumberProvider',
@@ -1520,7 +1511,7 @@ final class BookmarkPageNumberFamily extends $Family
 }
 
 @ProviderFor(readingProgressService)
-const readingProgressServiceProvider = ReadingProgressServiceProvider._();
+final readingProgressServiceProvider = ReadingProgressServiceProvider._();
 
 final class ReadingProgressServiceProvider
     extends
@@ -1532,7 +1523,7 @@ final class ReadingProgressServiceProvider
     with
         $FutureModifier<ReadingProgressService>,
         $FutureProvider<ReadingProgressService> {
-  const ReadingProgressServiceProvider._()
+  ReadingProgressServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -1562,7 +1553,7 @@ String _$readingProgressServiceHash() =>
     r'cbb770ea3b372dddb792cad1472b25de37f2c52d';
 
 @ProviderFor(readingStatistics)
-const readingStatisticsProvider = ReadingStatisticsProvider._();
+final readingStatisticsProvider = ReadingStatisticsProvider._();
 
 final class ReadingStatisticsProvider
     extends
@@ -1574,7 +1565,7 @@ final class ReadingStatisticsProvider
     with
         $FutureModifier<ReadingStatistics>,
         $FutureProvider<ReadingStatistics> {
-  const ReadingStatisticsProvider._()
+  ReadingStatisticsProvider._()
     : super(
         from: null,
         argument: null,
@@ -1603,12 +1594,12 @@ final class ReadingStatisticsProvider
 String _$readingStatisticsHash() => r'11644989a0c8eac4fcd7ffd4eb809c1f43b0275d';
 
 @ProviderFor(pagesReadToday)
-const pagesReadTodayProvider = PagesReadTodayProvider._();
+final pagesReadTodayProvider = PagesReadTodayProvider._();
 
 final class PagesReadTodayProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  const PagesReadTodayProvider._()
+  PagesReadTodayProvider._()
     : super(
         from: null,
         argument: null,
@@ -1636,12 +1627,12 @@ final class PagesReadTodayProvider
 String _$pagesReadTodayHash() => r'2a0d28df25e63ccce6fb47565e121658c340eea5';
 
 @ProviderFor(currentStreak)
-const currentStreakProvider = CurrentStreakProvider._();
+final currentStreakProvider = CurrentStreakProvider._();
 
 final class CurrentStreakProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  const CurrentStreakProvider._()
+  CurrentStreakProvider._()
     : super(
         from: null,
         argument: null,
@@ -1669,11 +1660,11 @@ final class CurrentStreakProvider
 String _$currentStreakHash() => r'e92074e4a2350a1e4fcc5e444be86a364ff6a968';
 
 @ProviderFor(PrimaryColorNotifier)
-const primaryColorProvider = PrimaryColorNotifierProvider._();
+final primaryColorProvider = PrimaryColorNotifierProvider._();
 
 final class PrimaryColorNotifierProvider
     extends $NotifierProvider<PrimaryColorNotifier, int> {
-  const PrimaryColorNotifierProvider._()
+  PrimaryColorNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1707,8 +1698,7 @@ abstract class _$PrimaryColorNotifier extends $Notifier<int> {
   int build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int, int>;
     final element =
         ref.element
@@ -1718,16 +1708,16 @@ abstract class _$PrimaryColorNotifier extends $Notifier<int> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(ThemeNotifier)
-const themeProvider = ThemeNotifierProvider._();
+final themeProvider = ThemeNotifierProvider._();
 
 final class ThemeNotifierProvider
     extends $NotifierProvider<ThemeNotifier, AppThemeMode> {
-  const ThemeNotifierProvider._()
+  ThemeNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1760,8 +1750,7 @@ abstract class _$ThemeNotifier extends $Notifier<AppThemeMode> {
   AppThemeMode build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AppThemeMode, AppThemeMode>;
     final element =
         ref.element
@@ -1771,12 +1760,12 @@ abstract class _$ThemeNotifier extends $Notifier<AppThemeMode> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(MemorizationSessionNotifier)
-const memorizationSessionProvider = MemorizationSessionNotifierProvider._();
+final memorizationSessionProvider = MemorizationSessionNotifierProvider._();
 
 final class MemorizationSessionNotifierProvider
     extends
@@ -1784,7 +1773,7 @@ final class MemorizationSessionNotifierProvider
           MemorizationSessionNotifier,
           MemorizationSessionState?
         > {
-  const MemorizationSessionNotifierProvider._()
+  MemorizationSessionNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1819,8 +1808,7 @@ abstract class _$MemorizationSessionNotifier
   MemorizationSessionState? build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<MemorizationSessionState?, MemorizationSessionState?>;
     final element =
@@ -1831,16 +1819,16 @@ abstract class _$MemorizationSessionNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(OntologyServiceNotifier)
-const ontologyServiceProvider = OntologyServiceNotifierProvider._();
+final ontologyServiceProvider = OntologyServiceNotifierProvider._();
 
 final class OntologyServiceNotifierProvider
     extends $AsyncNotifierProvider<OntologyServiceNotifier, OntologyService> {
-  const OntologyServiceNotifierProvider._()
+  OntologyServiceNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1867,8 +1855,7 @@ abstract class _$OntologyServiceNotifier
   FutureOr<OntologyService> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<OntologyService>, OntologyService>;
     final element =
         ref.element
@@ -1878,16 +1865,16 @@ abstract class _$OntologyServiceNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(TafsirServiceNotifier)
-const tafsirServiceProvider = TafsirServiceNotifierProvider._();
+final tafsirServiceProvider = TafsirServiceNotifierProvider._();
 
 final class TafsirServiceNotifierProvider
     extends $AsyncNotifierProvider<TafsirServiceNotifier, TafsirService> {
-  const TafsirServiceNotifierProvider._()
+  TafsirServiceNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -1913,8 +1900,7 @@ abstract class _$TafsirServiceNotifier extends $AsyncNotifier<TafsirService> {
   FutureOr<TafsirService> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<TafsirService>, TafsirService>;
     final element =
         ref.element
@@ -1924,17 +1910,17 @@ abstract class _$TafsirServiceNotifier extends $AsyncNotifier<TafsirService> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(topicById)
-const topicByIdProvider = TopicByIdFamily._();
+final topicByIdProvider = TopicByIdFamily._();
 
 final class TopicByIdProvider
     extends $FunctionalProvider<AsyncValue<Topic>, Topic, FutureOr<Topic>>
     with $FutureModifier<Topic>, $FutureProvider<Topic> {
-  const TopicByIdProvider._({
+  TopicByIdProvider._({
     required TopicByIdFamily super.from,
     required int super.argument,
   }) : super(
@@ -1981,7 +1967,7 @@ String _$topicByIdHash() => r'e08abcd4f123413ff358e6409f955c67b4f72d39';
 
 final class TopicByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Topic>, int> {
-  const TopicByIdFamily._()
+  TopicByIdFamily._()
     : super(
         retry: null,
         name: r'topicByIdProvider',
@@ -1998,12 +1984,12 @@ final class TopicByIdFamily extends $Family
 }
 
 @ProviderFor(ayahText)
-const ayahTextProvider = AyahTextFamily._();
+final ayahTextProvider = AyahTextFamily._();
 
 final class AyahTextProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  const AyahTextProvider._({
+  AyahTextProvider._({
     required AyahTextFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2050,7 +2036,7 @@ String _$ayahTextHash() => r'bd72f6bf15e4ebfd0319a8d80158a8890b48f01d';
 
 final class AyahTextFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, (int, int)> {
-  const AyahTextFamily._()
+  AyahTextFamily._()
     : super(
         retry: null,
         name: r'ayahTextProvider',
@@ -2067,7 +2053,7 @@ final class AyahTextFamily extends $Family
 }
 
 @ProviderFor(ayahWords)
-const ayahWordsProvider = AyahWordsFamily._();
+final ayahWordsProvider = AyahWordsFamily._();
 
 final class AyahWordsProvider
     extends
@@ -2077,7 +2063,7 @@ final class AyahWordsProvider
           FutureOr<List<Word>>
         >
     with $FutureModifier<List<Word>>, $FutureProvider<List<Word>> {
-  const AyahWordsProvider._({
+  AyahWordsProvider._({
     required AyahWordsFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2124,7 +2110,7 @@ String _$ayahWordsHash() => r'2b4a49a370e34adfc69097f4abf032d9a41fc420';
 
 final class AyahWordsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Word>>, (int, int)> {
-  const AyahWordsFamily._()
+  AyahWordsFamily._()
     : super(
         retry: null,
         name: r'ayahWordsProvider',
@@ -2141,7 +2127,7 @@ final class AyahWordsFamily extends $Family
 }
 
 @ProviderFor(ayahDisplayData)
-const ayahDisplayDataProvider = AyahDisplayDataFamily._();
+final ayahDisplayDataProvider = AyahDisplayDataFamily._();
 
 final class AyahDisplayDataProvider
     extends
@@ -2157,7 +2143,7 @@ final class AyahDisplayDataProvider
         $FutureProvider<
           ({String fontFamily, int pageNumber, List<Word> words})
         > {
-  const AyahDisplayDataProvider._({
+  AyahDisplayDataProvider._({
     required AyahDisplayDataFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2212,7 +2198,7 @@ final class AyahDisplayDataFamily extends $Family
           FutureOr<({String fontFamily, int pageNumber, List<Word> words})>,
           (int, int)
         > {
-  const AyahDisplayDataFamily._()
+  AyahDisplayDataFamily._()
     : super(
         retry: null,
         name: r'ayahDisplayDataProvider',
@@ -2232,12 +2218,12 @@ final class AyahDisplayDataFamily extends $Family
 }
 
 @ProviderFor(surahName)
-const surahNameProvider = SurahNameFamily._();
+final surahNameProvider = SurahNameFamily._();
 
 final class SurahNameProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  const SurahNameProvider._({
+  SurahNameProvider._({
     required SurahNameFamily super.from,
     required int super.argument,
   }) : super(
@@ -2284,7 +2270,7 @@ String _$surahNameHash() => r'67a16e9ed606746bb0d964a27086bb6afe1f4662';
 
 final class SurahNameFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String>, int> {
-  const SurahNameFamily._()
+  SurahNameFamily._()
     : super(
         retry: null,
         name: r'surahNameProvider',
@@ -2301,12 +2287,12 @@ final class SurahNameFamily extends $Family
 }
 
 @ProviderFor(tafsir)
-const tafsirProvider = TafsirFamily._();
+final tafsirProvider = TafsirFamily._();
 
 final class TafsirProvider
     extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
     with $FutureModifier<String?>, $FutureProvider<String?> {
-  const TafsirProvider._({
+  TafsirProvider._({
     required TafsirFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2353,7 +2339,7 @@ String _$tafsirHash() => r'9beaadd54a4db02a7de684a0f9f243a2242b268f';
 
 final class TafsirFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String?>, (int, int)> {
-  const TafsirFamily._()
+  TafsirFamily._()
     : super(
         retry: null,
         name: r'tafsirProvider',
@@ -2370,7 +2356,7 @@ final class TafsirFamily extends $Family
 }
 
 @ProviderFor(previousAyah)
-const previousAyahProvider = PreviousAyahFamily._();
+final previousAyahProvider = PreviousAyahFamily._();
 
 final class PreviousAyahProvider
     extends
@@ -2382,7 +2368,7 @@ final class PreviousAyahProvider
     with
         $FutureModifier<({int ayahNumber, int surahNumber})?>,
         $FutureProvider<({int ayahNumber, int surahNumber})?> {
-  const PreviousAyahProvider._({
+  PreviousAyahProvider._({
     required PreviousAyahFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2434,7 +2420,7 @@ final class PreviousAyahFamily extends $Family
           FutureOr<({int ayahNumber, int surahNumber})?>,
           (int, int)
         > {
-  const PreviousAyahFamily._()
+  PreviousAyahFamily._()
     : super(
         retry: null,
         name: r'previousAyahProvider',
@@ -2451,7 +2437,7 @@ final class PreviousAyahFamily extends $Family
 }
 
 @ProviderFor(nextAyah)
-const nextAyahProvider = NextAyahFamily._();
+final nextAyahProvider = NextAyahFamily._();
 
 final class NextAyahProvider
     extends
@@ -2463,7 +2449,7 @@ final class NextAyahProvider
     with
         $FutureModifier<({int ayahNumber, int surahNumber})?>,
         $FutureProvider<({int ayahNumber, int surahNumber})?> {
-  const NextAyahProvider._({
+  NextAyahProvider._({
     required NextAyahFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2515,7 +2501,7 @@ final class NextAyahFamily extends $Family
           FutureOr<({int ayahNumber, int surahNumber})?>,
           (int, int)
         > {
-  const NextAyahFamily._()
+  NextAyahFamily._()
     : super(
         retry: null,
         name: r'nextAyahProvider',
@@ -2532,7 +2518,7 @@ final class NextAyahFamily extends $Family
 }
 
 @ProviderFor(topicsForAyah)
-const topicsForAyahProvider = TopicsForAyahFamily._();
+final topicsForAyahProvider = TopicsForAyahFamily._();
 
 final class TopicsForAyahProvider
     extends
@@ -2542,7 +2528,7 @@ final class TopicsForAyahProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const TopicsForAyahProvider._({
+  TopicsForAyahProvider._({
     required TopicsForAyahFamily super.from,
     required (int, int) super.argument,
   }) : super(
@@ -2590,7 +2576,7 @@ String _$topicsForAyahHash() => r'4e569e1cbf758b733105b5ff5f67f703f52f7ecc';
 
 final class TopicsForAyahFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Topic>>, (int, int)> {
-  const TopicsForAyahFamily._()
+  TopicsForAyahFamily._()
     : super(
         retry: null,
         name: r'topicsForAyahProvider',
@@ -2607,7 +2593,7 @@ final class TopicsForAyahFamily extends $Family
 }
 
 @ProviderFor(versesForTopic)
-const versesForTopicProvider = VersesForTopicFamily._();
+final versesForTopicProvider = VersesForTopicFamily._();
 
 final class VersesForTopicProvider
     extends
@@ -2619,7 +2605,7 @@ final class VersesForTopicProvider
     with
         $FutureModifier<List<VerseReference>>,
         $FutureProvider<List<VerseReference>> {
-  const VersesForTopicProvider._({
+  VersesForTopicProvider._({
     required VersesForTopicFamily super.from,
     required int super.argument,
   }) : super(
@@ -2667,7 +2653,7 @@ String _$versesForTopicHash() => r'148f93263c3b2064a4d539a4d3d02136d14cc827';
 
 final class VersesForTopicFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<VerseReference>>, int> {
-  const VersesForTopicFamily._()
+  VersesForTopicFamily._()
     : super(
         retry: null,
         name: r'versesForTopicProvider',
@@ -2684,7 +2670,7 @@ final class VersesForTopicFamily extends $Family
 }
 
 @ProviderFor(relatedTopics)
-const relatedTopicsProvider = RelatedTopicsFamily._();
+final relatedTopicsProvider = RelatedTopicsFamily._();
 
 final class RelatedTopicsProvider
     extends
@@ -2694,7 +2680,7 @@ final class RelatedTopicsProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const RelatedTopicsProvider._({
+  RelatedTopicsProvider._({
     required RelatedTopicsFamily super.from,
     required int super.argument,
   }) : super(
@@ -2742,7 +2728,7 @@ String _$relatedTopicsHash() => r'05514a56bdf32924cdced8c76df6b1e088912613';
 
 final class RelatedTopicsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Topic>>, int> {
-  const RelatedTopicsFamily._()
+  RelatedTopicsFamily._()
     : super(
         retry: null,
         name: r'relatedTopicsProvider',
@@ -2759,7 +2745,7 @@ final class RelatedTopicsFamily extends $Family
 }
 
 @ProviderFor(rootTopics)
-const rootTopicsProvider = RootTopicsProvider._();
+final rootTopicsProvider = RootTopicsProvider._();
 
 final class RootTopicsProvider
     extends
@@ -2769,7 +2755,7 @@ final class RootTopicsProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const RootTopicsProvider._()
+  RootTopicsProvider._()
     : super(
         from: null,
         argument: null,
@@ -2798,7 +2784,7 @@ final class RootTopicsProvider
 String _$rootTopicsHash() => r'a62d217d1c3232c0d7864f0c1e4a5ee232d81d41';
 
 @ProviderFor(rootTopicsByHierarchy)
-const rootTopicsByHierarchyProvider = RootTopicsByHierarchyFamily._();
+final rootTopicsByHierarchyProvider = RootTopicsByHierarchyFamily._();
 
 final class RootTopicsByHierarchyProvider
     extends
@@ -2808,7 +2794,7 @@ final class RootTopicsByHierarchyProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const RootTopicsByHierarchyProvider._({
+  RootTopicsByHierarchyProvider._({
     required RootTopicsByHierarchyFamily super.from,
     required bool super.argument,
   }) : super(
@@ -2857,7 +2843,7 @@ String _$rootTopicsByHierarchyHash() =>
 
 final class RootTopicsByHierarchyFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Topic>>, bool> {
-  const RootTopicsByHierarchyFamily._()
+  RootTopicsByHierarchyFamily._()
     : super(
         retry: null,
         name: r'rootTopicsByHierarchyProvider',
@@ -2874,7 +2860,7 @@ final class RootTopicsByHierarchyFamily extends $Family
 }
 
 @ProviderFor(childTopics)
-const childTopicsProvider = ChildTopicsFamily._();
+final childTopicsProvider = ChildTopicsFamily._();
 
 final class ChildTopicsProvider
     extends
@@ -2884,7 +2870,7 @@ final class ChildTopicsProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const ChildTopicsProvider._({
+  ChildTopicsProvider._({
     required ChildTopicsFamily super.from,
     required (int, bool) super.argument,
   }) : super(
@@ -2932,7 +2918,7 @@ String _$childTopicsHash() => r'd18cd5f49baab9da4ae4aeba6205376518f72816';
 
 final class ChildTopicsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Topic>>, (int, bool)> {
-  const ChildTopicsFamily._()
+  ChildTopicsFamily._()
     : super(
         retry: null,
         name: r'childTopicsProvider',
@@ -2949,7 +2935,7 @@ final class ChildTopicsFamily extends $Family
 }
 
 @ProviderFor(searchTopics)
-const searchTopicsProvider = SearchTopicsFamily._();
+final searchTopicsProvider = SearchTopicsFamily._();
 
 final class SearchTopicsProvider
     extends
@@ -2959,7 +2945,7 @@ final class SearchTopicsProvider
           FutureOr<List<Topic>>
         >
     with $FutureModifier<List<Topic>>, $FutureProvider<List<Topic>> {
-  const SearchTopicsProvider._({
+  SearchTopicsProvider._({
     required SearchTopicsFamily super.from,
     required String super.argument,
   }) : super(
@@ -3007,7 +2993,7 @@ String _$searchTopicsHash() => r'c243dc4d6971e08e070920c4d9407eb4ebb79cfe';
 
 final class SearchTopicsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Topic>>, String> {
-  const SearchTopicsFamily._()
+  SearchTopicsFamily._()
     : super(
         retry: null,
         name: r'searchTopicsProvider',
@@ -3024,7 +3010,7 @@ final class SearchTopicsFamily extends $Family
 }
 
 @ProviderFor(audioService)
-const audioServiceProvider = AudioServiceProvider._();
+final audioServiceProvider = AudioServiceProvider._();
 
 final class AudioServiceProvider
     extends
@@ -3034,7 +3020,7 @@ final class AudioServiceProvider
           FutureOr<AudioService>
         >
     with $FutureModifier<AudioService>, $FutureProvider<AudioService> {
-  const AudioServiceProvider._()
+  AudioServiceProvider._()
     : super(
         from: null,
         argument: null,
@@ -3063,11 +3049,11 @@ final class AudioServiceProvider
 String _$audioServiceHash() => r'f1e443368f920a7836226a184b56436971806473';
 
 @ProviderFor(AudioStateNotifier)
-const audioStateProvider = AudioStateNotifierProvider._();
+final audioStateProvider = AudioStateNotifierProvider._();
 
 final class AudioStateNotifierProvider
     extends $NotifierProvider<AudioStateNotifier, AudioState> {
-  const AudioStateNotifierProvider._()
+  AudioStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -3101,8 +3087,7 @@ abstract class _$AudioStateNotifier extends $Notifier<AudioState> {
   AudioState build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AudioState, AudioState>;
     final element =
         ref.element
@@ -3112,6 +3097,6 @@ abstract class _$AudioStateNotifier extends $Notifier<AudioState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
