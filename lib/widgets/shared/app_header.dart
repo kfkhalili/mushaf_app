@@ -153,7 +153,7 @@ class AppHeader extends StatelessWidget {
             ),
           ),
         // Optional trailing widget
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }
@@ -211,7 +211,7 @@ class AppHeader extends StatelessWidget {
             ],
           ),
         // Optional trailing widget
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }
