@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 15  # WHY: Prevent hanging tests from wasting minutes
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -48,7 +48,7 @@ jobs:
           cache: true  # WHY: Cache Flutter SDK to reduce setup time
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -72,9 +72,9 @@ jobs:
         run: flutter test --coverage --exclude-tags=golden --concurrency=1
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
-          file: coverage/lcov.info
+          files: coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -122,7 +122,7 @@ jobs:
 
   golden-check:
     name: Verify Golden Tests
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 15  # WHY: Limit expensive macOS job time
     # WHY: Only run golden tests on main branch or when PR is ready (not draft)
     # This saves ~30-50 minutes per run on macOS
@@ -132,7 +132,7 @@ jobs:
     needs: test  # WHY: Only run if unit tests pass
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -142,7 +142,7 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -164,7 +164,7 @@ jobs:
 
   integration-test:
     name: Integration Tests (E2E) - iOS Simulator
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 20  # WHY: Reduced from 30 to save minutes on hanging tests
     # WHY: Only run expensive integration tests on main branch merges
     # Saves ~100-300 minutes per run - only run when code is actually merged
@@ -181,7 +181,7 @@ jobs:
     needs: test  # WHY: Only run if unit tests pass
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -191,7 +191,7 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -326,14 +326,17 @@ jobs:
 
       - name: Upload integration test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: integration-test-results
           path: test_driver/
+          # WHY: integration tests don't emit files to test_driver/ (legacy path);
+          # silence the "no files were found" warning instead of failing/uploading.
+          if-no-files-found: ignore
 
   ios-build:
     name: iOS Build Check
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 20  # WHY: Limit build time
     # WHY: Only run iOS build on main branch merges
     # Saves ~50-100 minutes per run
@@ -345,7 +348,7 @@ jobs:
     needs: test  # WHY: Only run if unit tests pass
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -355,7 +358,7 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -383,7 +386,7 @@ jobs:
         run: flutter test --no-pub --exclude-tags=golden
 
       - name: Cache CocoaPods
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ios/Pods
           key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
