@@ -25,33 +25,12 @@ class FontService {
       return cachedFamily;
     }
 
-    String pageFontFamily;
-    String fontAssetPath;
-
-    switch (layout) {
-      case MushafLayout.uthmani15Lines:
-        pageFontFamily = 'Page$pageNumber';
-        fontAssetPath =
-            'assets/fonts/qpc-v2-page-by-page-fonts/p$pageNumber.ttf';
-        break;
-      case MushafLayout.indopak13Lines:
-        // For Indopak, we use the common font for all pages
-        pageFontFamily = indopakFontFamily;
-        fontAssetPath = 'assets/fonts/indopak-font.ttf';
-        break;
-      case MushafLayout.digitalKhatt15Lines:
-        // For DigitalKhatt, we use the common font for all pages
-        pageFontFamily = digitalKhattFontFamily;
-        fontAssetPath = 'assets/fonts/DigitalKhattV2.otf';
-        break;
-      case MushafLayout.indopak9Lines:
-        // WHY: The GABA 9-line layout (info.font_name = "indopak") is authored
-        // for the Indopak font — its line breaks fill the width only with these
-        // glyph metrics. Single font for all pages.
-        pageFontFamily = indopakFontFamily;
-        fontAssetPath = 'assets/fonts/indopak-font.ttf';
-        break;
-    }
+    // WHY: Font + asset come from the registry keyed by the layout's authored
+    // font_name (see [mushafFontSpec]), so the rendered font always matches the
+    // layout — no per-layout switch that can silently diverge from the data.
+    final MushafFontSpec spec = mushafFontSpec(layout);
+    final String pageFontFamily = spec.familyForPage(pageNumber);
+    final String fontAssetPath = spec.assetForPage(pageNumber);
 
     try {
       final FontLoader fontLoader = FontLoader(pageFontFamily);

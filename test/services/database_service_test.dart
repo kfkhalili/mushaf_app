@@ -89,6 +89,32 @@ void main() {
       },
     );
 
+    test(
+      'each layout DB info.font_name matches the font registry mirror',
+      () async {
+        // WHY: The font + script are selected from one registry keyed on each
+        // layout's authored info.font_name. This guards the hardcoded
+        // mushafLayoutFontName mirror against drift — if a bundled DB's font_name
+        // changes or a new layout is added, this fails instead of silently
+        // rendering with the wrong font (the bug that broke the 9-line layout).
+        for (final layout in MushafLayout.values) {
+          await service.init(layout: layout);
+          final dbFontName = await service.getLayoutFontName();
+          expect(
+            dbFontName,
+            mushafLayoutFontName[layout],
+            reason: 'info.font_name mismatch for $layout',
+          );
+          expect(
+            mushafFontRegistry.containsKey(dbFontName),
+            isTrue,
+            reason: 'registry has no entry for font_name "$dbFontName"',
+          );
+          expect(mushafFontSpec(layout).scriptDbFileName, isNotEmpty);
+        }
+      },
+    );
+
     test('indopak9Lines reports 1890 pages and renders a high page', () async {
       await service.init(layout: MushafLayout.indopak9Lines);
 

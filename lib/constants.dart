@@ -61,22 +61,10 @@ extension MushafLayoutExtension on MushafLayout {
     }
   }
 
-  String get scriptDatabaseFileName {
-    switch (this) {
-      case MushafLayout.uthmani15Lines:
-        return scriptDbFileName;
-      case MushafLayout.indopak13Lines:
-        return indopakScriptDbFileName;
-      case MushafLayout.digitalKhatt15Lines:
-        return digitalKhattScriptDbFileName;
-      // WHY: The GABA 9-line layout's info.font_name is "indopak" and its line
-      // breaks are authored for the Indopak font, so it must use the Indopak
-      // script text (same global word ids 1..83668, Indopak orthography) — not
-      // the Digital Khatt text, whose glyph widths don't match the line breaks.
-      case MushafLayout.indopak9Lines:
-        return indopakScriptDbFileName;
-    }
-  }
+  // WHY: Derived from the font registry, keyed by the layout's font_name, so the
+  // word-text source always matches the font the layout was authored for (a
+  // mismatch is what broke the 9-line layout's line-fill). See [mushafFontSpec].
+  String get scriptDatabaseFileName => mushafFontSpec(this).scriptDbFileName;
 
   String get displayName {
     switch (this) {
@@ -90,22 +78,6 @@ extension MushafLayoutExtension on MushafLayout {
         return 'إندوباك (٩ سطر)';
     }
   }
-
-  String get fontFamily {
-    switch (this) {
-      case MushafLayout.uthmani15Lines:
-        return quranCommonFontFamily;
-      case MushafLayout.indopak13Lines:
-        return indopakFontFamily;
-      case MushafLayout.digitalKhatt15Lines:
-        return digitalKhattFontFamily;
-      // WHY: The GABA 9-line layout is authored for the Indopak font
-      // (info.font_name = "indopak"); rendering it with anything else breaks the
-      // authored line-fill (the cause of the loose word spacing).
-      case MushafLayout.indopak9Lines:
-        return indopakFontFamily;
-    }
-  }
 }
 
 // --- TEXT CONSTANTS ---
@@ -117,11 +89,79 @@ const String quranCommonFontFamily = 'QuranCommon';
 const String indopakFontFamily = 'IndopakFont';
 const String digitalKhattFontFamily = 'DigitalKhattV2';
 
+// --- FONT REGISTRY (keyed by the layout DB's info.font_name) ---
+// WHY: One source of truth for "given a layout's authored font_name, how do we
+// render it" — the font family + asset + the matching script (word-text) DB.
+// Selecting font and script together from the same key makes the divergence
+// that broke the 9-line layout (font_name said "indopak", code used DigitalKhatt)
+// structurally impossible. A test asserts [mushafLayoutFontName] matches each
+// DB's actual info.font_name, so a new/relabelled layout can't silently break.
+@immutable
+class MushafFontSpec {
+  /// Word-text source DB for this font.
+  final String scriptDbFileName;
+
+  /// Page-specific layouts (QPC "me_quran") use a per-page font: [family] is a
+  /// prefix and [assetPath] contains a `{page}` placeholder. Single-font layouts
+  /// use [family]/[assetPath] verbatim for every page.
+  final bool pageSpecific;
+  final String family;
+  final String assetPath;
+
+  const MushafFontSpec({
+    required this.scriptDbFileName,
+    required this.family,
+    required this.assetPath,
+    this.pageSpecific = false,
+  });
+
+  String familyForPage(int page) => pageSpecific ? '$family$page' : family;
+  String assetForPage(int page) =>
+      pageSpecific ? assetPath.replaceAll('{page}', '$page') : assetPath;
+}
+
+const MushafFontSpec _qpcSpec = MushafFontSpec(
+  scriptDbFileName: scriptDbFileName,
+  pageSpecific: true,
+  family: 'Page',
+  assetPath: 'assets/fonts/qpc-v2-page-by-page-fonts/p{page}.ttf',
+);
+const MushafFontSpec _digitalKhattSpec = MushafFontSpec(
+  scriptDbFileName: digitalKhattScriptDbFileName,
+  family: digitalKhattFontFamily,
+  assetPath: 'assets/fonts/DigitalKhattV2.otf',
+);
+const MushafFontSpec _indopakSpec = MushafFontSpec(
+  scriptDbFileName: indopakScriptDbFileName,
+  family: indopakFontFamily,
+  assetPath: 'assets/fonts/indopak-font.ttf',
+);
+
+/// info.font_name -> how to render it.
+const Map<String, MushafFontSpec> mushafFontRegistry = {
+  'me_quran': _qpcSpec,
+  'digitalkhatt': _digitalKhattSpec,
+  'indopak': _indopakSpec,
+  'mushaf-indopak-nastaleeq-hanafi-compressed': _indopakSpec,
+};
+
+/// Each layout's authored font_name (mirrors the layout DB's info.font_name;
+/// verified against the actual DBs by a test).
+const Map<MushafLayout, String> mushafLayoutFontName = {
+  MushafLayout.uthmani15Lines: 'me_quran',
+  MushafLayout.indopak13Lines: 'mushaf-indopak-nastaleeq-hanafi-compressed',
+  MushafLayout.digitalKhatt15Lines: 'digitalkhatt',
+  MushafLayout.indopak9Lines: 'indopak',
+};
+
+/// Resolves a layout to its [MushafFontSpec] via its font_name.
+MushafFontSpec mushafFontSpec(MushafLayout layout) =>
+    mushafFontRegistry[mushafLayoutFontName[layout]]!;
+
 // --- RESPONSIVE SIZING ---
 const double baseFontSize = 20.0;
 const double referenceScreenWidth = 428.0;
 const double referenceScreenHeight = 926.0;
-const double maxLineContentWidth = 600.0;
 
 // Per-layout base reading size for the single-ayah detail view.
 // WHY: The page body is sized by measurement (see PageFit) and no longer uses
@@ -483,6 +523,7 @@ class DbConstants {
   static const String numberOfPagesCol = 'number_of_pages';
   static const String layoutNameCol = 'name';
   static const String linesPerPageCol = 'lines_per_page';
+  static const String fontNameCol = 'font_name';
 
   // --- Query Helpers ---
   static const String startPageAlias = 'start_page';

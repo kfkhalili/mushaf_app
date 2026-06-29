@@ -74,19 +74,12 @@ class MushafLine extends ConsumerWidget {
     // --- Layout-driven sizing ---
     // WHY: [bodyFontSize] fills the column width; [lineHeight] is the font's own
     // natural leading (both measured by [MushafPage]). The page's Expanded grid
-    // supplies the inter-line spacing, so there's no per-layout leading constant.
-    final double screenWidth = MediaQuery.of(context).size.width;
+    // supplies the inter-line spacing, and [MushafPage] owns the column width
+    // (it narrows to the lines' natural width), so the line just fills the width
+    // it's given — no per-layout leading constant, no width math here.
     final double dynamicLineHeight = lineHeight;
     const double tightLineHeight = ornamentLineHeight;
     // --- End Layout-driven sizing ---
-
-    // --- Dynamic Padding Calculation ---
-    final double availableWidth = screenWidth - (2 * pageHorizontalPadding);
-    double dynamicLinePadding = 0.0;
-    if (availableWidth > maxLineContentWidth) {
-      dynamicLinePadding = (availableWidth - maxLineContentWidth) / 2.0;
-    }
-    // --- End Dynamic Padding Calculation ---
 
     Widget lineWidget;
 
@@ -252,15 +245,12 @@ class MushafLine extends ConsumerWidget {
             finalChildren = wordWidgets;
           }
 
-          lineWidget = Padding(
-            padding: EdgeInsets.symmetric(horizontal: dynamicLinePadding),
-            child: Row(
-              mainAxisAlignment: line.isCentered
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.spaceBetween,
-              textDirection: TextDirection.rtl,
-              children: finalChildren,
-            ),
+          lineWidget = Row(
+            mainAxisAlignment: line.isCentered
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.spaceBetween,
+            textDirection: TextDirection.rtl,
+            children: finalChildren,
           );
           break;
         }

@@ -1026,6 +1026,27 @@ class DatabaseService with InitializationMixin {
     );
   }
 
+  /// Reads the active layout's authored `font_name` from the info table.
+  ///
+  /// WHY: This is the data the font/script registry is keyed on
+  /// (see [mushafFontRegistry]); a test cross-checks [mushafLayoutFontName]
+  /// against it so the hardcoded mirror can't drift from the databases.
+  Future<String?> getLayoutFontName() async {
+    await init();
+    if (_layoutDb == null) {
+      throw DatabaseNotInitializedException(
+        "Layout database is not initialized for getLayoutFontName",
+      );
+    }
+    final List<Map<String, dynamic>> result = await _layoutDb!.query(
+      DbConstants.infoTable,
+      columns: [DbConstants.fontNameCol],
+      limit: QueryLimits.singleResult,
+    );
+    if (result.isEmpty) return null;
+    return result.first[DbConstants.fontNameCol] as String?;
+  }
+
   /// Retrieves layout information (name and lines_per_page) from the info table.
   /// Reads from the 'info' table in the layout database.
   Future<LayoutInfo> getLayoutInfo() async {
