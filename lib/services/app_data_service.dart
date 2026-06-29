@@ -1,15 +1,20 @@
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import '../constants.dart';
 import '../utils/initialization_mixin.dart';
+import 'migration_service.dart';
 
 /// WHY: Unified database service for all user-generated data.
 /// Consolidates bookmarks, reading progress, memorization sessions, and preferences
 /// into a single SQLite database for easier maintenance and backup.
+///
+/// Owns one-time migration of the legacy `bookmarks.db` / `reading_progress.db`
+/// into this database. Consumers (bookmarks, reading progress, memorization
+/// storage) simply `await ensureInitialized()` and read a ready, migrated
+/// database — they no longer carry any migration knowledge of their own.
 class AppDataService with InitializationMixin {
-  Database? _db;
-
   // WHY: Where the writable user-data database lives. Null means the default
   // on-disk location (`app_data.db` in the app documents directory) used in
   // production. Tests pass [inMemoryDatabasePath] for an isolated database with
@@ -18,11 +23,22 @@ class AppDataService with InitializationMixin {
   // sequential test execution.
   final String? _databasePath;
 
+  /// WHY: [prefs] is injected so legacy-data migration can run during
+  /// initialization (it stores the idempotency flag). Null skips migration —
+  /// used by tests that exercise the database without legacy data.
+  final SharedPreferences? _prefs;
+
+  Database? _db;
+  late final MigrationService _migrationService = MigrationService(this);
+
   /// [databasePath] overrides where the database is opened. Defaults to
-  /// `app_data.db` under the app documents directory. Pass
-  /// `inMemoryDatabasePath` (from `package:sqflite`) in tests for an isolated,
-  /// parallel-safe database.
-  AppDataService({String? databasePath}) : _databasePath = databasePath;
+  /// `app_data.db` under the app documents directory; pass `inMemoryDatabasePath`
+  /// (from `package:sqflite`) in tests for an isolated, parallel-safe database.
+  /// [prefs] enables one-time migration of the legacy bookmarks.db /
+  /// reading_progress.db into this database during initialization.
+  AppDataService({String? databasePath, SharedPreferences? prefs})
+    : _databasePath = databasePath,
+      _prefs = prefs;
 
   /// WHY: Ensures database is initialized. Uses mixin pattern to prevent
   /// concurrent initialization attempts.
@@ -79,6 +95,15 @@ class AppDataService with InitializationMixin {
     } catch (e) {
       // Ignore exceptions from PRAGMA statements.
       // The database is fully functional without these optional settings.
+    }
+
+    // WHY: Consolidate legacy bookmarks.db / reading_progress.db into this
+    // unified database on first open, so every consumer just awaits
+    // ensureInitialized() and reads a ready, migrated database. The migration is
+    // idempotent (guarded by a SharedPreferences flag) and runs at most once.
+    final prefs = _prefs;
+    if (prefs != null) {
+      await _migrationService.migrateIfNeeded(prefs);
     }
 
     markInitialized();

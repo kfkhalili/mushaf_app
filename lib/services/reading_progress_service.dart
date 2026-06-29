@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -8,7 +7,6 @@ import '../utils/date_query_helpers.dart';
 import '../utils/validation_helpers.dart';
 import '../exceptions/database_exceptions.dart';
 import 'app_data_service.dart';
-import 'migration_service.dart';
 import 'database_service.dart';
 
 abstract class ReadingProgressService {
@@ -22,45 +20,15 @@ abstract class ReadingProgressService {
   Future<void> clearAllData(); // For privacy/reset
 }
 
-/// WHY: Updated to use unified app_data.db instead of separate reading_progress.db.
-/// Migrates data from old database on first use.
+/// WHY: Tracks reading progress in the unified app_data.db. Initialization and
+/// any legacy-data migration are owned by [AppDataService]; this service simply
+/// awaits `ensureInitialized()` before each operation.
 class SqliteReadingProgressService implements ReadingProgressService {
   final AppDataService _appDataService;
   final DatabaseService? _databaseService;
-  final MigrationService _migrationService;
-  SharedPreferences? _prefs;
-  bool _initialized = false;
   ReadingStatistics? _cachedStatistics;
 
-  SqliteReadingProgressService(this._appDataService, [this._databaseService])
-    : _migrationService = MigrationService(_appDataService);
-
-  /// WHY: Sets SharedPreferences for migration (dependency injection).
-  /// Called by provider to inject SharedPreferences from provider.
-  void setSharedPreferences(SharedPreferences prefs) {
-    _prefs = prefs;
-  }
-
-  /// WHY: Ensures unified database is initialized and runs migration if needed.
-  Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-
-    // WHY: Initialize unified database (creates app_data.db if needed)
-    await _appDataService.ensureInitialized();
-
-    // WHY: Run migration from old reading_progress.db if needed
-    // Requires SharedPreferences to be set via setSharedPreferences()
-    if (_prefs != null) {
-      await _migrationService.migrateIfNeeded(_prefs!);
-    } else {
-      // WHY: Fallback to direct access if provider injection hasn't happened yet
-      // This shouldn't happen in normal flow, but provides safety
-      final prefs = await SharedPreferences.getInstance();
-      await _migrationService.migrateIfNeeded(prefs);
-    }
-
-    _initialized = true;
-  }
+  SqliteReadingProgressService(this._appDataService, [this._databaseService]);
 
   /// WHY: Getter for database instance from unified service.
   Database get _db => _appDataService.database;
@@ -91,7 +59,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
       }
     }
 
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     final now = DateTime.now();
     final sessionDate = DateTime(now.year, now.month, now.day);
@@ -116,7 +84,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<ReadingStatistics> getStatistics() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     // Check cache first
     if (_cachedStatistics != null) return _cachedStatistics!;
@@ -291,7 +259,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<int> getCurrentStreak() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     // Check today first - must have read today to have a streak
     final todayDateStr = DateQueryHelpers.today();
@@ -390,13 +358,13 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<int> getPagesReadToday() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
     return _getPagesToday();
   }
 
   @override
   Future<List<int>> getPagesReadByDate(DateTime date) async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     final dateStr = DateHelpers.formatDateForDb(date);
 
@@ -418,7 +386,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<Map<DateTime, int>> getWeeklyProgress() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     final weekAgoDateStr = DateQueryHelpers.lastWeekStart();
 
@@ -461,7 +429,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<Map<DateTime, int>> getMonthlyProgress() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     final monthStartDateStr = DateQueryHelpers.thisMonthStart();
 
@@ -504,7 +472,7 @@ class SqliteReadingProgressService implements ReadingProgressService {
 
   @override
   Future<void> clearAllData() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       await _db.delete(DbConstants.readingSessionsTable);

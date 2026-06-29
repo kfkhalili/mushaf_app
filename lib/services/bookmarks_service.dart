@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -7,7 +6,6 @@ import '../exceptions/database_exceptions.dart';
 import '../utils/validation_helpers.dart';
 import 'database_service.dart';
 import 'app_data_service.dart';
-import 'migration_service.dart';
 
 abstract class BookmarksService {
   // Add bookmark by surah:ayah
@@ -37,44 +35,14 @@ abstract class BookmarksService {
   Future<void> migratePageBookmark(int pageNumber);
 }
 
-/// WHY: Updated to use unified app_data.db instead of separate bookmarks.db.
-/// Migrates data from old database on first use.
+/// WHY: Stores bookmarks in the unified app_data.db. Initialization and any
+/// legacy-data migration are owned by [AppDataService]; this service simply
+/// awaits `ensureInitialized()` before each operation.
 class SqliteBookmarksService implements BookmarksService {
   final AppDataService _appDataService;
   final DatabaseService _databaseService;
-  final MigrationService _migrationService;
-  SharedPreferences? _prefs;
-  bool _initialized = false;
 
-  SqliteBookmarksService(this._appDataService, this._databaseService)
-    : _migrationService = MigrationService(_appDataService);
-
-  /// WHY: Sets SharedPreferences for migration (dependency injection).
-  /// Called by provider to inject SharedPreferences from provider.
-  void setSharedPreferences(SharedPreferences prefs) {
-    _prefs = prefs;
-  }
-
-  /// WHY: Ensures unified database is initialized and runs migration if needed.
-  Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-
-    // WHY: Initialize unified database (creates app_data.db if needed)
-    await _appDataService.ensureInitialized();
-
-    // WHY: Run migration from old bookmarks.db if needed
-    // Requires SharedPreferences to be set via setSharedPreferences()
-    if (_prefs != null) {
-      await _migrationService.migrateIfNeeded(_prefs!);
-    } else {
-      // WHY: Fallback to direct access if provider injection hasn't happened yet
-      // This shouldn't happen in normal flow, but provides safety
-      final prefs = await SharedPreferences.getInstance();
-      await _migrationService.migrateIfNeeded(prefs);
-    }
-
-    _initialized = true;
-  }
+  SqliteBookmarksService(this._appDataService, this._databaseService);
 
   /// WHY: Getter for database instance from unified service.
   Database get _db => _appDataService.database;
@@ -88,7 +56,7 @@ class SqliteBookmarksService implements BookmarksService {
       throw ArgumentError('Ayah number must be greater than 0');
     }
 
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     final now = DateTime.now().toIso8601String();
 
@@ -124,7 +92,7 @@ class SqliteBookmarksService implements BookmarksService {
 
   @override
   Future<void> removeBookmark(int surahNumber, int ayahNumber) async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       await _db.delete(
@@ -144,7 +112,7 @@ class SqliteBookmarksService implements BookmarksService {
 
   @override
   Future<bool> isBookmarked(int surahNumber, int ayahNumber) async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       final result = await _db.query(
@@ -171,7 +139,7 @@ class SqliteBookmarksService implements BookmarksService {
     bool newestFirst = true,
     bool includeAyahText = false,
   }) async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       final results = await _db.query(
@@ -300,7 +268,7 @@ class SqliteBookmarksService implements BookmarksService {
 
   @override
   Future<Bookmark?> getBookmarkByAyah(int surahNumber, int ayahNumber) async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       final results = await _db.query(
@@ -383,7 +351,7 @@ class SqliteBookmarksService implements BookmarksService {
 
   @override
   Future<void> clearAllBookmarks() async {
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       await _db.delete(DbConstants.bookmarksTable);
@@ -400,7 +368,7 @@ class SqliteBookmarksService implements BookmarksService {
   Future<void> migratePageBookmark(int pageNumber) async {
     // Migration: Convert page-based bookmark to ayah-based
     // This method is called for old bookmarks that need migration
-    await _ensureInitialized();
+    await _appDataService.ensureInitialized();
 
     try {
       final firstAyah = await _databaseService.getFirstAyahOnPage(pageNumber);

@@ -107,8 +107,13 @@ abstract class _$MemorizationIconFlash extends $Notifier<int> {
 final appDataServiceProvider = AppDataServiceProvider._();
 
 final class AppDataServiceProvider
-    extends $FunctionalProvider<AppDataService, AppDataService, AppDataService>
-    with $Provider<AppDataService> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<AppDataService>,
+          AppDataService,
+          FutureOr<AppDataService>
+        >
+    with $FutureModifier<AppDataService>, $FutureProvider<AppDataService> {
   AppDataServiceProvider._()
     : super(
         from: null,
@@ -125,24 +130,17 @@ final class AppDataServiceProvider
 
   @$internal
   @override
-  $ProviderElement<AppDataService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<AppDataService> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  AppDataService create(Ref ref) {
+  FutureOr<AppDataService> create(Ref ref) {
     return appDataService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AppDataService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AppDataService>(value),
-    );
   }
 }
 
-String _$appDataServiceHash() => r'5ed485b1e634417af75265c61fc7154093588d38';
+String _$appDataServiceHash() => r'8c6d383daef3e9487e252a7ddd746972ccff100d';
 
 @ProviderFor(CurrentPage)
 final currentPageProvider = CurrentPageProvider._();
@@ -1385,7 +1383,7 @@ final class BookmarksServiceProvider
   }
 }
 
-String _$bookmarksServiceHash() => r'd98c721dc9efa6326cc9242716e708b58ab3c297';
+String _$bookmarksServiceHash() => r'82f560320198a05498ff01d0fcca1cfbcc988adc';
 
 @ProviderFor(isAyahBookmarked)
 final isAyahBookmarkedProvider = IsAyahBookmarkedFamily._();
@@ -1694,7 +1692,7 @@ final class ReadingProgressServiceProvider
 }
 
 String _$readingProgressServiceHash() =>
-    r'cbb770ea3b372dddb792cad1472b25de37f2c52d';
+    r'845f62431f3f0ec491027c2862b06295fc69152a';
 
 @ProviderFor(readingStatistics)
 final readingStatisticsProvider = ReadingStatisticsProvider._();
@@ -1945,7 +1943,7 @@ final class MemorizationSessionNotifierProvider
 }
 
 String _$memorizationSessionNotifierHash() =>
-    r'7c69dd070ebbe321fa1d84985ae85402c54d9547';
+    r'6f0075a139e859449125813a9cb844f1d4ea3c87';
 
 abstract class _$MemorizationSessionNotifier
     extends $Notifier<MemorizationSessionState?> {

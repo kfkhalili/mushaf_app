@@ -7,14 +7,11 @@ import '../widgets/shared/app_header.dart';
 import '../providers.dart';
 import '../models.dart';
 import '../constants.dart';
-import '../utils/helpers.dart';
 import '../utils/selectors.dart';
 import '../utils/navigation.dart';
-import '../memorization/models.dart';
 import '../utils/async_value_helpers.dart';
 import '../utils/page_controller_sync_mixin.dart';
 import 'bookmarks_screen.dart';
-import 'dart:collection';
 import '../widgets/countdown_circle.dart';
 // duplicate import removed
 
@@ -132,45 +129,19 @@ class _MushafScreenState extends ConsumerState<MushafScreen>
   void _handleMemorizationTap() {
     final int currentPage = ref.read(currentPageProvider);
 
-    // Beta session tap handling with auto-advance
     final session = ref.read(memorizationSessionProvider);
-    if (session != null && session.pageNumber == currentPage) {
-      final asyncPageData = ref.read(pageDataProvider(currentPage));
-      asyncPageData.whenData((PageData pageData) {
-        final allQuranWordsOnPage = extractQuranWordsFromPage(pageData.layout);
-        final ayahsOnPageMap = SplayTreeMap<String, List<Word>>.from(
-          groupWordsByAyahKey(allQuranWordsOnPage),
-        );
-        final totalAyatOnPage = ayahsOnPageMap.length;
-        ref
-            .read(memorizationSessionProvider.notifier)
-            .onTap(totalAyatOnPage: totalAyatOnPage)
-            .then((outcome) async {
-              // The notifier owns the decision; the screen owns the animation.
-              if (outcome != MemorizationTapOutcome.advanceToNextPage) return;
+    if (session == null || session.pageNumber != currentPage) return;
 
-              final updated = ref.read(memorizationSessionProvider);
-              if (updated == null || updated.pageNumber != currentPage) return;
-
-              final nextPage = currentPage + 1;
-              final totalPages = await ref.read(totalPagesProvider.future);
-              if (nextPage <= totalPages) {
-                _pageController.animateToPage(
-                  nextPage - 1,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                );
-                ref.read(currentPageProvider.notifier).setPage(nextPage);
-                await ref
-                    .read(memorizationSessionProvider.notifier)
-                    .startSession(pageNumber: nextPage, firstAyahIndex: 0);
-              }
-            });
-      });
-      return;
-    }
-
-    // No legacy fallback
+    // WHY: The session module owns counting ayat, the reveal decision, and the
+    // page turn. The widget only forwards the tap with the page it is showing;
+    // the resulting advance flows back through currentPageProvider, which this
+    // screen already listens to and animates (see _handleExternalPageUpdate).
+    final asyncPageData = ref.read(pageDataProvider(currentPage));
+    asyncPageData.whenData((PageData pageData) {
+      ref
+          .read(memorizationSessionProvider.notifier)
+          .handleTap(pageData: pageData);
+    });
   }
 
   // Track if we're currently animating to prevent conflicts

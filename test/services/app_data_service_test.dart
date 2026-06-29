@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mushaf_app/services/app_data_service.dart';
 import 'package:mushaf_app/constants.dart';
 
@@ -169,6 +172,71 @@ void main() {
         tables.any((t) => t['name'] == DbConstants.readingSessionsTable),
         isTrue,
       );
+    });
+  });
+
+  // WHY: The unified gateway now owns legacy-data migration. Constructed with
+  // SharedPreferences, ensureInitialized() migrates the legacy bookmarks.db into
+  // the unified database so every consumer reads a ready, migrated database with
+  // no migration wiring of its own. The in-memory adapter keeps this isolated.
+  group('AppDataService legacy migration', () {
+    test('migrates legacy bookmarks.db during initialization', () async {
+      // Seed a legacy bookmarks.db in this file's isolated documents dir.
+      final documentsDirectory = await getApplicationDocumentsDirectory();
+      final oldDbPath = p.join(
+        documentsDirectory.path,
+        MigrationConstants.legacyBookmarksDb,
+      );
+      final oldDb = await openDatabase(
+        oldDbPath,
+        version: 1,
+        onCreate: (db, _) async {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS ${DbConstants.bookmarksTable} (
+              ${DbConstants.idCol} INTEGER PRIMARY KEY AUTOINCREMENT,
+              ${DbConstants.surahNumberCol} INTEGER NOT NULL,
+              ${DbConstants.ayahNumberCol} INTEGER NOT NULL,
+              ${DbConstants.cachedPageNumberCol} INTEGER,
+              ${DbConstants.createdAtCol} TEXT NOT NULL,
+              ${DbConstants.noteCol} TEXT,
+              UNIQUE(${DbConstants.surahNumberCol}, ${DbConstants.ayahNumberCol})
+            )
+          ''');
+        },
+      );
+      const surah = 3;
+      const ayah = 7;
+      await oldDb.insert(DbConstants.bookmarksTable, {
+        DbConstants.surahNumberCol: surah,
+        DbConstants.ayahNumberCol: ayah,
+        DbConstants.createdAtCol: DateTime.now().toIso8601String(),
+        DbConstants.noteCol: 'legacy',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await oldDb.close();
+
+      // WHY: in-memory unified db — isolated per instance, so the migrated row
+      // never leaks into other suites and needs no manual cleanup.
+      final prefs = await SharedPreferences.getInstance();
+      final service = AppDataService(
+        databasePath: inMemoryDatabasePath,
+        prefs: prefs,
+      );
+      addTearDown(service.close);
+
+      // The gateway migrates as part of its own initialization — no consumer
+      // and no explicit MigrationService call is involved.
+      await service.ensureInitialized();
+
+      final rows = await service.database.query(
+        DbConstants.bookmarksTable,
+        where:
+            '${DbConstants.surahNumberCol} = ? AND ${DbConstants.ayahNumberCol} = ?',
+        whereArgs: [surah, ayah],
+      );
+
+      expect(rows, isNotEmpty);
+      expect(rows.first[DbConstants.noteCol], 'legacy');
+      expect(prefs.getBool('app_data_migrated_v1'), isTrue);
     });
   });
 }

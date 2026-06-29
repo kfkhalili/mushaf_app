@@ -23,6 +23,7 @@ import 'models/ontology_models.dart';
 import 'constants.dart';
 import 'memorization/models.dart';
 import 'services/memorization_service.dart';
+import 'utils/helpers.dart';
 
 // WHY: This directive points to the file that code-gen will create.
 part 'providers.g.dart';
@@ -58,10 +59,14 @@ class MemorizationIconFlash extends _$MemorizationIconFlash {
 }
 
 // --- App Data Service Provider (Unified Storage) ---
-// WHY: Provides unified database for all user data (bookmarks, reading progress, memorization)
+// WHY: Provides the unified database for all user data (bookmarks, reading
+// progress, memorization). Async because SharedPreferences is injected so the
+// service can run one-time legacy-data migration during its own initialization;
+// consumers no longer carry any migration wiring of their own.
 @Riverpod(keepAlive: true)
-AppDataService appDataService(Ref ref) {
-  return AppDataService();
+Future<AppDataService> appDataService(Ref ref) async {
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
+  return AppDataService(prefs: prefs);
 }
 
 // --- Current Page Provider ---
@@ -443,13 +448,9 @@ class SearchHistory extends _$SearchHistory {
 Future<BookmarksService> bookmarksService(Ref ref) async {
   // WHY: Use consistent async pattern - await both async dependencies
   // to avoid unnecessary rebuilds when mixing watch() and watch().future
-  final appDataService = ref.watch(appDataServiceProvider);
+  final appDataService = await ref.watch(appDataServiceProvider.future);
   final dbService = await ref.watch(databaseServiceProvider.future);
-  final prefs = await ref.watch(sharedPreferencesProvider.future);
-  final service = SqliteBookmarksService(appDataService, dbService);
-  // WHY: Inject SharedPreferences from provider for dependency injection pattern
-  service.setSharedPreferences(prefs);
-  return service;
+  return SqliteBookmarksService(appDataService, dbService);
 }
 
 // --- Bookmarks List Provider --- (Removed - using Bookmarks notifier instead)
@@ -555,13 +556,9 @@ Future<int?> bookmarkPageNumber(
 // --- Reading Progress Service Provider ---
 @Riverpod(keepAlive: true)
 Future<ReadingProgressService> readingProgressService(Ref ref) async {
-  final appDataService = ref.watch(appDataServiceProvider);
+  final appDataService = await ref.watch(appDataServiceProvider.future);
   final dbService = await ref.watch(databaseServiceProvider.future);
-  final prefs = await ref.watch(sharedPreferencesProvider.future);
-  final service = SqliteReadingProgressService(appDataService, dbService);
-  // WHY: Inject SharedPreferences from provider for dependency injection pattern
-  service.setSharedPreferences(prefs);
-  return service;
+  return SqliteReadingProgressService(appDataService, dbService);
 }
 
 // --- Reading Statistics Provider ---
@@ -698,12 +695,14 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
   }
 
   final MemorizationService _service = const MemorizationService();
-  late final MemorizationStorage _storage = _createStorage(ref);
+  late final Future<MemorizationStorage> _storage = _createStorage();
   MemorizationConfig _config = const MemorizationConfig();
 
-  // WHY: Creates SQLite-based memorization storage for persistent sessions
-  MemorizationStorage _createStorage(Ref ref) {
-    final appDataService = ref.watch(appDataServiceProvider);
+  // WHY: Creates SQLite-based memorization storage for persistent sessions.
+  // Async because the unified app-data service is now an async provider (it runs
+  // one-time legacy-data migration during its own initialization).
+  Future<MemorizationStorage> _createStorage() async {
+    final appDataService = await ref.read(appDataServiceProvider.future);
     return SqliteMemorizationStorage(appDataService);
   }
 
@@ -712,7 +711,7 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
   }
 
   Future<void> resumeIfExists(int pageNumber) async {
-    final loaded = await _storage.loadSession(pageNumber);
+    final loaded = await (await _storage).loadSession(pageNumber);
     if (loaded != null) {
       state = loaded;
     }
@@ -742,15 +741,49 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
     final page = state?.pageNumber;
     state = null;
     if (page != null) {
-      await _storage.clearSession(page);
+      await (await _storage).clearSession(page);
     }
+  }
+
+  /// Handles a tap on the memorizing page described by [pageData].
+  ///
+  /// This is the entry point callers use: it counts the ayat on the page,
+  /// advances the reveal window, persists, and — when the page has been fully
+  /// revealed — turns to the next page and resumes a session there. The caller
+  /// only forwards taps; it does not count ayat or decide when to turn the page.
+  /// The page turn flows back through [currentPageProvider], which the reader
+  /// screen already listens to and animates.
+  Future<void> handleTap({required PageData pageData}) async {
+    if (state == null) return;
+
+    final totalAyatOnPage = _countAyatOnPage(pageData);
+    final outcome = await onTap(totalAyatOnPage: totalAyatOnPage);
+    if (outcome != MemorizationTapOutcome.advanceToNextPage) return;
+
+    // Page complete → advance to the next page (bounded by the layout) and
+    // resume memorizing from its first ayah. The completed page is the session's
+    // own page, which onTap leaves in state.
+    final completedPage = state?.pageNumber;
+    if (completedPage == null) return;
+    final totalPages = await ref.read(totalPagesProvider.future);
+    final nextPage = completedPage + 1;
+    if (nextPage > totalPages) return;
+
+    ref.read(currentPageProvider.notifier).setPage(nextPage);
+    await startSession(pageNumber: nextPage, firstAyahIndex: 0);
+  }
+
+  /// Counts the distinct ayat rendered on [pageData]'s layout.
+  int _countAyatOnPage(PageData pageData) {
+    final words = extractQuranWordsFromPage(pageData.layout);
+    return groupWordsByAyahKey(words).length;
   }
 
   /// Applies a tap and reports whether the page is now complete.
   ///
   /// The page is complete once the last ayah has been reached and the visible
-  /// window has fully faded and slid away — at which point the caller should
-  /// advance to the next page.
+  /// window has fully faded and slid away. This is the pure decision core,
+  /// exercised directly by tests; [handleTap] is the orchestration around it.
   Future<MemorizationTapOutcome> onTap({required int totalAyatOnPage}) async {
     if (state == null) return MemorizationTapOutcome.stay;
 
@@ -772,7 +805,7 @@ class MemorizationSessionNotifier extends _$MemorizationSessionNotifier {
 
   Future<void> _maybePersist() async {
     if (state == null) return;
-    await _storage.saveSession(state!);
+    await (await _storage).saveSession(state!);
   }
 }
 

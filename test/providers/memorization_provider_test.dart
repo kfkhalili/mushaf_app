@@ -1,8 +1,37 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mushaf_app/providers.dart';
+import 'package:mushaf_app/models.dart';
 import 'package:mushaf_app/memorization/models.dart';
 import '../support/harness.dart';
+
+/// A one-ayah page (two words of surah 1, ayah 1) so the layout resolves to a
+/// single ayah — used to drive [MemorizationSessionNotifier.handleTap] to
+/// completion with a full-fade config.
+PageData _singleAyahPageData(int pageNumber) {
+  return PageData(
+    layout: PageLayout(
+      pageNumber: pageNumber,
+      lines: const [
+        LineInfo(
+          lineNumber: 1,
+          lineType: 'ayah',
+          isCentered: false,
+          surahNumber: 1,
+          words: [
+            Word(text: 'بِسْمِ', surahNumber: 1, ayahNumber: 1),
+            Word(text: 'اللَّهِ', surahNumber: 1, ayahNumber: 1),
+          ],
+        ),
+      ],
+    ),
+    pageFontFamily: 'Page$pageNumber',
+    pageSurahName: 'الفاتحة',
+    pageSurahNumber: 1,
+    juzNumber: 1,
+    hizbNumber: 1,
+  );
+}
 
 void main() {
   useDatabaseTestEnv();
@@ -162,6 +191,48 @@ void main() {
           .read(memorizationSessionProvider.notifier)
           .onTap(totalAyatOnPage: 7);
       expect(outcome, MemorizationTapOutcome.stay);
+    });
+
+    // WHY: handleTap is the deep entry point — it counts the ayat on the page,
+    // decides, and owns the page turn. These tests exercise the page-advance
+    // behaviour the reader screen used to carry, directly through the notifier
+    // interface (no widget pump). totalPagesProvider is overridden so the test
+    // does not spin up DatabaseService / bundled assets.
+    test(
+      'handleTap advances the page and resumes when the page completes',
+      () async {
+        final container = ProviderContainer(
+          overrides: [totalPagesProvider.overrideWith((ref) async => 604)],
+        );
+        addTearDown(container.dispose);
+
+        final notifier = container.read(memorizationSessionProvider.notifier);
+        // Full-fade config: a single tap completes a one-ayah page.
+        notifier.setConfig(const MemorizationConfig(fadeStepPerTap: 1.0));
+        await notifier.startSession(pageNumber: 1, firstAyahIndex: 0);
+
+        await notifier.handleTap(pageData: _singleAyahPageData(1));
+
+        expect(container.read(currentPageProvider), 2);
+        expect(container.read(memorizationSessionProvider)?.pageNumber, 2);
+      },
+    );
+
+    test('handleTap does not advance past the last page', () async {
+      final container = ProviderContainer(
+        overrides: [totalPagesProvider.overrideWith((ref) async => 1)],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(memorizationSessionProvider.notifier);
+      notifier.setConfig(const MemorizationConfig(fadeStepPerTap: 1.0));
+      await notifier.startSession(pageNumber: 1, firstAyahIndex: 0);
+
+      await notifier.handleTap(pageData: _singleAyahPageData(1));
+
+      // Page 1 is the last page → stay put, session unchanged.
+      expect(container.read(currentPageProvider), 1);
+      expect(container.read(memorizationSessionProvider)?.pageNumber, 1);
     });
   });
 }

@@ -22,7 +22,10 @@ class MigrationService {
 
     if (migrated) return;
 
-    await _appDataService.ensureInitialized();
+    // WHY: The caller (AppDataService.doInit) has already opened the database
+    // before invoking migration, so the handle is ready. We must NOT call
+    // ensureInitialized() here: during doInit that would await the in-flight
+    // initialization future and deadlock.
     final newDb = _appDataService.database;
 
     try {
