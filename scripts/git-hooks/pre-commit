@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# WHY: git exports GIT_DIR / GIT_WORK_TREE / GIT_INDEX_FILE / GIT_PREFIX into
+# hook processes. Flutter & Dart determine the Flutter SDK version by running
+# git inside the SDK directory; the inherited GIT_* vars redirect those calls at
+# THIS repository, producing "Flutter SDK version is 0.0.0-unknown" and breaking
+# pub version-solving. Clear them so the toolchain's own git runs against its
+# SDK. The hook's own git commands below rediscover this repo from the working
+# directory (and the same index), so their behaviour is unchanged.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Pre-commit Checks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -50,7 +59,7 @@ flutter analyze || {
 # 3. Code generation
 echo ""
 echo "⚙️  [3/5] Code generation..."
-flutter pub run build_runner build --delete-conflicting-outputs || {
+dart run build_runner build --delete-conflicting-outputs || {
   echo "❌ Code generation failed!"
   exit 1
 }
