@@ -50,7 +50,7 @@ class SearchOutcome extends Equatable {
 
 // --- New Model for Surah List ---
 @immutable
-class SurahInfo {
+class SurahInfo extends Equatable {
   final int surahNumber;
   final String nameArabic;
   final String revelationPlace;
@@ -62,6 +62,14 @@ class SurahInfo {
     required this.revelationPlace,
     required this.startingPage,
   });
+
+  @override
+  List<Object?> get props => [
+    surahNumber,
+    nameArabic,
+    revelationPlace,
+    startingPage,
+  ];
 }
 
 // --- Existing Models ---
@@ -187,12 +195,15 @@ class PageData extends Equatable {
 }
 
 @immutable
-class JuzInfo {
+class JuzInfo extends Equatable {
   final int juzNumber;
   final int startingPage;
   // We don't need the name explicitly, as we'll use the font glyphs.
 
   const JuzInfo({required this.juzNumber, required this.startingPage});
+
+  @override
+  List<Object?> get props => [juzNumber, startingPage];
 }
 
 // --- Bookmark Model ---
@@ -297,7 +308,7 @@ class ReadingSession extends Equatable {
 
 // --- Reading Statistics Model ---
 @immutable
-class ReadingStatistics {
+class ReadingStatistics extends Equatable {
   final int totalPagesRead; // Unique pages read (all-time)
   final int totalReadingDays; // Days with at least 1 page read
   final int currentStreak; // Current consecutive days streak
@@ -327,6 +338,20 @@ class ReadingStatistics {
       totalPagesRead / totalPages;
   int overallProgressPercentForTotalPages(int totalPages) =>
       (overallProgressForTotalPages(totalPages) * 100).round();
+
+  @override
+  List<Object?> get props => [
+    totalPagesRead,
+    totalReadingDays,
+    currentStreak,
+    longestStreak,
+    pagesToday,
+    pagesThisWeek,
+    pagesThisMonth,
+    daysThisWeek,
+    daysThisMonth,
+    averagePagesPerDay,
+  ];
 }
 
 // --- Audio Models ---
