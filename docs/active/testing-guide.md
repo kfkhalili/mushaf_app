@@ -22,7 +22,7 @@ This comprehensive guide outlines the testing controls and strategy to ensure **
 - **CI/CD Pipeline** (`.github/workflows/test.yml`) - Automated testing on PRs
 - **Pre-commit Hooks** (`scripts/test-pre-commit.sh`)
 - **Coverage Tracking** (`.coverage_threshold.json`, `scripts/check-coverage.sh`)
-- **Test Helpers** (`test/helpers/test_helpers.dart`)
+- **Test Harness** (`test/support/`)
 
 ### 📋 Planned/Partially Implemented
 
@@ -541,10 +541,6 @@ production adapter. Inject a `FakeDatabaseStore`/`ThrowingDatabaseStore` in test
 to open fixtures or simulate failures. `AppDataService` accepts a
 `databasePath`; pass `inMemoryDatabasePath` for an isolated, parallel-safe
 database with no shared `app_data.db`.
-
-> **Note:** `test/helpers/test_helpers.dart` (the old `pumpApp`/
-> `createTestContainer`/`waitForProvider`/`verifyGolden` helpers) is superseded
-> by this harness and no longer used.
 
 ---
 
